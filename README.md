@@ -116,27 +116,36 @@ Using z3gi in Python
 Let's learn the same model (from `train.txt`) in Python:
 
 1. Open your Python interpreter:
+
 ```
 $ python
 ```
+
 2. Let's use a different encoder this time:
+
 ```
 >>> from z3gi.encoders import expressive
 >>> encoder = expressive.Encoder()
 ```
+
 3. Create a sample:
+
 ```
 >>> from z3gi import sample
 >>> sample = sample.Sample(encoder)
 ```
+
 4. Add constraints for strings in `train.txt` to the sample:
+
 ```
 >>> from z3gi.parsers import abbadingo
 >>> for string, label in abbadingo.read(open('train.txt', 'r'), header=1):
 ...     sample[str] = label
 ...
 ```
+
 5. Obtain the model!
+
 ```
 >>> model = sample.model()
 >>> print(model)
