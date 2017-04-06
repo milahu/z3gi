@@ -113,7 +113,7 @@ We can interpret this learned model as follows.
 Using z3gi in Python
 --------------------
 
-Let's learn the same model (from `train.txt`) in Python:
+Let's learn the same model (from `docs/train.txt`) in Python:
 
 1. Open your Python interpreter:
 
@@ -135,11 +135,11 @@ $ python
 >>> sample = sample.Sample(encoder)
 ```
 
-4. Add constraints for strings in `train.txt` to the sample:
+4. Add constraints for strings in `docs/train.txt` to the sample:
 
 ```
 >>> from z3gi.parsers import abbadingo
->>> for string, label in abbadingo.read(open('train.txt', 'r'), header=1):
+>>> for string, label in abbadingo.read(open('docs/train.txt', 'r'), header=1):
 ...     sample[str] = label
 ...
 ```
