@@ -75,7 +75,7 @@ Where label `1` means accepted, and the label `0` means rejected.
 We can use Z3GI to learn a model for the strings in `train.txt` as follows:
 
 ```
-$ python z3gi --model -f docs/train.txt
+$ python -m z3gi --model -f train.txt
 ```
 
 This produces the following output:
@@ -113,40 +113,36 @@ We can interpret this learned model as follows.
 Using z3gi in Python
 --------------------
 
-Let's learn the same model (from `docs/train.txt`) in Python:
+Let's learn the same model (from `train.txt`) in Python:
 
 1. Open your Python interpreter:
 
-```
-$ python
-```
-
+    ```
+    $ python
+    ```
 2. Let's use a different encoder this time:
 
-```
->>> from z3gi.encoders import expressive
->>> encoder = expressive.Encoder()
-```
-
+    ```
+    >>> from z3gi.encoders import expressive
+    >>> encoder = expressive.Encoder()
+    ```
 3. Create a sample:
 
-```
->>> from z3gi import sample
->>> sample = sample.Sample(encoder)
-```
-
+    ```
+    >>> from z3gi import sample
+    >>> sample = sample.Sample(encoder)
+    ```
 4. Add constraints for strings in `docs/train.txt` to the sample:
 
-```
->>> from z3gi.parsers import abbadingo
->>> for string, label in abbadingo.read(open('docs/train.txt', 'r'), header=1):
-...     sample[str] = label
-...
-```
-
+    ```
+    >>> from z3gi.parsers import abbadingo
+    >>> for string, label in abbadingo.read(open('docs/train.txt', 'r'), header=1):
+    ...     sample[str] = label
+    ...
+    ```
 5. Obtain the model!
 
-```
->>> model = sample.model()
->>> print(model)
-```
+    ```
+    >>> model = sample.model()
+    >>> print(model)
+    ```
