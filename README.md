@@ -137,7 +137,7 @@ Let's learn the same model (from `train.txt`) in Python:
     ```
     >>> from z3gi.parsers import abbadingo
     >>> for string, label in abbadingo.read(open('docs/train.txt', 'r'), header=1):
-    ...     sample[str] = label
+    ...     sample[string] = label
     ...
     ```
 5. Obtain the model!
