@@ -39,7 +39,7 @@ Consider a deterministic finite automaton (DFA) that accepts strings of `0`s and
 
 [dfa]: http://abbadingo.cs.nuim.ie/dfa.html
 
-A training file `train.txt` for this DFA could read:
+A training file `train.txt` for this DFA could read (if you have the sources of this package, this file can be found at `docs/train.txt`):
 
 ```
 16 2
@@ -132,11 +132,11 @@ Let's learn the same model (from `train.txt`) in Python:
     >>> from z3gi import sample
     >>> sample = sample.Sample(encoder)
     ```
-4. Add constraints for strings in `docs/train.txt` to the sample:
+4. Add constraints for strings in `train.txt` to the sample:
 
     ```
     >>> from z3gi.parsers import abbadingo
-    >>> for string, label in abbadingo.read(open('docs/train.txt', 'r'), header=1):
+    >>> for string, label in abbadingo.read(open('train.txt', 'r'), header=1):
     ...     sample[string] = label
     ...
     ```
