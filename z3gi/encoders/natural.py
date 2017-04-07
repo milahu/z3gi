@@ -42,7 +42,8 @@ class Encoder(interface.Encoder):
         Raises a NonDeterminsmError if string is already encoded with another label.
         """
         string = ' '.join(string)
-        if string in self.sample:
+        label = bool(int(label))
+        if string in self.sample and self.sample[string] != label:
             raise NonDeterminismError("string: %s, label: %s, already encoded other label" % (string, label))
         self.sample[string] = label
 
