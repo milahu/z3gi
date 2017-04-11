@@ -1,7 +1,7 @@
 Grammatical inference using the Z3 SMT solver
 =============================================
 
-Z3GI is a Python tool and library that uses the [Z3 SMT solver][z3] for learning minimal consistent state machine models from labeled strings or input/output traces.
+Z3GI is a Python tool and library that uses the [Z3 SMT solver][z3] for learning minimal consistent state machine models from labeled strings or input/output taces.
 
 [z3]: https://github.com/Z3Prover/z3
 
@@ -129,8 +129,8 @@ Let's learn the same model (from `train.txt`) in Python:
 3. Create a sample:
 
     ```
-    >>> from z3gi import sample
-    >>> sample = sample.Sample(encoder)
+    >>> from z3gi.sample import Sample
+    >>> sample = Sample(encoder)
     ```
 4. Add constraints for strings in `train.txt` to the sample:
 

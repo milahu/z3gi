@@ -2,11 +2,13 @@ import io
 import unittest
 
 from z3gi.encoders import natural
+from z3gi.sample import sample
 
 class TestNaturalEncoder(unittest.TestCase):
 
     def test_NonDeterminsimError(self):
         encoder = natural.Encoder()
+        encoder['a'] = True
         encoder['a'] = True
         with self.assertRaises(natural.NonDeterminismError):
             encoder['a'] = False
@@ -25,6 +27,8 @@ class TestNaturalEncoder(unittest.TestCase):
         encoder = natural.Encoder(quantifiers=False)
         encoder['a'] = True
         self.assertEqual(len(encoder.encode(1)), 4)
+
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -18,6 +18,8 @@ class Sample(object):
         """Adds a string, label pair to the encoder."""
         self.encoder[string] = label
 
+    #TODO getitem (run on model)
+
     def model(self, solver=z3.Solver(), minstates=1, maxstates=100):
         """Returns a z3 model for the strings in the encoder, or unsat.
 

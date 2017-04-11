@@ -2,7 +2,7 @@
 import sys
 import argparse
 
-from z3gi import sample
+from z3gi.sample import Sample
 from z3gi.parsers import abbadingo
 from z3gi.encoders import propositional
 from z3gi.encoders import natural
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     elif args.expressive:
         encoder = expressive.Encoder(args.quantifiers, args.inequalities)
 
-    sample = sample.Sample(encoder)
+    sample = Sample(encoder)
 
     f = sys.stdin
     header = 0

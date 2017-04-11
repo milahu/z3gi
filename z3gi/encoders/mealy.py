@@ -34,7 +34,7 @@ class Encoder(interface.Encoder):
         self.trans = z3.Function('trans', self.STATE, self.INPUT, self.STATE)
         self.out = z3.Function('out', self.STATE, self.INPUT, self.OUTPUT)
         self.repr = z3.Function('repr', self.NODE, self.STATE)
-        self.n
+        self.n = z3.Int('n')
 
         # Alphabets
         self.inputs = {}
@@ -124,16 +124,16 @@ class _node(object):
         input, inputs = inputs[0], inputs[1:]
         output, outputs = outputs[0], outputs[1:]
         try:
-            if not self.children[input].label == o:
+            if not self.children[input].label == output:
                 raise NonDeterminismError()
-            self.children[i][inputs] = outputs
+            self.children[input][inputs] = outputs
         except KeyError:
             child = _node(self.encoder)
-            child.label = o
-            self.children[i] = child
-            self.encoder._add_trans_constraint(self.name, i, child.name)
-            self.encoder._add_out_constraint(self.name, i, o)
-            self.children[i][inputs] = outputs
+            child.label = output
+            self.children[input] = child
+            self.encoder._add_trans_constraint(self.name, input, child.name)
+            self.encoder._add_out_constraint(self.name, input, output)
+            self.children[input][inputs] = outputs
 
     def __len__(self):
         """Returns the number of nodes in the APT

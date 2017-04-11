@@ -5,6 +5,10 @@ class NonDeterminismError(Exception):
     """A NonDeterminismError is raised when there are conflicting labels for a string."""
     pass
 
+class SymbolError(Exception):
+    """A SymbolError is raised when getting a string contains a symbol that is not in the alphabet."""
+    pass
+
 class Encoder(interface.Encoder):
     """An Encoder constructs a set of constraints for labeled strings.
     This implementation uses the 'natural' encoding for DFA models.
@@ -56,6 +60,19 @@ class Encoder(interface.Encoder):
             return self.trans(transitions(s[:-1]), self.alphabet[s[-1]])
 
         self.constraints.append(self.out(transitions(string.split())) == label)
+
+    def __getitem__(self, string):
+        """Returns the Z3 expression that one can evaluate on a natural model to obtain the label for string."""
+
+        def transitions(s):
+            """Returns nested transitions for symbols in string s."""
+            if len(s) == 0:
+                return self.start
+            if s[-1] not in self.alphabet:
+                raise SymbolError("Symbol %s not in alphabet" % s[-1])
+            return self.trans(transitions(s[:-1]), self.alphabet[s[-1]])
+
+        return self.out(transitions(string))
 
     def encode(self, n):
         """Returns a list of constraints for a DFA with n states."""
