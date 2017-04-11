@@ -13,8 +13,8 @@ One of the best studied problems in grammatical inference is that of finding a d
 This problem is can be very hard, as it has been shown to be NP-complete.
 Z3GI provides different ways of solving this (and similar) problem(s) using satisfiability modulo theories (SMT).
 
-Installing with pip
---------------------
+Installing with pip (recommended)
+---------------------------------
 
 The recommended way of installing Z3GI is with `pip`:
 
