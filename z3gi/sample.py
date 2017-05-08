@@ -28,6 +28,11 @@ class Sample(object):
         minstates -- a lower bound for the number of states in the model (default 1)
         maxstates -- an upper bound for the number of states in the model (default 100)
         """
+        if hasattr(self.encoder, 'k'):
+            k = self.encoder.k
+            if minstates < k:
+                minstates = k
+
         for n in range(minstates, maxstates):
             constraints = self.encoder.encode(n)
             solver.push()
