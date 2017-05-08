@@ -1,10 +1,6 @@
 from z3gi.encoders import interface
 import z3
 
-class NonDeterminismError(Exception):
-    """A NonDeterminismError is raised when there are conflicting labels for a string."""
-    pass
-
 class SymbolError(Exception):
     """A SymbolError is raised when getting a string contains a symbol that is not in the alphabet."""
     pass
@@ -21,7 +17,7 @@ class Encoder(interface.Encoder):
     STATE = z3.IntSort()
     LABEL = z3.BoolSort()
 
-    def __init__(self, k=2, quantifiers=True, inequalities=False):
+    def __init__(self, k, quantifiers=True, inequalities=False):
         """Returns a new natural Encoder.
 
         Keyword arguments:
@@ -47,9 +43,7 @@ class Encoder(interface.Encoder):
         self.sample = {}
 
     def __setitem__(self, string, label):
-        """Adds constraints for a string, label pair.
-        Raises a NonDeterminsmError if string is already encoded with another label.
-        """
+        """Adds constraints for a string, label pair."""
         string = ' '.join(string)
         if string in self.sample:
             return
