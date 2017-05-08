@@ -1,6 +1,14 @@
 from z3gi.encoders import interface
 import z3
 
+class LabelError(Exception):
+    """A LabelError is raised when an unknown label is provided."""
+    pass
+
+class NonDeterminismError(Exception):
+    """A NonDeterminismError is raised when there are conflicting labels for a string."""
+    pass
+
 class SymbolError(Exception):
     """A SymbolError is raised when getting a string contains a symbol that is not in the alphabet."""
     pass
@@ -42,11 +50,17 @@ class Encoder(interface.Encoder):
         # Data structure
         self.sample = {}
 
+    ACCEPT = 1
+    REJECT = 0
+    UNKOWN = -1
     def __setitem__(self, string, label):
         """Adds constraints for a string, label pair."""
+        if label != ACCEPT and label != REJECT and label != UNKNOWN:
+            raise LabelError("Unknown label %s" % label)
+
         string = ' '.join(string)
-        if string in self.sample:
-            return
+        if string in self.sample and self.sample[string] != label:
+            raise NonDeterminismError("string: %s, label: %s, already encoded other label" % (string, label))
         self.sample[string] = True
 
         def transitions(s, i):
@@ -57,7 +71,13 @@ class Encoder(interface.Encoder):
                 self.alphabet[s[-1]] = z3.Const(s[-1], self.SYMBOL)
             return self.trans(transitions(s[:-1], i), self.alphabet[s[-1]])
 
-        constraint = z3.Or([z3.And([self.out(transitions(string.split(), i)) == True] + [self.out(transitions(string.split(), j)) == False for j in range(self.k) if j != i]) for i in range(self.k)])
+        if label == UNKNOWN:
+            constraint = z3.Or([z3.And([self.out(transitions(string.split(), i)) == True] + [self.out(transitions(string.split(), j)) == False for j in range(self.k) if j != i]) for i in range(self.k)])
+        else if label == ACCEPT:
+            constraint = z3.And([self.out(transitions(string.split(), i)) == True for i in range(self.k)])
+        else if label == REJECT:
+            constraint = z3.And([self.out(transitions(string.split(), i)) == False for i in range(self.k)])
+
         self.constraints.append(constraint)
 
 #    def __getitem__(self, string):
