@@ -104,7 +104,7 @@ trans = [(0, INPUT!val!0) -> 3,
 ```
 
 We can interpret this learned model as follows.
-- `0 = INPUT!val!1` and `1 = INPUT!val!0` provide identifiers for `0` and `1`
+- `0 = INPUT!val!1` and `1 = INPUT!val!0` provide identifiers for `0` and `1` (notice that the values in the identifiers and the actual inputs are different!)
 - `n = 5` indicates that the learned model has 5 states
 - `state0 = 0` through `state4 = 4` provide the identifiers for these states
 - `out` describes an output function for these states (`True` if it is accepting and `False` if it is rejecting)
