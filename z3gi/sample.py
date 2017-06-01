@@ -21,7 +21,7 @@ class Sample(object):
     #TODO getitem (run on model)
 
     def model(self, solver=z3.Solver(), minstates=1, maxstates=100):
-        """Returns a z3 model for the strings in the encoder, or unsat.
+        """Returns a Model object for the strings in the encoder.
 
         Keyword arguments:
         solver -- the z3 solver to use (default: z3.Solver())
