@@ -1,7 +1,6 @@
 #TODO allow customization for the else branch of z3 functions
-#TODO let encoders construct and return these types of models
+import sys
 import z3
-
 from z3gi.models import interface
 
 class NotAssignedError(Exception):
@@ -24,13 +23,15 @@ class DFA(interface.Model):
         trans -- a z3 function from states and symbols to states
         out -- a z3 function from states to z3 boolean expressions
         """
+        self.model = None
+        self._statemap = None
+        self._alphabetmap = None
+
         self.alphabet = alphabet
-        self.states = states
-        self.start = start
+        self.states = {"state%d" % i:state for i, state in enumerate(states)}
+        self._start = start
         self.trans = trans
         self.out = out
-
-        self.model = None
 
     def __getitem__(self, string):
         """Returns the computation of the provided string on the model.
@@ -43,19 +44,41 @@ class DFA(interface.Model):
         if not self.assigned():
             raise NotAssignedError()
 
-        state = self.start
+        state = self._start
         for s in string:
             symbol = self.alphabet[s]
             state = self.model.evaluate(self.trans(state, symbol))
         return z3.is_true(self.model.evaluate(self.out(state)))
 
-    def export(self, f):
-        """Writes the model in DOT format to text stream f.
+    def export(self, fn=None):
+        """Prints the model in DOT format
         Raises a NotAssignedError if the model is not assigned yet.
+
+        If no filename is provided, it prints to sys.stdout
+
+        Keyword arguments:
+        fn -- the file to print to (default None)
         """
         if not self.assigned():
             raise NotAssignedError()
-        # TODO
+        f = open(fn, 'w') if fn is not None else sys.stdout
+        print('digraph g {', file=f)
+        print('__start [label="" shape="none"];', file=f)
+
+        for state in self.states:
+            label = "doublecircle" if self.is_accepting(state) else "circle"
+            print('%s shape="%s" label="%s"];\n' % (state, label, state), file=f)
+
+        for state in self.states:
+            for symbol in self.alphabet:
+                target = self.transition(state, symbol)
+                print('%s -> %s [label="%s"];' % (state, target, symbol), file=f)
+
+        print('__start -> %s;' % self.start(), file=f)
+        print('}', file=f)
+
+        if fn is not None:
+            f.close()
 
     def assign(self, model):
         """Assigns the model.
@@ -64,10 +87,65 @@ class DFA(interface.Model):
         Keyword arguments:
         model -- a z3.ModelRef assignment for the constants, terms and functions in this model
         """
-        for symbol in self.alphabet:
-            if interface.is_uninterpreted(model.evaluate(self.alphabet[symbol])):
-                raise ModelError("Symbol %s is uninterpreted in model %s." % (symbol, model))
-        for i, state in enumerate(self.states):
-            if interface.is_uninterpreted(model.evaluate(state)):
-                raise ModelError("State %d is uninterpreted in model %s." % (i, model))
+        self._statemap = {model.evaluate(value):key for key, value in self.states.items()}
+        self._alphabetmap = {model.evaluate(value):key for key, value in self.alphabet.items()}
         self.model = model
+
+    def is_accepting(self, state):
+        """Returns True if state is accepting and False otherwise.
+
+        Raises a NotAssignedError if the model has not yet been assigned.
+
+        Keyword arguments:
+        state -- a state name that is in self.states
+        """
+        if not self.assigned():
+            raise NotAssignedError()
+
+        return z3.is_true(self.model.evaluate(self.out(self.states[state])))
+
+    def state(self, string):
+        """Returns the name of the state reached after computing the given string on the model.
+
+        Raises a NotAssignedError if the model has not yet been assigned.
+
+        Keyword arguments:
+        string -- an iterable of symbol names in self.alphabet
+        """
+        if not self.assigned():
+            raise NotAssignedError()
+
+        state = self.model.evaluate(self._start)
+        for symbol in string:
+            state = self.model.evaluate(self.trans(state, self.alphabet[symbol]))
+        return self._statemap[state]
+
+    def start(self):
+        """Returns the name of the start state.
+
+        Raises a NotAssignedError if the model has not yet been assigned.
+
+        Keyword arguments:
+        string -- an iterable of symbol names in self.alphabet
+        """
+        if not self.assigned():
+            raise NotAssignedError()
+
+        return self.state('')
+
+    def transition(self, state, symbol):
+        """Returns the state reached by transitioning from state with symbol.
+
+        Raises a NotAssignedError if the model has not yet been assigned.
+
+        Keyword arguments:
+        state -- a state name that is in self.states
+        symbol -- a symbol name that is in self.alphabet
+        """
+        if not self.assigned():
+            raise NotAssignedError()
+
+        z3state = self.states[state]
+        z3symbol = self.alphabet[symbol]
+        z3target = self.model.evaluate(self.trans(z3state, z3symbol))
+        return self._statemap[z3target]

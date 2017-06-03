@@ -19,8 +19,8 @@ class Model(object):
         """
         raise NotImplementedError()
 
-    def export(self, f):
-        """Writes the model in DOT format to text stream f.
+    def export(self, fn):
+        """Writes the model in DOT format to file fn.
         Raises a NotAssignedError if the model is not assigned yet.
         """
         raise NotImplementedError()
@@ -36,9 +36,4 @@ class Model(object):
 
     def assigned(self):
         """Returns True if the model is assigned, and False otherwise."""
-        return self.model is None
-
-
-def is_uninterpreted(x):
-    return z3.is_const(x) and x.decl().kind() == z3.Z3_OP_UNINTERPRETED
-
+        return self.model is not None

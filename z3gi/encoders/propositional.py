@@ -1,4 +1,5 @@
 from z3gi.encoders import interface
+from z3gi.models import dfa
 import z3
 
 class NonDeterminismError(Exception):
@@ -47,6 +48,10 @@ class Encoder(interface.Encoder):
 
     def encode(self, n):
         """Returns a list of constraints for a DFA with n states."""
+        # TODO: construct a proper model for this implementation
+        model = dfa.DFA(None, None, None, None, None)
+
+
         # Initiate variables
         for v in range(len(self.x)):
             self.x[v] = [z3.Bool('x_%d_%d' % (v, i)) for i in range(n)]
@@ -101,7 +106,7 @@ class Encoder(interface.Encoder):
                 for i in range(n):
                     constraints.append(z3.Or(z3.Not(self.x[v][i]), z3.Not(self.x[w][i])))
 
-        return constraints
+        return constraints, model
 
     def __len__(self):
         """Returns the number of encoded labels."""

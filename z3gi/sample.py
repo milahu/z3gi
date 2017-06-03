@@ -1,5 +1,11 @@
 import z3
 from z3gi.encoders import natural
+class UnsatError(Exception):
+    """An UnsatError is raised when no model can be found for the sample.
+    This is typically because the maximum number of states is too low,
+    or there is non-determinism in the sample.
+    """
+    pass
 
 class Sample(object):
     """A Sample encodes labeled strings, and provides methods to learn a model from these strings."""
@@ -12,7 +18,6 @@ class Sample(object):
         """
         self.encoder = encoder
         self.constriants = None # will be set once a model is found
-        self.statistics = None # will be set when self.model() is called
 
     def __setitem__(self, string, label):
         """Adds a string, label pair to the encoder."""
@@ -34,16 +39,15 @@ class Sample(object):
                 minstates = k
 
         for n in range(minstates, maxstates):
-            constraints = self.encoder.encode(n)
+            constraints, model = self.encoder.encode(n)
             solver.push()
             solver.add(constraints)
             if solver.check() == z3.sat:
                 self.constraints = constraints
-                self.statistics = solver.statistics()
-                return solver.model()
+                model.assign(solver.model())
+                return model
             solver.pop()
-        self.statistics = solver.statistics()
-        return z3.unsat
+        raise UnsatError("No model with at most %d states exists for sample %s (statistics: %s)." % (maxstates, self.encoder, solver.statistics()))
 
     def __len__(self):
         """Returns the number of key, value pairs in this sample."""

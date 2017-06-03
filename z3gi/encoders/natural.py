@@ -1,4 +1,5 @@
 from z3gi.encoders import interface
+from z3gi.models import dfa
 import z3
 
 class NonDeterminismError(Exception):
@@ -32,7 +33,7 @@ class Encoder(interface.Encoder):
         # Z3 functions and constants
         self.trans = z3.Function('trans', self.STATE, self.SYMBOL, self.STATE)
         self.out = z3.Function('out', self.STATE, self.LABEL)
-        self.start = z3.Const('state0', self.STATE)
+        self.start = z3.Const('start', self.STATE)
         self.n = z3.Int('n')
 
         # Alphabet
@@ -76,9 +77,12 @@ class Encoder(interface.Encoder):
 
     def encode(self, n):
         """Returns a list of constraints for a DFA with n states."""
+        states = [z3.Const('state%d' % i, self.STATE) for i in range(0, n)]
+        model = dfa.DFA(self.alphabet, states, self.start, self.trans, self.out)
+
         axioms = [self.n == n]
-        states = [self.start] + [z3.Const('state%d' % i, self.STATE) for i in range(1, n)]
         axioms += [states[i] == i for i in range(0, n)]
+        axioms += [self.start == states[0]]
 
         # free variables used in z3's forall must be declared
         state = z3.Const('state', self.STATE)
@@ -99,7 +103,7 @@ class Encoder(interface.Encoder):
                 for state in states:
                     axioms.append(z3.Or([self.trans(state, self.alphabet[symbol]) == target for target in states]))
 
-        return axioms + self.constraints
+        return axioms + self.constraints, model
 
     def __len__(self):
         """Returns the number encoded labels."""

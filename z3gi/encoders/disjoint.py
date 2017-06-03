@@ -1,4 +1,5 @@
 from z3gi.encoders import interface
+from z3gi.models import dfa
 import z3
 
 class LabelError(Exception):
@@ -98,8 +99,10 @@ class Encoder(interface.Encoder):
         if n < self.k:
             raise EncodeError("Not enough states %d" % n)
 
-        axioms = [self.n == n]
         states = self.start + [z3.Const('state%d' % i, self.STATE) for i in range(n-self.k)]
+        model = dfa.DFA(self.alphabet, states, self.start, self.trans, self.out)
+
+        axioms = [self.n == n]
         axioms += [states[i] == i for i in range(0, n)]
 
         # free variables used in z3's forall must be declared
@@ -121,7 +124,7 @@ class Encoder(interface.Encoder):
                 for state in states:
                     axioms.append(z3.Or([self.trans(state, self.alphabet[symbol]) == target for target in states]))
 
-        return axioms + self.constraints
+        return axioms + self.constraints, model
 
     def __len__(self):
         """Returns the number encoded strings."""
