@@ -28,8 +28,8 @@ Installing from sources
 Alternatively, you can install Z3GI by cloning this repository, and installing using `setuptools`:
 
 ```
-$ git clone https://gitlab.science.ru.nl/rick/smtgi.git
-$ python smtgi/z3gi/setup.py install
+$ git clone https://gitlab.science.ru.nl/rick/z3gi.git
+$ python z3gi/setup.py install
 ```
 
 Getting started
