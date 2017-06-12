@@ -29,8 +29,8 @@ class FSMLearner(object):
             self._add_single(inputs, outputs)
         else:
             expected_length = {
-                (define.STATE,): lambda: len(inputs) + 1,
-                (define.STATE, define.INPUT): lambda: len(inputs)
+                (define.State,): lambda: len(inputs) + 1,
+                (define.State, define.Input): lambda: len(inputs)
             }[define.domain(self.encoder.fsm.output)]()
             if not len(outputs) == expected_length or len(outputs) == 0:
                 raise encode.EncodeError(inputs, outputs)
@@ -49,21 +49,21 @@ class FSMLearner(object):
         self.outputs.add(output)
 
         domain = define.domain(self.encoder.fsm.output)
-        if domain == (define.STATE, define.INPUT) and not inputs:
+        if domain == (define.State, define.Input) and not inputs:
             raise encode.EncodeError('Can not encode empty string for output function over domain {0}'.format(domain))
 
         constraint = {
-            (define.STATE,): lambda: self.encoder.output(self.encoder.state(inputs)) == define.output(output),
-            (define.STATE, define.INPUT): lambda: self.encoder.output(self.encoder.state(inputs[:-1]),
+            (define.State,): lambda: self.encoder.output(self.encoder.state(inputs)) == define.output(output),
+            (define.State, define.Input): lambda: self.encoder.output(self.encoder.state(inputs[:-1]),
                                                                       define.input(inputs[-1])) == define.output(output)
         }[domain]()
         self.solver.add(constraint)
 
     def _add_iter(self, inputs, outputs):
         for i in range(len(outputs)):
-            if define.domain(self.encoder.fsm.output) == (define.STATE,):
+            if define.domain(self.encoder.fsm.output) == (define.State,):
                 self._add_single(inputs[:i], outputs[i])
-            elif define.domain(self.encoder.fsm.output) == (define.STATE, define.INPUT):
+            elif define.domain(self.encoder.fsm.output) == (define.State, define.Input):
                 self._add_single(inputs[:i + 1], outputs[i])
 
     def model(self, min_states=1, max_states=20):

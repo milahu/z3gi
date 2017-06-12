@@ -31,32 +31,31 @@ class FSMEncoder(metaclass=abc.ABCMeta):
         pass
 
     def transition(self, state, input):
-        if not (isinstance(state, z3.ExprRef) and state.sort() == define.STATE):
+        if not (isinstance(state, z3.ExprRef) and state.sort() == define.State):
             raise EncodeError(state)
-        if not (isinstance(input, z3.ExprRef) and input.sort() == define.INPUT):
+        if not (isinstance(input, z3.ExprRef) and input.sort() == define.Input):
             raise EncodeError(input)
 
         return self.fsm.transition(state, input)
 
     def output(self, state, input=None):
-        if not (isinstance(state, z3.ExprRef) and state.sort() == define.STATE):
+        if not (isinstance(state, z3.ExprRef) and state.sort() == define.State):
             raise EncodeError(state)
         domain = define.domain(self.fsm.output)
-        if not ({(define.STATE,): lambda: input is None,
-                 (define.STATE, define.INPUT): lambda: (isinstance(input, z3.ExprRef) and input.sort() == define.INPUT)
+        if not ({(define.State,): lambda: input is None,
+                 (define.State, define.Input): lambda: (isinstance(input, z3.ExprRef) and input.sort() == define.Input)
                  }[domain]()):
             raise EncodeError(input)
 
         return {
-            (define.STATE,): lambda: self.fsm.output(state),
-            (define.STATE, define.INPUT): lambda: self.fsm.output(state, input)
+            (define.State,): lambda: self.fsm.output(state),
+            (define.State, define.Input): lambda: self.fsm.output(state, input)
         }[domain]()
 
     def states(self, names):
         if not isinstance(names, collections.Iterable) or len(names) < 1:
             raise EncodeError(names)
 
-        # TODO: change to enum
         states = [define.state(name) for name in names]
 
         # free variables in z3's ForAll need to be declared
@@ -65,7 +64,7 @@ class FSMEncoder(metaclass=abc.ABCMeta):
 
         return z3.And([z3.Int('n') == len(states),
                        self.fsm.start == states[0],
-                       z3.Distinct([define.state(s) for s in states]),
+                       #z3.Distinct([define.state(s) for s in states]),
                        z3.ForAll([state, input],
                                  z3.Or([self.fsm.transition(state, input) == s for s in states]),
                                  patterns=[self.fsm.transition(state, input)]),

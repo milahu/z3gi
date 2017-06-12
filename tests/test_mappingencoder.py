@@ -14,7 +14,7 @@ class TestMappingEncoder(TestCase):
                      '1': encoder._statemap(define.element(3))}
             for key in ['', 'ab', (1, 2), 'a', '1']:
                 state = encoder.state(key)
-                self.assertTrue(state.sort().eq(define.STATE))
+                self.assertTrue(state.sort().eq(define.State))
                 self.assertEqual(state, tests[key])
 
     def test_transition(self):
@@ -34,7 +34,7 @@ class TestMappingEncoder(TestCase):
                  (1, 2): fsm.output(encoder.state((1, 2)))}
         for key, value in tests.items():
             self.assertTrue(encoder.output(encoder.state(key)).eq(tests[key]))
-            self.assertTrue(tests[key].sort().eq(define.OUTPUT))
+            self.assertTrue(tests[key].sort().eq(define.Output))
 
         fsm = define.MealyMachine()
         encoder = encode.MappingEncoder(fsm)

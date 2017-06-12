@@ -13,9 +13,9 @@ class TestFSMEncoder(TestCase):
         for fsm in fsms:
             encoder = encode.NestingEncoder(fsm)
             try:
-                self.assertTrue(encoder.state('').sort().eq(define.STATE))
-                self.assertTrue(encoder.state((1, 2, 3)).sort().eq(define.STATE))
-                self.assertTrue(encoder.state([i for i in range(5)]).sort().eq(define.STATE))
+                self.assertTrue(encoder.state('').sort().eq(define.State))
+                self.assertTrue(encoder.state((1, 2, 3)).sort().eq(define.State))
+                self.assertTrue(encoder.state([i for i in range(5)]).sort().eq(define.State))
                 self.assertTrue(encoder.state('').eq(encoder.state([])))
             except encode.EncodeError:
                 self.fail()
@@ -28,8 +28,8 @@ class TestFSMEncoder(TestCase):
         for fsm in fsms:
             encoder = encode.NestingEncoder(fsm)
             try:
-                self.assertTrue(encoder.transition(encoder.state('abc'), define.input()).sort().eq(define.STATE))
-                self.assertTrue(encoder.transition(define.state(), define.input()).sort().eq(define.STATE))
+                self.assertTrue(encoder.transition(encoder.state('abc'), define.input()).sort().eq(define.State))
+                self.assertTrue(encoder.transition(define.state(), define.input()).sort().eq(define.State))
             except encode.EncodeError:
                 self.fail()
             with self.assertRaises(encode.EncodeError):
@@ -40,8 +40,8 @@ class TestFSMEncoder(TestCase):
     def test_output(self):
         encoder = encode.NestingEncoder(define.MooreMachine())
         try:
-            self.assertTrue(encoder.output(encoder.state('abc')).sort().eq(define.OUTPUT))
-            self.assertTrue(encoder.output(define.state()).sort().eq(define.OUTPUT))
+            self.assertTrue(encoder.output(encoder.state('abc')).sort().eq(define.Output))
+            self.assertTrue(encoder.output(define.state()).sort().eq(define.Output))
         except encode.EncodeError:
             self.fail()
         with self.assertRaises(encode.EncodeError):
@@ -53,8 +53,8 @@ class TestFSMEncoder(TestCase):
 
         encoder = encode.NestingEncoder(define.MealyMachine())
         try:
-            self.assertTrue(encoder.output(encoder.state('abc'), define.input()).sort().eq(define.OUTPUT))
-            self.assertTrue(encoder.output(define.state(), define.input()).sort().eq(define.OUTPUT))
+            self.assertTrue(encoder.output(encoder.state('abc'), define.input()).sort().eq(define.Output))
+            self.assertTrue(encoder.output(define.state(), define.input()).sort().eq(define.Output))
         except encode.EncodeError:
             self.fail()
         with self.assertRaises(encode.EncodeError):
