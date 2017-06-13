@@ -8,7 +8,7 @@ from z3gi import define, encode, learn
 class TestFSMLearner(TestCase):
     def test_add(self):
         fsm = define.MooreMachine()
-        for encoder in [encode.NestingEncoder, encode.MappingEncoder]:
+        for encoder in [encode.NestingFSMEncoder, encode.MappingFSMEncoder]:
             learner = learn.FSMLearner(fsm, encoder)
             try:
                 learner.add('', 0)
@@ -35,7 +35,7 @@ class TestFSMLearner(TestCase):
             self.assertEqual(learner.outputs, {'0', '1', '2', '3'})
 
         fsm = define.MealyMachine()
-        for encoder in [encode.NestingEncoder, encode.MappingEncoder]:
+        for encoder in [encode.NestingFSMEncoder, encode.MappingFSMEncoder]:
             learner = learn.FSMLearner(fsm, encoder)
             try:
                 learner.add('a', 0)
@@ -64,7 +64,7 @@ class TestFSMLearner(TestCase):
 
     def test_model(self):
         fsm = define.MooreMachine()
-        for encoder in [encode.NestingEncoder, encode.MappingEncoder]:
+        for encoder in [encode.NestingFSMEncoder, encode.MappingFSMEncoder]:
             learner = learn.FSMLearner(fsm, encoder)
             learner.add('aaaa', '10010')
             with self.assertRaises(learn.LearnError):

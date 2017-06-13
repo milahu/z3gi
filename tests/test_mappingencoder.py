@@ -6,7 +6,7 @@ from z3gi import define, encode
 class TestMappingEncoder(TestCase):
     def test_state(self):
         for fsm in [define.MooreMachine(), define.MealyMachine()]:
-            encoder = encode.MappingEncoder(fsm)
+            encoder = encode.MappingFSMEncoder(fsm)
             tests = {'': encoder._statemap(define.element(0)),
                      'ab': encoder._statemap(define.element(2)),
                      (1, 2): encoder._statemap(define.element(4)),
@@ -19,16 +19,16 @@ class TestMappingEncoder(TestCase):
 
     def test_transition(self):
         for fsm in [define.MooreMachine(), define.MealyMachine()]:
-            encoder = encode.MappingEncoder(fsm)
+            encoder = encode.MappingFSMEncoder(fsm)
             tests = {'ab': fsm.transition(encoder.state('a'), define.input('b')),
                      (1, 2): fsm.transition(encoder.state((1,)), define.input(2))}
-            encoder = encode.MappingEncoder(fsm)
+            encoder = encode.MappingFSMEncoder(fsm)
             for key, value in tests.items():
                 self.assertTrue(encoder.transition(encoder.state(key[:-1]), define.input(key[-1])).eq(tests[key]))
 
     def test_output(self):
         fsm = define.MooreMachine()
-        encoder = encode.MappingEncoder(fsm)
+        encoder = encode.MappingFSMEncoder(fsm)
         tests = {'': fsm.output(encoder.state('')),
                  'ab': fsm.output(encoder.state('ab')),
                  (1, 2): fsm.output(encoder.state((1, 2)))}
@@ -37,7 +37,7 @@ class TestMappingEncoder(TestCase):
             self.assertTrue(tests[key].sort().eq(define.Output))
 
         fsm = define.MealyMachine()
-        encoder = encode.MappingEncoder(fsm)
+        encoder = encode.MappingFSMEncoder(fsm)
         tests = {'a': fsm.output(encoder.state(''), define.input('a')),
                  'ab': fsm.output(encoder.state(('a',)), define.input('b')),
                  (1, 2): fsm.output(encoder.state('1'), define.input(2))}
@@ -56,7 +56,7 @@ class TestMappingEncoder(TestCase):
         pass
 
     def test_node_iter(self):
-        encoder = encode.MappingEncoder(define.MooreMachine())
+        encoder = encode.MappingFSMEncoder(define.MooreMachine())
         encoder.state('ab')
         encoder.state('aa')
 

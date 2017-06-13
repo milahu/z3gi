@@ -82,7 +82,7 @@ class FSMEncoder(metaclass=abc.ABCMeta):
         return z3.Distinct(outputs)
 
 
-class NestingEncoder(FSMEncoder):
+class NestingFSMEncoder(FSMEncoder):
     def _init(self):
         pass
 
@@ -95,9 +95,9 @@ class NestingEncoder(FSMEncoder):
         return True
 
 
-class MappingEncoder(FSMEncoder):
+class MappingFSMEncoder(FSMEncoder):
     def _init(self):
-        self._trie = MappingEncoder.Node(itertools.count(0))
+        self._trie = MappingFSMEncoder.Node(itertools.count(0))
         self._statemap = define.StateMapper()
 
     def _state(self, access):
@@ -125,7 +125,7 @@ class MappingEncoder(FSMEncoder):
             for input in access:
                 input = str(input)
                 if input not in node.children:
-                    node.children[input] = MappingEncoder.Node(self.counter)
+                    node.children[input] = MappingFSMEncoder.Node(self.counter)
                 node = node.children[input]
             return node
 

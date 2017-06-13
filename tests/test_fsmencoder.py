@@ -11,7 +11,7 @@ fsms = [define.MooreMachine(), define.MealyMachine()]
 class TestFSMEncoder(TestCase):
     def test_state(self):
         for fsm in fsms:
-            encoder = encode.NestingEncoder(fsm)
+            encoder = encode.NestingFSMEncoder(fsm)
             try:
                 self.assertTrue(encoder.state('').sort().eq(define.State))
                 self.assertTrue(encoder.state((1, 2, 3)).sort().eq(define.State))
@@ -26,7 +26,7 @@ class TestFSMEncoder(TestCase):
 
     def test_transition(self):
         for fsm in fsms:
-            encoder = encode.NestingEncoder(fsm)
+            encoder = encode.NestingFSMEncoder(fsm)
             try:
                 self.assertTrue(encoder.transition(encoder.state('abc'), define.input()).sort().eq(define.State))
                 self.assertTrue(encoder.transition(define.state(), define.input()).sort().eq(define.State))
@@ -38,7 +38,7 @@ class TestFSMEncoder(TestCase):
                 encoder.transition(None, None)
 
     def test_output(self):
-        encoder = encode.NestingEncoder(define.MooreMachine())
+        encoder = encode.NestingFSMEncoder(define.MooreMachine())
         try:
             self.assertTrue(encoder.output(encoder.state('abc')).sort().eq(define.Output))
             self.assertTrue(encoder.output(define.state()).sort().eq(define.Output))
@@ -51,7 +51,7 @@ class TestFSMEncoder(TestCase):
         with self.assertRaises(encode.EncodeError):
             encoder.output(define.state(), define.input())
 
-        encoder = encode.NestingEncoder(define.MealyMachine())
+        encoder = encode.NestingFSMEncoder(define.MealyMachine())
         try:
             self.assertTrue(encoder.output(encoder.state('abc'), define.input()).sort().eq(define.Output))
             self.assertTrue(encoder.output(define.state(), define.input()).sort().eq(define.Output))
@@ -66,7 +66,7 @@ class TestFSMEncoder(TestCase):
 
     def test_states(self):
         for fsm in fsms:
-            encoder = encode.NestingEncoder(fsm)
+            encoder = encode.NestingFSMEncoder(fsm)
             try:
                 self.assertTrue(encoder.states(range(10)).sort().eq(z3.BoolSort()))
                 self.assertTrue(encoder.states(['a']).sort().eq(z3.BoolSort()))
@@ -80,7 +80,7 @@ class TestFSMEncoder(TestCase):
 
     def test_outputs(self):
         for fsm in fsms:
-            encoder = encode.NestingEncoder(fsm)
+            encoder = encode.NestingFSMEncoder(fsm)
             try:
                 self.assertTrue(encoder.outputs(range(10)).sort().eq(z3.BoolSort()))
                 self.assertTrue(encoder.outputs(['a']).sort().eq(z3.BoolSort()))

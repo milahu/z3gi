@@ -9,7 +9,7 @@ class TestNestingEncoder(TestCase):
             tests = {'': fsm.start,
                      'ab': fsm.transition(fsm.transition(fsm.start, define.input('a')), define.input('b')),
                      (1, 2): fsm.transition(fsm.transition(fsm.start, define.input(1)), define.input(2))}
-            encoder = encode.NestingEncoder(fsm)
+            encoder = encode.NestingFSMEncoder(fsm)
             for key, value in tests.items():
                 self.assertTrue(encoder.state(key).eq(tests[key]))
 
@@ -17,7 +17,7 @@ class TestNestingEncoder(TestCase):
         for fsm in [define.MooreMachine(), define.MealyMachine()]:
             tests = {'ab': fsm.transition(fsm.transition(fsm.start, define.input('a')), define.input('b')),
                      (1, 2): fsm.transition(fsm.transition(fsm.start, define.input(1)), define.input(2))}
-            encoder = encode.NestingEncoder(fsm)
+            encoder = encode.NestingFSMEncoder(fsm)
             for key, value in tests.items():
                 self.assertTrue(encoder.transition(encoder.state(key[:-1]), define.input(key[-1])).eq(tests[key]))
 
@@ -26,7 +26,7 @@ class TestNestingEncoder(TestCase):
         tests = {'': fsm.output(fsm.start),
                  'ab': fsm.output(fsm.transition(fsm.transition(fsm.start, define.input('a')), define.input('b'))),
                  (1, 2): fsm.output(fsm.transition(fsm.transition(fsm.start, define.input(1)), define.input(2)))}
-        encoder = encode.NestingEncoder(fsm)
+        encoder = encode.NestingFSMEncoder(fsm)
         for key, value in tests.items():
             self.assertTrue(encoder.output(encoder.state(key)).eq(tests[key]))
 
@@ -34,7 +34,7 @@ class TestNestingEncoder(TestCase):
         tests = {'a': fsm.output(fsm.start, define.input('a')),
                  'ab': fsm.output(fsm.transition(fsm.start, define.input('a')), define.input('b')),
                  (1, 2): fsm.output(fsm.transition(fsm.start, define.input(1)), define.input(2))}
-        encoder = encode.NestingEncoder(fsm)
+        encoder = encode.NestingFSMEncoder(fsm)
         for key, value in tests.items():
             self.assertTrue(encoder.output(encoder.state(key[:-1]), define.input(key[-1])).eq(tests[key]))
 

@@ -16,7 +16,7 @@ class LearnError(Exception):
 class FSMLearner(object):
     def __init__(self, fsm, encoder=None, solver=None):
         if not encoder:
-            encoder = encode.NestingEncoder
+            encoder = encode.NestingFSMEncoder
         self.encoder = encoder(fsm)
         if not solver:
             solver = z3.Solver()
