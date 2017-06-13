@@ -6,33 +6,33 @@ Input = z3.DeclareSort('Input')
 Output = z3.DeclareSort('Output')
 Element = z3.DeclareSort('Element')
 
-FSM = collections.namedtuple('FSM', 'start transition output')
-RA = collections.namedtuple('RA', 'start transition output registers set select store')
+Automaton = collections.namedtuple('Automaton', 'start transition output')
+RegisterAutomaton = collections.namedtuple('RegisterAutomaton', 'start transition output registers set select store')
 
 def DFA(name=''):
     if name:
         name = name + '_'
-    return FSM(start=z3.Const('{0}start'.format(name), State),
-               transition=z3.Function('{0}transition'.format(name), State, Input, State),
-               output=z3.Function('{0}output'.format(name), State, z3.BoolSort()))
+    return Automaton(start=z3.Const('{0}start'.format(name), State),
+                     transition=z3.Function('{0}transition'.format(name), State, Input, State),
+                     output=z3.Function('{0}output'.format(name), State, z3.BoolSort()))
 
 
 def MooreMachine(name=''):
     if name:
         name = name + '_'
-    return FSM(start=z3.Const('{0}start'.format(name), State),
-               transition=z3.Function('{0}transition'.format(name), State, Input, State),
-               output=z3.Function('{0}output'.format(name), State, Output))
+    return Automaton(start=z3.Const('{0}start'.format(name), State),
+                     transition=z3.Function('{0}transition'.format(name), State, Input, State),
+                     output=z3.Function('{0}output'.format(name), State, Output))
 
 
 def MealyMachine(name=''):
     if name:
         name = name + '_'
-    return FSM(start=z3.Const('{0}start'.format(name), State),
-               transition=z3.Function('{0}transition'.format(name), State, Input, State),
-               output=z3.Function('{0}output'.format(name), State, Input, Output))
+    return Automaton(start=z3.Const('{0}start'.format(name), State),
+                     transition=z3.Function('{0}transition'.format(name), State, Input, State),
+                     output=z3.Function('{0}output'.format(name), State, Input, Output))
 
-def RegisterAutomaton(name='', registers=1):
+def RegisterDFA(name='', registers=1):
     if name:
         name = name + '_'
 
@@ -42,13 +42,13 @@ def RegisterAutomaton(name='', registers=1):
         registers.append(Register.declare('register{0}'.format(i)))
     Register.create()
 
-    return RA(start=z3.Const('{0}start'.format(name), State),
-              transition=z3.Function('{0}transition'.format(name), State, Register, State),
-              output=z3.Function('{0}output'.format(name), State, z3.BoolSort()),
-              registers=registers,
-              set=z3.Function('{0}set'.format(name), State, Register, z3.BoolSort()),
-              select=z3.Function('{0}select'.format(name), State, Input, Register),
-              store=z3.Function('{0}store'.format(name), State, Input, Register))
+    return RegisterAutomaton(start=z3.Const('{0}start'.format(name), State),
+                             transition=z3.Function('{0}transition'.format(name), State, Register, State),
+                             output=z3.Function('{0}output'.format(name), State, z3.BoolSort()),
+                             registers=registers,
+                             set=z3.Function('{0}set'.format(name), State, Register, z3.BoolSort()),
+                             select=z3.Function('{0}select'.format(name), State, Input, Register),
+                             store=z3.Function('{0}store'.format(name), State, Input, Register))
 
 
 def StateMapper(name=''):

@@ -12,7 +12,7 @@ class EncodeError(Exception):
 
 class FSMEncoder(metaclass=abc.ABCMeta):
     def __init__(self, fsm):
-        if not isinstance(fsm, define.FSM):
+        if not isinstance(fsm, define.Automaton):
             raise EncodeError(fsm)
         self.fsm = fsm
         self._init()
@@ -64,7 +64,7 @@ class FSMEncoder(metaclass=abc.ABCMeta):
 
         return z3.And([z3.Int('n') == len(states),
                        self.fsm.start == states[0],
-                       #z3.Distinct([define.state(s) for s in states]),
+                       z3.Distinct([define.state(s) for s in states]),
                        z3.ForAll([state, input],
                                  z3.Or([self.fsm.transition(state, input) == s for s in states]),
                                  patterns=[self.fsm.transition(state, input)]),
