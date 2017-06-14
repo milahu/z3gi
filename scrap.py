@@ -57,6 +57,10 @@ axioms = [z3.ForAll([register],
                                    z3.Or(ra.set(state, register) == True,
                                          z3.And(ra.select(state, val) == fresh,
                                                 ra.store(state, val) == register))))
+                        # Explictly adding that we can not update registers that are already set
+                        #   -> Is this a logical consequence of the other axioms?
+                        #z3.Implies(ra.store(state, val) == register,
+                        #           ra.set(state, register) == False))
                         for register in registers[1:]]),
                     patterns = [ra.transition(state, val)]),
           z3.ForAll([state, val, other],
@@ -95,10 +99,17 @@ constraints = [ra.output(_state(ra, canonical('11'))) == True,
 
 solver = z3.Solver()
 solver.add(axioms + constraints)
+#solver.add(axioms) # Useful if we want to see if additional axioms are a logical consequence of the ones we have
 
 if solver.check() == z3.sat:
     model = solver.model()
     print(model)
+
+    print()
+
+    # Proof that we do not update registers that are already set.
+    eval = model.evaluate(z3.Implies(ra.store(state, val) == register, ra.set(state, register) == False))
+    print(eval)
 else:
     print(solver.unsat_core())
     print(z3.simplify(z3.And(axioms + constraints)))
