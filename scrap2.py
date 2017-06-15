@@ -169,9 +169,9 @@ for n, a, c in trie.transitions():
     values.add(a.value)
 
 value_constraints = [z3.Distinct(list(values)),
-                     z3.ForAll([r],
-                               z3.Implies(r != fresh,
-                                          m.valuation(trie.node, r) == init)),
+                     #z3.ForAll([r],
+                     #          z3.Implies(r != fresh,
+                     #                     m.valuation(trie.node, r) == init)),
                      ]
 
 s = z3.Solver()
@@ -181,12 +181,10 @@ s.add(transition_constraints)
 s.add(output_constraints)
 s.add(value_constraints)
 
-if s.check() == z3.sat:
-    model = s.model()
-    print(model)
-    for seq, accept in data:
-        print(model.eval(ra.output(m.map(trie[seq].node)) == accept))
-    for n in trie:
-        print('{0} maps to {1}'.format(n.node, model.eval(m.map(n.node))))
-else:
-    print('FUCK!!!')
+print(s.check())
+model = s.model()
+print(model)
+for seq, accept in data:
+    print(model.eval(ra.output(m.map(trie[seq].node)) == accept))
+for n in trie:
+    print('{0} maps to {1}'.format(n.node, model.eval(m.map(n.node))))
