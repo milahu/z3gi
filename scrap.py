@@ -1,3 +1,4 @@
+# Encoding of Frits' first suggestion
 import collections
 import z3
 
