@@ -4,8 +4,8 @@ import collections
 import itertools
 import z3
 
-num_locations = 3
-num_registers = 1
+num_locations = 4
+num_registers = 2
 
 def enum(type, names):
     dt = z3.Datatype(type)
@@ -96,9 +96,9 @@ m = mapper(Node, Location, Value, Register)
 q = z3.Const('q', Location)
 r = z3.Const('r', Register)
 rp = z3.Const('rp', Register)
-n = z3.Const('n', Node)
-np = z3.Const('np', Node)
-v = z3.Const('v', Value)
+# n = z3.Const('n', Node)
+# np = z3.Const('np', Node)
+# v = z3.Const('v', Value)
 init = z3.Const('init', Value)
 root = trie.node
 
@@ -138,6 +138,8 @@ axioms = [
 
 
 # Define data
+
+# store something and accept, as long as you give the stored value, accept, otherwise go back to start and reject
 data_m1 = [([], False),
         ([act(9)], True),
         ([act(5), act(5)], True),
@@ -151,6 +153,7 @@ data_m1 = [([], False),
         ([act(1), act(2), act(1)], True)
         ]
 
+# doing three transitions, and accept if the first and third parameters are the same
 data_m2 = [
     ([act(1)], True),
     ([act(1), act(2)], False),
@@ -159,7 +162,19 @@ data_m2 = [
     ([act(1), act(2), act(1), act(1)], False),
 ]
 
-data = data_m2
+# check for unique valuedness
+data_m3 = [
+    ([], False),
+    ([act(1)], False),
+    ([act(1), act(1)], False),
+    ([act(1), act(2)], False),
+    ([act(1), act(1), act(1)], True),
+    ([act(1), act(2), act(1)], True),
+    ([act(1), act(2), act(2)], True),
+    ([act(1), act(2), act(3)], False),
+]
+
+data = data_m3
 
 
 # Add output constraints for data
@@ -220,3 +235,5 @@ for seq, accept in data:
     print(model.eval(ra.output(m.map(trie[seq].node)) == accept))
 for n in trie:
     print('{0} maps to {1}'.format(n.node, model.eval(m.map(n.node))))
+
+n = z3.Const('n', Node)
