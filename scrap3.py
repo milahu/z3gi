@@ -156,7 +156,9 @@ axioms = [
 
 
 # Define data
-data = [([act(5), act(5)], True),
+
+# Data for M1
+data_m1 = [([act(5), act(5)], True),
         ([act(6), act(6)], True),
         ([act(1), act(7)], False),
         ([act(9)], True),
@@ -167,6 +169,15 @@ data = [([act(5), act(5)], True),
         ([act(1), act(2), act(2), act(6), act(9), act(9)], True),
         ]
 
+data_m2 = [
+    ([act(1)], True),
+    ([act(1), act(2)], False),
+    ([act(1), act(2), act(1)], True),
+    ([act(1), act(2), act(3)], False),
+    ([act(1), act(2), act(1), act(1)], False),
+]
+
+data = data_m2
 
 # Add output constraints for data
 output_constraints = []

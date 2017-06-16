@@ -4,7 +4,7 @@ import collections
 import itertools
 import z3
 
-num_locations = 2
+num_locations = 3
 num_registers = 1
 
 def enum(type, names):
@@ -138,7 +138,7 @@ axioms = [
 
 
 # Define data
-data = [([], False),
+data_m1 = [([], False),
         ([act(9)], True),
         ([act(5), act(5)], True),
         ([act(6), act(6)], True),
@@ -150,6 +150,16 @@ data = [([], False),
         ([act(1), act(2), act(2), act(6), act(9), act(9)], True),
         ([act(1), act(2), act(1)], True)
         ]
+
+data_m2 = [
+    ([act(1)], True),
+    ([act(1), act(2)], False),
+    ([act(1), act(2), act(1)], True),
+    ([act(1), act(2), act(3)], False),
+    ([act(1), act(2), act(1), act(1)], False),
+]
+
+data = data_m2
 
 
 # Add output constraints for data
@@ -180,6 +190,14 @@ for n, a, c in trie.transitions():
                                m.val(c.node, r) == m.val(n.node, r),
                                z3.Implies(ra.update(m.map(n.node), r) == rp,
                                           m.val(c.node, rp) == a.value)))))
+
+    # for all n - v -> c where n.r != c.r -> update r
+    transition_constraints.append(z3.ForAll([r, rp],
+                                            z3.Implies(z3.And(r != fresh,
+                                                              m.val(c.node, r) != m.val(n.node, r),
+                                                              ra.transition(m.map(n.node), rp) == m.map(c.node)),
+                                                       ra.update(m.map(n.node), rp) == r)))
+
 
 # Create an empty value and assert that all (neat) values are different
 values = {init}
