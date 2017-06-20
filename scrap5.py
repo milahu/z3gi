@@ -22,7 +22,8 @@ fresh = registers[-1]
 Value = z3.DeclareSort('Value')
 Node = z3.DeclareSort('Node')
 
-
+def is_fresh(reg):
+   return str(reg) == str(fresh)
 
 RegisterAutomaton = collections.namedtuple('RegisterAutomaton',
                                            'start transition output guard update')
@@ -318,7 +319,8 @@ class RaPrinter(RaVisitor):
       print("\t{0} -> {1} {2}".format(str(guard), str(asg), str(end_loc)))
 
 
-def SimpleRa():
+# TODO it should probably store locations/regs as strings
+class SimpleRa():
    def __init__(self, locations, loc_to_acc, loc_to_trans, registers):
       super().__init__()
       self.locations = locations
@@ -346,7 +348,7 @@ def SimpleRa():
 class NoTransitionTriggeredException(Exception):
    pass
 
-def SimpleRaRunner():
+class SimpleRaSimulator():
    def __init__(self, sra):
       super().__init__()
       self.ra = sra
@@ -354,7 +356,7 @@ def SimpleRaRunner():
    """
    Runs the given sequence of values on the RA.
    """
-   def run(self, trace):
+   def accepts(self, trace):
       init = -1
       reg_val =  dict()
       for reg in self.ra.get_registers():
@@ -363,20 +365,27 @@ def SimpleRaRunner():
       for val in trace:
          next_transitions = self.ra.get_transitions(loc)
          # to define a fresh guard we need to know which register guards are present
-         active_regs = [trans.index(1) for trans in next_transitions]
+         active_regs = [trans[1] for trans in next_transitions]
+         n_loc = None
          for (_, guard, asg, next_loc) in next_transitions:
             if (self._is_satisfied(val, guard, active_regs, reg_val)):
-               if asg is not fresh:
+               if not is_fresh(asg):
                   reg_val[asg] = val
-               loc = next_loc
-               continue
+               n_loc = next_loc
+               break
+         if n_loc is None:
+            print("In location {0} with trans. {1}, \n reg vals {2} and crt val {3}".format(
+               str(loc), str(next_transitions), str(reg_val), str(val)
+            ))
             raise NoTransitionTriggeredException()
+         else:
+            loc = n_loc
       return self.ra.get_acc(loc)
 
    def _is_satisfied(self, val, guard, active_regs, reg_val):
-      if guard is fresh:
-         reg_vals = list([reg_val(reg) for reg in active_regs])
-         return val in reg_vals
+      if is_fresh(guard):
+         reg_vals = list([reg_val[reg] for reg in active_regs])
+         return val not in reg_vals
       else:
          return val is reg_val[guard]
 
@@ -389,28 +398,52 @@ class SimpleRaBuilder(RaVisitor):
       self.loc_to_trans = dict()
       self.registers = []
 
-   """ 
-   Prints location. 
-   """
    def _visit_location(self, loc, acc):
       self.locations.append(loc)
       self.loc_to_acc[loc] = acc
+      if loc not in self.loc_to_trans:
+         self.loc_to_trans[loc] = []
 
-   """ 
-   Prints transition. 
-   """
    def _visit_transition(self, start_loc, guard, asg, end_loc):
-      self.loc_to_trans[start_loc] = (start_loc, guard, asg, end_loc)
-      if guard is not fresh and guard not in self.registers:
+      self.loc_to_trans[start_loc].append((start_loc, guard, asg, end_loc))
+      if not is_fresh(guard) and guard not in self.registers:
+         print("guard",guard)
          self.registers.append(guard)
-      if asg is not fresh and asg not in self.registers:
+      if not is_fresh(asg) and asg not in self.registers:
+         print("asg", asg, asg is not fresh)
          self.registers.append(asg)
 
+   """ 
+   Builds a SRA from the RA generated functions. It uses as locations and registers the actual Z3 constants.  
+   """
    def build_ra(self):
-      return SimpleRa(self.locations, self.loc_to_acc, self.loc_to_trans, self.registers)
+      return SimpleRa(self.locations, self.loc_to_acc, self.loc_to_trans, self.registers.sort(key=lambda reg: str(reg)))
+"""
+Checks if a sra corresponds to a given sequence of acc/rej observations.
+Returns a 4-tuple with the first element True (if conforming), or False (if not).
+For the False case, the next elements provide a CE.
+"""
+def conforms_to_obs(sra, obs):
+   runner = SimpleRaSimulator(sra)
+   for (actions, acc) in obs:
+      trace = [act.value for act in actions]
+      ra_acc = runner.accepts(trace)
+      if str(ra_acc) is not str(acc):
+         return (False, trace, acc, ra_acc)
+   return (True, None, None, None)
+
+
 
 printer = RaPrinter()
 printer.process(model, ra, registers, locations)
 builder = SimpleRaBuilder()
-sra = builder.process(model, ra, registers, locations)
+builder.process(model, ra, registers, locations)
+sra = builder.build_ra()
+conforms = conforms_to_obs(sra, data_m4)
+print(conforms)
+
+runner = SimpleRaSimulator(sra)
+print(runner.accepts([0, 1, 1]))
+print(runner.accepts([0, 1, 0, 1]))
+print(runner.accepts([0, 1, 0, 1, 0, 1]))
 n = z3.Const('n', Node)
