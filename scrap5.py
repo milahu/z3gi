@@ -272,7 +272,7 @@ class RaVisitor:
       while (len(to_visit) > 0):
          loc = to_visit.pop(0)
          acc = model.eval(ra.output(loc))
-         self.visit_location(loc, acc)
+         self._visit_location(loc, acc)
          visited.append(loc)
          next_trans  = []
          for r in regs:
@@ -282,23 +282,22 @@ class RaVisitor:
                next_asg = model.eval(ra.update(loc, r))
                next_trans.append((loc, r, next_asg, next_loc))
          for (start_loc, guard, asg, end_loc) in next_trans:
-            self.visit_transition(start_loc, guard, asg, end_loc)
+            self._visit_transition(start_loc, guard, asg, end_loc)
             if end_loc not in visited and end_loc not in to_visit:
                to_visit.append(end_loc)
          # we sort according to the location strings so we get them in order
          to_visit.sort(key=lambda loc: str(loc))
 
    """
-      Visits a location in the RA.
+   Visits locations in the RA in lexographical order starting from the initial location.
    """
-
-   def visit_location(self, loc, acc):
+   def _visit_location(self, loc, acc):
       raise NotImplementedError()
 
    """
-   Visits a transition in the RA.
+   Visits transitions in the RA.
    """
-   def visit_transition(self, start_loc, guard, asg, end_loc):
+   def _visit_transition(self, start_loc, guard, asg, end_loc):
       raise NotImplementedError()
 
 
@@ -309,15 +308,109 @@ class RaPrinter(RaVisitor):
    """ 
    Prints location. 
    """
-   def visit_location(self, loc, acc):
+   def _visit_location(self, loc, acc):
       print("{0}({1})".format(str(loc), "+" if acc == True else "-") )
 
    """ 
    Prints transition. 
    """
-   def visit_transition(self, start_loc, guard, asg, end_loc):
+   def _visit_transition(self, start_loc, guard, asg, end_loc):
       print("\t{0} -> {1} {2}".format(str(guard), str(asg), str(end_loc)))
+
+
+def SimpleRa():
+   def __init__(self, locations, loc_to_acc, loc_to_trans, registers):
+      super().__init__()
+      self.locations = locations
+      self.loc_to_acc = loc_to_acc
+      self.loc_to_trans = loc_to_trans
+      self.register = registers
+
+   def get_start_loc(self):
+      return self.locations[0]
+
+   def get_locations(self):
+      return list(self.locations)
+
+   def get_transitions(self, loc):
+      return list(self.loc_to_trans[loc])
+
+   def get_registers(self):
+      return list(registers)
+
+
+   def get_acc(self, loc):
+      return self.loc_to_acc[loc]
+
+
+class NoTransitionTriggeredException(Exception):
+   pass
+
+def SimpleRaRunner():
+   def __init__(self, sra):
+      super().__init__()
+      self.ra = sra
+
+   """
+   Runs the given sequence of values on the RA.
+   """
+   def run(self, trace):
+      init = -1
+      reg_val =  dict()
+      for reg in self.ra.get_registers():
+         reg_val[reg] = init
+      loc = self.ra.get_start_loc()
+      for val in trace:
+         next_transitions = self.ra.get_transitions(loc)
+         # to define a fresh guard we need to know which register guards are present
+         active_regs = [trans.index(1) for trans in next_transitions]
+         for (_, guard, asg, next_loc) in next_transitions:
+            if (self._is_satisfied(val, guard, active_regs, reg_val)):
+               if asg is not fresh:
+                  reg_val[asg] = val
+               loc = next_loc
+               continue
+            raise NoTransitionTriggeredException()
+      return self.ra.get_acc(loc)
+
+   def _is_satisfied(self, val, guard, active_regs, reg_val):
+      if guard is fresh:
+         reg_vals = list([reg_val(reg) for reg in active_regs])
+         return val in reg_vals
+      else:
+         return val is reg_val[guard]
+
+
+class SimpleRaBuilder(RaVisitor):
+   def __init__(self):
+      super().__init__()
+      self.locations = []
+      self.loc_to_acc = dict()
+      self.loc_to_trans = dict()
+      self.registers = []
+
+   """ 
+   Prints location. 
+   """
+   def _visit_location(self, loc, acc):
+      self.locations.append(loc)
+      self.loc_to_acc[loc] = acc
+
+   """ 
+   Prints transition. 
+   """
+   def _visit_transition(self, start_loc, guard, asg, end_loc):
+      self.loc_to_trans[start_loc] = (start_loc, guard, asg, end_loc)
+      if guard is not fresh and guard not in self.registers:
+         self.registers.append(guard)
+      if asg is not fresh and asg not in self.registers:
+         self.registers.append(asg)
+
+   def build_ra(self):
+      return SimpleRa(self.locations, self.loc_to_acc, self.loc_to_trans, self.registers)
 
 printer = RaPrinter()
 printer.process(model, ra, registers, locations)
+builder = SimpleRaBuilder()
+sra = builder.process(model, ra, registers, locations)
 n = z3.Const('n', Node)
