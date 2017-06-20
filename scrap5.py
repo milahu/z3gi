@@ -4,9 +4,8 @@ import collections
 import itertools
 import z3
 
-num_locations = 4
+num_locations = 3
 num_registers = 2
-
 def enum(type, names):
     dt = z3.Datatype(type)
     for name in names:
@@ -175,15 +174,15 @@ data_m3 = [
    ([act(1), act(2), act(3)], False),
    # add this and it's no longer SAT with 3 locations
    ([act(1), act(2), act(2), act(1), act(3)], True),
-   #([act(1), act(1), act(1), act(1)], True),
-   #([act(1), act(1), act(1), act(2)], True),
-   #([act(1), act(1), act(1), act(1), act(2)], True),
-   #([act(1), act(1), act(1), act(1), act(2), act(2)], True),
-   #([act(1), act(1), act(1), act(2), act(2)], True),
-   #([act(1), act(1), act(1), act(2), act(3)], True),
-   #([act(1), act(2), act(2), act(2)], True),
-   #([act(1), act(2), act(2), act(1)], True),
-   #([act(1), act(2), act(2), act(2), act(3)], True),
+   ([act(1), act(1), act(1), act(1)], True),
+   ([act(1), act(1), act(1), act(2)], True),
+   ([act(1), act(1), act(1), act(1), act(2)], True),
+   ([act(1), act(1), act(1), act(1), act(2), act(2)], True),
+   ([act(1), act(1), act(1), act(2), act(2)], True),
+   ([act(1), act(1), act(1), act(2), act(3)], True),
+   ([act(1), act(2), act(2), act(2)], True),
+   ([act(1), act(2), act(2), act(1)], True),
+   ([act(1), act(2), act(2), act(2), act(3)], True),
 
 ]
 
@@ -205,8 +204,7 @@ data_m4 = [
    # add this and it is no longer SAT
    ([act(1), act(2), act(1), act(2), act(1)], True),
 
-   ([act(1), act(2), act(1), act(3)], False),
-   # should still be SAT after this (with 4 locations)
+   #([act(1), act(2), act(1), act(3)], False),
    #([act(1), act(2), act(2), act(1)], False),
    #([act(1), act(2), act(1), act(1)], False),
    #([act(1), act(2), act(1), act(2)], True),
@@ -215,7 +213,7 @@ data_m4 = [
 ]
 
 
-data = data_m4
+data = data_m3
 
 
 # Add output constraints for data
@@ -232,8 +230,12 @@ for n, a, c in trie.transitions():
    # noinspection PyInterpreter
    transition_constraints.append(z3.If(z3.Exists([r], z3.And(r != fresh, m.val(n.node, r) == a.value)),
                                        z3.ForAll([r], z3.Implies(z3.And(r != fresh, m.val(n.node, r) == a.value),
-                                                                 z3.And(ra.transition(m.map(n.node), r) == m.map(c.node),
-                                                                        ra.guard(m.map(n.node), r) == True))),
+                                                                 z3.Xor(
+                                                                    z3.And(ra.transition(m.map(n.node), r) == m.map(c.node),
+                                                                        ra.guard(m.map(n.node), r) == True),
+                                                                    z3.And(ra.transition(m.map(n.node), fresh) == m.map(c.node),
+                                                                           ra.guard(m.map(n.node), r) == False)
+                                                                        ))),
                                        ra.transition(m.map(n.node), fresh) == m.map(c.node)))
 
    # If we update a non-fresh register on a transition from a state,
@@ -253,7 +255,7 @@ for n, a, c in trie.transitions():
                                            z3.Implies(z3.And(r != fresh,
                                                              m.val(c.node, r) != m.val(n.node, r),
                                                              ra.transition(m.map(n.node), rp) == m.map(c.node),
-                                                         #    ra.guard(m.map(n.node), rp) == True
+                                                             ra.guard(m.map(n.node), rp) == True
                                                              ),
                                                       ra.update(m.map(n.node), rp) == r)))
 
@@ -270,8 +272,14 @@ s.add(axioms)
 s.add(transition_constraints)
 s.add(output_constraints)
 s.add(distinct_values)
-
-print(s.check())
+#s2 = z3.Solver()
+#all = transition_constraints + output_constraints + output_constraints + [distinct_values]
+chk = s.check()
+if str(chk) == "unsat":
+   print(chk)
+   print(s.unsat_core())
+   print(s.statistics())
+   exit(0)
 model = s.model()
 print(model)
 print(locations)
