@@ -4,7 +4,7 @@ import collections
 import itertools
 import z3
 
-num_locations = 3
+num_locations = 4
 num_registers = 2
 
 def enum(type, names):
@@ -163,7 +163,7 @@ data_m2 = [
    ([act(1), act(2), act(1), act(1)], False),
 ]
 
-# check for unique valuedness
+# check for unique valuedness (non-UV 4 LOC, UV 5 LOC)
 data_m3 = [
    ([], False),
    ([act(1)], False),
@@ -173,10 +173,22 @@ data_m3 = [
    ([act(1), act(2), act(1)], True),
    ([act(1), act(2), act(2)], True),
    ([act(1), act(2), act(3)], False),
+   # add this and it's no longer SAT with 3 locations
+   ([act(1), act(2), act(2), act(1), act(3)], True),
+   #([act(1), act(1), act(1), act(1)], True),
+   #([act(1), act(1), act(1), act(2)], True),
+   #([act(1), act(1), act(1), act(1), act(2)], True),
+   #([act(1), act(1), act(1), act(1), act(2), act(2)], True),
+   #([act(1), act(1), act(1), act(2), act(2)], True),
+   #([act(1), act(1), act(1), act(2), act(3)], True),
+   #([act(1), act(2), act(2), act(2)], True),
+   #([act(1), act(2), act(2), act(1)], True),
+   #([act(1), act(2), act(2), act(2), act(3)], True),
+
 ]
 
-# check for non-shifting property
-# expect this system to require one additional state than if our constraints allowed value shifting between registers
+# check for non-shifting property (3 LOC NS, 4 LOC non-NS)
+# expect this system to require one additional location than if our constraints allowed value shifting between registers
 data_m4 = [
    ([], False),
    ([act(1)], False),
@@ -185,12 +197,21 @@ data_m4 = [
    ([act(1), act(1), act(1)], False),
    ([act(1), act(2), act(1)], True),
    ([act(1), act(2), act(2)], False),
+   ([act(1), act(2), act(3)], False),
    ([act(1), act(2), act(1), act(2)], True),
-   ([act(1), act(2), act(2), act(1)], False),
    ([act(1), act(2), act(1), act(1)], False),
-   ([act(1), act(2), act(1), act(2)], True),
+   ([act(1), act(2), act(1), act(3)], False),
+   ([act(1), act(2), act(1), act(3), act(3)], False),
+   # add this and it is no longer SAT
    ([act(1), act(2), act(1), act(2), act(1)], True),
-   ([act(1), act(2), act(1), act(2), act(1), act(2)], True),
+
+   ([act(1), act(2), act(1), act(3)], False),
+   # should still be SAT after this (with 4 locations)
+   #([act(1), act(2), act(2), act(1)], False),
+   #([act(1), act(2), act(1), act(1)], False),
+   #([act(1), act(2), act(1), act(2)], True),
+   #([act(1), act(2), act(1), act(2), act(1)], True),
+   #([act(1), act(2), act(1), act(2), act(1), act(2)], True),
 ]
 
 
@@ -231,7 +252,9 @@ for n, a, c in trie.transitions():
    transition_constraints.append(z3.ForAll([r, rp],
                                            z3.Implies(z3.And(r != fresh,
                                                              m.val(c.node, r) != m.val(n.node, r),
-                                                             ra.transition(m.map(n.node), rp) == m.map(c.node)),
+                                                             ra.transition(m.map(n.node), rp) == m.map(c.node),
+                                                         #    ra.guard(m.map(n.node), rp) == True
+                                                             ),
                                                       ra.update(m.map(n.node), rp) == r)))
 
 
