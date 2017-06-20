@@ -389,7 +389,9 @@ class SimpleRaSimulator():
       else:
          return val is reg_val[guard]
 
-
+"""
+Builds a SRA from the inferred uninterpreted functions for the RA. 
+"""
 class SimpleRaBuilder(RaVisitor):
    def __init__(self):
       super().__init__()
@@ -421,7 +423,7 @@ class SimpleRaBuilder(RaVisitor):
 """
 Checks if a sra corresponds to a given sequence of acc/rej observations.
 Returns a 4-tuple with the first element True (if conforming), or False (if not).
-For the False case, the next elements provide a CE.
+For the False case, the next elements provide the trace, observed acceptance and sra acceptance.
 """
 def conforms_to_obs(sra, obs):
    runner = SimpleRaSimulator(sra)
@@ -439,7 +441,7 @@ printer.process(model, ra, registers, locations)
 builder = SimpleRaBuilder()
 builder.process(model, ra, registers, locations)
 sra = builder.build_ra()
-conforms = conforms_to_obs(sra, data_m4)
+conforms = conforms_to_obs(sra, data)
 print(conforms)
 
 runner = SimpleRaSimulator(sra)
