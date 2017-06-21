@@ -34,7 +34,7 @@ def register_automaton(Location, Register, start):
                              # Otherwise, use q -- l(v), fresh -> transition(q, l, fresh).
                              transition = z3.Function('transition', Location, Register, Location),
                              guard=z3.Function('guard', Location, Register, z3.BoolSort()),
-                             update = z3.Function('update', Location, Register, Register),
+                             update = z3.Function('update', Location, Register),
                              output=z3.Function('output', Location, z3.BoolSort()),
                              )
 
@@ -108,13 +108,6 @@ axioms = [
 
    z3.ForAll([q],
              ra.guard(q, fresh) == True
-             ),
-
-   z3.ForAll([q, r, rp],
-             z3.Implies(z3.And(r != fresh,
-                               ra.update(q, rp) == r),
-                        rp == fresh
-                        )
              ),
 
    # In the start state of the mapper,
@@ -245,23 +238,22 @@ for n, a, c in trie.transitions():
    # If we update a non-fresh register on a transition from a state,
    # then the register is assigned the value.
    # Else, the register keeps its previous value.
-   transition_constraints.append(z3.ForAll([r, rp],
+   transition_constraints.append(z3.ForAll([r],
              z3.Implies(z3.And(ra.transition(m.map(n.node), r) == m.map(c.node),
                                ra.guard(m.map(n.node), r) == True
                                ),
                         z3.If(r != fresh,
                               m.val(c.node, r) == m.val(n.node, r),
-                              z3.Implies(ra.update(m.map(n.node), r) == rp,
-                                         m.val(c.node, rp) == a.value)))))
+                              m.val(c.node, ra.update(m.map(n.node))) == a.value))))
 
    # for all n - v -> c where n.r != c.r -> update r
-   transition_constraints.append(z3.ForAll([r, rp],
+   transition_constraints.append(z3.ForAll([r],
                                            z3.Implies(z3.And(r != fresh,
                                                              m.val(c.node, r) != m.val(n.node, r),
-                                                             ra.transition(m.map(n.node), rp) == m.map(c.node),
-                                                             ra.guard(m.map(n.node), rp) == True
+                                                             #ra.transition(m.map(n.node), rp) == m.map(c.node),
+                                                             #ra.guard(m.map(n.node), rp) == True
                                                              ),
-                                                      ra.update(m.map(n.node), rp) == r)))
+                                                      ra.update(m.map(n.node)) == r)))
 
 
 # Create an empty value and assert that all (neat) values are different
@@ -316,7 +308,10 @@ class RaVisitor:
             guard_enabled = model.eval(ra.guard(loc, r))
             if guard_enabled:
                next_loc = model.eval(ra.transition(loc, r))
-               next_asg = model.eval(ra.update(loc, r))
+               if is_fresh(r):
+                  next_asg = model.eval(ra.update(loc))
+               else:
+                  next_asg = fresh
                next_trans.append((loc, r, next_asg, next_loc))
          for (start_loc, guard, asg, end_loc) in next_trans:
             self._visit_transition(start_loc, guard, asg, end_loc)
