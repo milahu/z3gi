@@ -110,6 +110,7 @@ axioms = [
              ra.guard(q, fresh) == True
              ),
 
+
    # In the start state of the mapper,
    # all registers contain a value outside the domain of plausible values.
    z3.ForAll([r],
@@ -210,8 +211,8 @@ data_m4 = [
 
 
 data = data_m3
-from random import shuffle
-shuffle(data)
+#from random import shuffle
+#shuffle(data)
 
 # Add output constraints for data
 output_constraints = []
@@ -231,14 +232,15 @@ for n, a, c in trie.transitions():
                                                                     z3.And(ra.transition(m.map(n.node), r) == m.map(c.node),
                                                                         ra.guard(m.map(n.node), r) == True),
                                                                     z3.And(ra.transition(m.map(n.node), fresh) == m.map(c.node),
-                                                                           ra.guard(m.map(n.node), r) == False)
+                                                                           ra.guard(m.map(n.node), r) == False
+                                                                           )
                                                                         ))),
                                        ra.transition(m.map(n.node), fresh) == m.map(c.node)))
 
    # If we update a non-fresh register on a transition from a state,
    # then the register is assigned the value.
    # Else, the register keeps its previous value.
-   transition_constraints.append(z3.ForAll([r],
+   transition_constraints.append(z3.ForAll([r,rp],
              z3.Implies(z3.And(ra.transition(m.map(n.node), r) == m.map(c.node),
                                ra.guard(m.map(n.node), r) == True
                                ),
@@ -246,14 +248,15 @@ for n, a, c in trie.transitions():
                               m.val(c.node, r) == m.val(n.node, r),
                               m.val(c.node, ra.update(m.map(n.node))) == a.value))))
 
+
    # for all n - v -> c where n.r != c.r -> update r
-   transition_constraints.append(z3.ForAll([r],
+   transition_constraints.append(z3.ForAll([r, rp],
                                            z3.Implies(z3.And(r != fresh,
                                                              m.val(c.node, r) != m.val(n.node, r),
-                                                             #ra.transition(m.map(n.node), rp) == m.map(c.node),
-                                                             #ra.guard(m.map(n.node), rp) == True
+                                                             ra.transition(m.map(n.node), rp) == m.map(c.node),
                                                              ),
-                                                      ra.update(m.map(n.node)) == r)))
+                                                      z3.And(ra.update(m.map(n.node)) == r,
+                                                             rp == fresh))))
 
 
 # Create an empty value and assert that all (neat) values are different
