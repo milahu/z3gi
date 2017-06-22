@@ -53,7 +53,8 @@ class Guard(metaclass=ABCMeta):
     def is_satisfied(self, valuation, value):
         pass
 
-class RegisterGuard(Guard):
+
+class EqualityGuard(Guard):
     def __init__(self, register):
         super.__init__()
         self.register = register
@@ -61,6 +62,16 @@ class RegisterGuard(Guard):
     def is_satisfied(self, valuation, value):
         return valuation[self.register] == value
 
+
+class OrGuard(Guard):
+    def __init__(self, guards):
+        self.guards = guards
+
+    def is_satisfied(self, valuation, value):
+        for guard in self.guards:
+            if guard.is_satisfied(valuation, value):
+                return True
+        return False
 
 
 class FreshGuard(Guard):
@@ -73,6 +84,7 @@ class FreshGuard(Guard):
             if valuation[register] == value:
                 return False
         return True
+
 
 class Assignment(metaclass=ABCMeta):
     def __init__(self):
