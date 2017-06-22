@@ -3,7 +3,7 @@ import collections
 import abc
 import z3
 
-from z3gi import define
+from z3gi_old import define
 
 
 class EncodeError(Exception):

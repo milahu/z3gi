@@ -2,7 +2,7 @@ import collections
 
 import z3
 
-from z3gi import define, encode
+from z3gi_old import define, encode
 
 
 class NonDeterminismError(Exception):

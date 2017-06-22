@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from z3gi import define, encode
+from z3gi_old import define, encode
 
 
 class TestNestingEncoder(TestCase):

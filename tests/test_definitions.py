@@ -1,6 +1,6 @@
 from unittest import TestCase
 import z3
-from z3gi import define
+from z3gi_old import define
 
 
 class TestDefine(TestCase):

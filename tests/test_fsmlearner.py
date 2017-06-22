@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import z3
 
-from z3gi import define, encode, learn
+from z3gi_old import define, encode, learn
 
 
 class TestFSMLearner(TestCase):
