@@ -183,6 +183,7 @@ data_m3 = [
    ([act(1), act(1), act(2), act(1)], True),
    ([act(0), act(1), act(2), act(2)], False),
    ([act(0), act(1), act(2), act(0)], True),
+    ([act(0), act(1), act(2), act(1)], True),
    ([act(1), act(1), act(1), act(2)], True),
    ([act(1), act(1), act(1), act(1), act(2)], True),
    ([act(1), act(1), act(1), act(1), act(2), act(2)], True),
