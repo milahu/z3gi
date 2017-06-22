@@ -150,11 +150,21 @@ data_m1 = [([], False),
 
 # doing three transitions, and accept if the first and third parameters are the same
 data_m2 = [
-   ([act(1)], True),
-   ([act(1), act(2)], False),
-   ([act(1), act(2), act(1)], True),
-   ([act(1), act(2), act(3)], False),
-   ([act(1), act(2), act(1), act(1)], False),
+    ([act(1)], True),
+    ([act(1), act(1)], False),
+    ([act(1), act(2)], False),
+    ([act(1), act(1), act(1)], True),
+    ([act(1), act(1), act(2)], False),
+    ([act(1), act(2), act(1)], True),
+    ([act(1), act(2), act(3)], False),
+    ([act(1), act(1), act(1), act(1)], False),
+    ([act(1), act(2), act(1), act(1)], False),
+    ([act(1), act(1), act(2), act(1)], False),
+    ([act(1), act(1), act(1), act(2)], False),
+    # This is a check for Rick, ignore the traces below
+    ([act(1), act(1), act(2), act(1), act(1)], False),
+    ([act(1), act(1), act(2), act(1), act(2)], True),
+
 ]
 
 # check for unique valuedness (non-UV 4 LOC, UV 5 LOC)
@@ -211,7 +221,7 @@ data_m4 = [
 ]
 
 
-data = data_m4
+data = data_m3
 from random import shuffle
 shuffle(data)
 
