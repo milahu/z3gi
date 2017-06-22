@@ -27,7 +27,7 @@ def is_fresh(reg):
    return str(reg) == str(fresh)
 
 RegisterAutomaton = collections.namedtuple('RegisterAutomaton',
-                                           'start transition output guard update')
+                                           'start transition output guard update used')
 
 def register_automaton(Location, Register, start):
     return RegisterAutomaton(start = start,
@@ -37,6 +37,7 @@ def register_automaton(Location, Register, start):
                              transition = z3.Function('transition', Location, Label, Register, Location),
                              guard=z3.Function('guard', Location, Label, Register, z3.BoolSort()),
                              update = z3.Function('update', Location, Label, Register),
+                             used = z3.Function('used', Location, Register, z3.BoolSort()),
                              output=z3.Function('output', Location, z3.BoolSort()),
                              )
 
@@ -96,6 +97,8 @@ m = mapper(Node, Location, Value, Register)
 
 l = z3.Const('l', Label)
 q = z3.Const('q', Location)
+qp = z3.Const('q', Location)
+
 r = z3.Const('r', Register)
 rp = z3.Const('rp', Register)
 # n = z3.Const('n', Node)
@@ -107,22 +110,71 @@ root = trie.node
 
 # Axioms
 axioms = [
-
-   z3.ForAll([q, l],
-             ra.guard(q, l, fresh) == True
-             ),
+    z3.ForAll(
+        [q, l],
+        ra.guard(q, l, fresh) == True
+    ),
 
    # In the start state of the mapper,
    # all registers contain a value outside the domain of plausible values.
-   z3.ForAll([r],
-             z3.Implies(r != fresh,
-                        m.val(root, r) == init)
-             ),
+    z3.ForAll(
+        [r],
+        z3.Implies(
+            r != fresh,
+            m.val(root, r) == init
+        )
+    ),
 
-   z3.ForAll([q, l, r],
-             z3.Implies(z3.And(r != fresh,
-                               ra.transition(q, l, fresh) == ra.transition(q, l, r)),
-                        ra.guard(q, l, r) == False)),
+    z3.ForAll(
+        [q, l, r],
+        z3.Implies(
+            z3.And(
+                r != fresh,
+                ra.transition(q, l, fresh) == ra.transition(q, l, r)
+            ),
+            ra.guard(q, l, r) == False
+        )
+    ),
+
+    z3.ForAll(
+        [q],
+        ra.used(q, fresh) == False
+    ),
+
+    z3.ForAll(
+        [q, l, r],
+        z3.Implies(
+            z3.And(
+                r != fresh,
+                ra.used(q, r) == False
+            ),
+            ra.guard(q, l, r) == False
+        )
+    ),
+
+    z3.ForAll(
+        [q, qp, l, r],
+        z3.Implies(
+            z3.And(
+                ra.transition(q, l, r) == qp,
+                ra.guard(q, l, r) == True,
+                ra.used(qp, r) == True
+            ),
+            z3.Or(
+                ra.used(q, r) == True,
+                z3.And(
+                    ra.transition(q, l, fresh) == qp,
+                    ra.update(q, l) == r
+                )
+            )
+        )
+    ),
+
+    # Frits' type RA's (uncomment this)
+    # z3.ForAll(
+    #     [r],
+    #     ra.used(ra.start, r) == False
+    # )
 
 
 ]
@@ -223,7 +275,7 @@ data_m4 = [
 ]
 
 
-data = data_m4
+data = data_m3
 # from random import shuffle
 # shuffle(data)
 
@@ -284,7 +336,7 @@ for n, a, c in trie.transitions():
                     )
                 )
             ),
-            ra.transition(m.map(n.node), a.label, fresh) == m.map(c.node))
+            ra.transition(m.map(n.node), a.label, fresh) == m.map(c.node)),
     ])
 
 
