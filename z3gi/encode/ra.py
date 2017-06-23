@@ -9,11 +9,13 @@ class RAEncoder(Encoder):
     def __init__(self):
         self.trie = RAEncoder.Trie(itertools.count(0))
         self.cache = {}
+        self.values = set()
 
     def add(self, trace):
         seq, accept = trace
         node = self.trie[determinize(seq)]
         self.cache[node] = accept
+        self.values.update(seq)
 
     def build(self, ra, initialized=True):
         mapper = RAEncoder.Mapper(ra)
