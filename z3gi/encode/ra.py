@@ -173,7 +173,7 @@ class RAEncoder(Encoder):
         constraints.append(z3.Distinct(list(values)))
         return constraints
 
-    @classmethod
+    @staticmethod
     class Trie(object):
         def __init__(self, counter):
             self.id = next(counter)
@@ -198,7 +198,7 @@ class RAEncoder(Encoder):
                 for label, value in node.children:
                     yield node, label, value, node.children[(label, value)]
 
-    @classmethod
+    @staticmethod
     class Mapper(object):
         def __init__(self, ra):
             self.Value = z3.DeclareSort('Value')
