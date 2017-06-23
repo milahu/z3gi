@@ -49,7 +49,8 @@ class RAEncoder(Encoder):
                 z3.Implies(
                     z3.And(
                         r != ra.fresh,
-                        ra.transition(q, l, ra.fresh) == ra.transition(q, l, r)
+                        ra.transition(q, l, ra.fresh) == ra.transition(q, l, r),
+                        ra.update(q, l) == r
                     ),
                     ra.guard(q, l, r) == False
                 )
