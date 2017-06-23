@@ -130,12 +130,16 @@ axioms = [
         z3.Implies(
             z3.And(
                 r != fresh,
-                ra.transition(q, l, fresh) == ra.transition(q, l, r)
-                #ra.update(q, l) == r
+                ra.transition(q, l, fresh) == ra.transition(q, l, r),
             ),
-            ra.guard(q, l, r) == False
+            z3.And(
+                ra.update(q, l) != fresh,
+                ra.update(q, l) != r
+            )
         )
     ),
+
+
 
     z3.ForAll(
         [q],
@@ -153,23 +157,59 @@ axioms = [
         )
     ),
 
+    # z3.ForAll(
+    #     [q, qp, l, r],
+    #     z3.Implies(
+    #         z3.And(
+    #             ra.transition(q, l, r) == qp,
+    #             ra.guard(q, l, r) == True,
+    #             ra.used(qp, r) == True
+    #         ),
+    #         z3.Or(
+    #             ra.used(q, r) == True,
+    #             z3.And(
+    #                 ra.transition(q, l, fresh) == qp,
+    #                 ra.update(q, l) == r
+    #             )
+    #         )
+    #     )
+    # ),
+
     z3.ForAll(
-        [q, qp, l, r],
+        [q, l, r, rp],
         z3.Implies(
             z3.And(
-                ra.transition(q, l, r) == qp,
-                ra.guard(q, l, r) == True,
-                ra.used(qp, r) == True
-            ),
-            z3.Or(
                 ra.used(q, r) == True,
-                z3.And(
-                    ra.transition(q, l, fresh) == qp,
-                    ra.update(q, l) == r
-                )
-            )
+                ra.guard(q, l, rp) == True
+            ),
+            ra.used(ra.transition(q, l, rp), r) == True
         )
     ),
+
+    z3.ForAll(
+        [q, l, r],
+        z3.Implies(
+            z3.And(
+                r != fresh,
+                ra.update(q, l) == r
+            ),
+            ra.used(ra.transition(q, l, fresh), r) == True
+        )
+    ),
+
+    z3.ForAll(
+        [q, l, r, rp],
+        z3.Implies(
+            z3.And(
+                r != rp,
+                r != fresh,
+                rp != fresh,
+                ra.used(q, r),
+                ra.update(q, l) == rp
+            ),
+            ra.guard(q, l, r) == True
+        )
+    )
 
     # Frits' type RA's (uncomment this)
     # z3.ForAll(
@@ -353,6 +393,33 @@ data_m5 = [
     ([act(0), act(1), act(2), act(3), act(2)], True),
     ([act(0), act(1), act(2), act(3), act(3)], True),
     ([act(0), act(1), act(2), act(3), act(4)], True),
+]
+
+data_m6 = [
+    ([], False),
+    ([act(0)], True),
+    ([act(0), act(0)], False),
+    ([act(0), act(1)], False),
+    #([act(0), act(0), act(0)], ???),
+    ([act(0), act(0), act(1)], False),
+    ([act(0), act(1), act(0)], True),
+    ([act(0), act(1), act(1)], False),
+    ([act(0), act(1), act(2)], False),
+    #([act(0), act(0), act(0), act(0)], ???),
+    #([act(0), act(0), act(0), act(1)], ???),
+    #([act(0), act(0), act(1), act(0)], ???),
+    ([act(0), act(0), act(1), act(1)], False),
+    ([act(0), act(0), act(1), act(2)], False),
+    ([act(0), act(1), act(0), act(0)], False),
+    ([act(0), act(1), act(0), act(1)], True),
+    ([act(0), act(1), act(0), act(2)], False),
+    ([act(0), act(1), act(1), act(0)], True),
+    ([act(0), act(1), act(1), act(1)], True),
+    ([act(0), act(1), act(1), act(2)], True),
+    ([act(0), act(1), act(2), act(0)], True),
+    ([act(0), act(1), act(2), act(1)], False),
+    ([act(0), act(1), act(2), act(2)], False),
+    ([act(0), act(1), act(2), act(3)], False),
 ]
 
 data = data_m5

@@ -43,16 +43,19 @@ class RAEncoder(Encoder):
                 )
             ),
 
-            # An active non-fresh transition and a fresh transition from a location can not go to the same location.
+            # If two locations are connected with both register and fresh transitions,
+            # then you have to do an update on a different register (otherwise you should merge the two transitions)
             z3.ForAll(
                 [q, l, r],
                 z3.Implies(
                     z3.And(
                         r != ra.fresh,
                         ra.transition(q, l, ra.fresh) == ra.transition(q, l, r),
-                        ra.update(q, l) == r
                     ),
-                    ra.guard(q, l, r) == False
+                    z3.And(
+                        ra.update(q, l) != ra.fresh,
+                        ra.update(q, l) != r
+                    )
                 )
             ),
 
@@ -74,24 +77,42 @@ class RAEncoder(Encoder):
                 )
             ),
 
-            # If a register is used after a transition,
-            # then it was either used before the transition
-            # or it stores the value carried by the transition.
+            # If a register was used in a state, then it is used in any state that can be reached from this state.
             z3.ForAll(
-                [q, qp, l, r],
+                [q, l, r, rp],
                 z3.Implies(
                     z3.And(
-                        ra.transition(q, l, r) == qp,
-                        ra.guard(q, l, r) == True,
-                        ra.used(qp, r) == True
-                    ),
-                    z3.Or(
                         ra.used(q, r) == True,
-                        z3.And(
-                            ra.transition(q, l, ra.fresh) == qp,
-                            ra.update(q, l) == r
-                        )
-                    )
+                        ra.guard(q, l, rp) == True
+                    ),
+                    ra.used(ra.transition(q, l, rp), r) == True
+                )
+            ),
+
+            # If a register is updated, it is used in the state that is reached.
+            z3.ForAll(
+                [q, l, r],
+                z3.Implies(
+                    z3.And(
+                        r != ra.fresh,
+                        ra.update(q, l) == r
+                    ),
+                    ra.used(ra.transition(q, l, ra.fresh), r) == True
+                )
+            ),
+
+            # The automaton we learn is unique valued.
+            z3.ForAll(
+                [q, l, r, rp],
+                z3.Implies(
+                    z3.And(
+                        r != rp,
+                        r != ra.fresh,
+                        rp != ra.fresh,
+                        ra.used(q, r),
+                        ra.update(q, l) == rp
+                    ),
+                    ra.guard(q, l, r) == True
                 )
             )
         ]
