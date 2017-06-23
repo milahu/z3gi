@@ -29,6 +29,3 @@ def enum(name, elements):
         d.declare(element)
     d = d.create()
     return d, [d.__getattribute__(element) for element in elements]
-
-
-action = namedtuple('action', "label symbol")

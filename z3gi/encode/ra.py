@@ -21,7 +21,8 @@ class RAEncoder(Encoder):
                self.output_constraints(ra, mapper) + \
                self.transition_constraints(ra, mapper)
 
-    def axioms(self, ra, mapper, initialized):
+    @staticmethod
+    def axioms(ra, mapper, initialized):
         l = z3.Const('l', ra.Label)
         q, qp = z3.Consts('q qp', ra.Location)
         r, rp = z3.Consts('r rp', ra.Register)
@@ -168,6 +169,7 @@ class RAEncoder(Encoder):
                     ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)),
             ])
             values.add(v)
+
         constraints.append(z3.Distinct(list(values)))
         return constraints
 
@@ -211,6 +213,7 @@ class RAEncoder(Encoder):
 
         def element(self, name):
             return z3.Const(name, self.Element)
+
 
 def determinize(seq):
     neat = {}
