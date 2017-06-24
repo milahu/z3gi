@@ -4,20 +4,20 @@ from abc import ABCMeta, abstractmethod
 class Automaton(metaclass=ABCMeta):
    def __init__(self, states, state_to_trans):
       super().__init__()
-      self.states = states
-      self.state_to_trans = state_to_trans
+      self._states = states
+      self._state_to_trans = state_to_trans
 
    def start_state(self):
-      return self.states[0]
+      return self._states[0]
 
    def states(self):
-      return list(self.states)
+      return list(self._states)
 
    def transitions(self, state, label=None):
       if label is None:
-         return list(self.state_to_trans[state])
+         return list(self._state_to_trans[state])
       else:
-         return list([trans for trans in self.state_to_trans[state] if trans.start_label == label])
+         return list([trans for trans in self._state_to_trans[state] if trans.start_label == label])
 
    @abstractmethod
    def state(self, trace):
@@ -36,10 +36,10 @@ class Transducer(Automaton, metaclass=ABCMeta):
 class Acceptor(Automaton, metaclass=ABCMeta):
     def __init__(self, states, state_to_trans, state_to_acc):
         super.__init__(states, state_to_trans)
-        self.state_to_acc = state_to_acc
+        self._state_to_acc = state_to_acc
 
     def is_accepting(self, state):
-        return self.state_to_acc[state]
+        return self._state_to_acc[state]
 
     def accepts(self, trace):
         state = self.state(trace)
@@ -54,10 +54,10 @@ class Transition():
         self.end_state = self.end_state
 
 
-"""Exception raised when no transition could be fired"""
+"""Exception raised when no transition can be fired"""
 class NoTransitionFired(Exception):
    pass
 
-"""Exception raised when several transitions could be fired in a deterministic machine"""
-class NonDeterminism(Exception):
+"""Exception raised when several transitions can be fired in a deterministic machine"""
+class MultipleTransitionsFired(Exception):
     pass
