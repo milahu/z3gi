@@ -1,16 +1,23 @@
 from z3gi.model import Transition, Acceptor, NoTransitionFired, MultipleTransitionsFired
 from abc import ABCMeta, abstractmethod
 import itertools
+import collections
+
+Action = collections.namedtuple('Action', ('label', 'value'))
 
 class RegisterAutomaton(Acceptor):
     def __init__(self, locations, loc_to_acc, loc_to_trans, registers):
       super.__init__(locations, loc_to_trans, loc_to_acc)
       self._registers = registers
 
-    def get_registers(self):
+    def get_registers(self) -> list[str]:
         return self._registers
 
-    def state(self, trace):
+    def transitions(self, state: str, label:str =None) -> list[RATransition]:
+        return self.transitions(state, label)
+
+
+    def state(self, trace: list[Action]) -> str:
         init = -1
         reg_val = dict()
         for reg in self.get_registers():
@@ -53,7 +60,7 @@ class MutableRegisterAutomaton(RegisterAutomaton):
             if reg not in self._registers:
                 self._registers.append(reg)
 
-    def to_immutable(self):
+    def to_immutable(self) -> RegisterAutomaton:
         return RegisterAutomaton(self._states, self._state_to_acc, self._state_to_trans, self._registers)
 
 
@@ -72,14 +79,16 @@ class RATransition(Transition):
     def update(self, action, valuation):
         return self.assignment.update(valuation, action.value)
 
-"""A guard with is_satisfied implements a predicate over the current register valuation and the parameter value. """
+
 class Guard(metaclass=ABCMeta):
+    """A guard with is_satisfied implements a predicate over the current register valuation and the parameter value. """
     def __init__(self):
         pass
 
-    """Returns the registers/constants over which the guard is formed"""
+
     @abstractmethod
     def get_registers(self):
+        """Returns the registers/constants over which the guard is formed"""
         pass
 
     # to make this more abstract, value would have to be replaced by param valuation
@@ -87,8 +96,8 @@ class Guard(metaclass=ABCMeta):
     def is_satisfied(self, valuation, value):
         pass
 
-"""An equality guard holds iff. the parameter value is equal to the value assigned to its register."""
 class EqualityGuard(Guard):
+    """An equality guard holds iff. the parameter value is equal to the value assigned to its register."""
     def __init__(self, register):
         super.__init__()
         self.register = register
@@ -118,8 +127,8 @@ class OrGuard(Guard):
         return list(distinct_regs)
 
 
-"""An fresh guard holds if the parameter value is different from the value assigned to any of its registers."""
 class FreshGuard(Guard):
+    """An fresh guard holds if the parameter value is different from the value assigned to any of its registers."""
     def __init__(self, guarded_registers = []):
         super.__init__()
         self.registers = guarded_registers
@@ -133,8 +142,8 @@ class FreshGuard(Guard):
     def get_registers(self):
         return self.registers
 
-"""An assignment updates the valuation of registers using the old valuation and the current parameter value"""
 class Assignment(metaclass=ABCMeta):
+    """An assignment updates the valuation of registers using the old valuation and the current parameter value"""
     def __init__(self):
         pass
 
@@ -154,14 +163,16 @@ class RegisterAssignment(Assignment):
         new_valuation[self.register] = value
         return new_valuation
 
+
 class NoAssignment(Assignment):
     def __init__(self):
         super.__init__()
     def update(self, valuation):
         return dict(valuation)
 
-"""Symbolic values can be used to symbolically express registers, constants and parameters."""
+
 class SymbolicValue(metaclass=ABCMeta):
+    """Symbolic values can be used to symbolically express registers, constants and parameters."""
     def __init__(self, index):
         super.__init__()
         self.index = index
