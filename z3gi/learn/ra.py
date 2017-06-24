@@ -43,3 +43,4 @@ class RALearner(Learner):
                 else:
                     # TODO: process the unsat core?
                     pass
+        return None
