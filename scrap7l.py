@@ -4,8 +4,8 @@ import collections
 import itertools
 import z3
 
-num_locations = 4
-num_registers = 2
+num_locations = 2
+num_registers = 1
 num_labels = 1
 def enum(type, names):
     dt = z3.Datatype(type)
@@ -422,7 +422,19 @@ data_m6 = [
     ([act(0), act(1), act(2), act(3)], False),
 ]
 
-data = data_m5
+data_m7 = [
+    ([], False),
+    ([act(0)], False),
+    ([act(0), act(0)], False),
+    ([act(0), act(1)], False),
+    ([act(0), act(0), act(0)], False),
+    ([act(0), act(0), act(1)], True),
+#    ([act(0), act(1), act(0)], False),
+#    ([act(0), act(1), act(1)], False),
+#    ([act(0), act(1), act(2)], True),
+]
+
+data = data_m7
 # from random import shuffle
 # shuffle(data)
 
