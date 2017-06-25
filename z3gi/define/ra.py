@@ -23,7 +23,7 @@ class RegisterAutomaton(Automaton):
 
     def export(self, model):
         builder = RegisterAutomatonBuilder(self)
-        ra = builder.build_ra(model, self.locations, self.labels, self.registers)
+        ra = builder.build_ra(model, self.locations, list(self.labels.values()), self.registers)
         return ra
 
 
@@ -47,21 +47,20 @@ class RegisterAutomatonBuilder():
     def build_ra(self, model, states, labels, regs):
         mut_ra = MutableRegisterAutomaton()
         translator = Translator(self.ra)
-        self._add_states(model, translator, mut_ra, states)
-        self._add_transitions(model, translator, mut_ra, states, labels, regs)
+        for z3state in states:
+            self._add_state(model, translator, mut_ra, z3state)
+            for z3label in labels:
+                self._add_transitions(model, translator, mut_ra, z3state, z3label, regs)
         return mut_ra.to_immutable()
 
-    def _add_states(self, model, translator, mut_ra, z3states):
-        for z3state in z3states:
-            z3acc = model.eval(model.eval(self.ra.output(z3state)))
-            mut_ra.add_state(translator.z3_to_state(z3state), translator.z3_to_acc(z3acc) )
+    def _add_state(self, model, translator, mut_ra, z3state):
+        z3acc = model.eval(model.eval(self.ra.output(z3state)))
+        mut_ra.add_state(translator.z3_to_state(z3state), translator.z3_to_bool(z3acc) )
 
     def _add_transitions(self, model, translator, mut_ra, z3state, z3label, z3regs):
-        registers_used = []
-        next_trans = []
         z3end_state_to_guards = dict()
         enabled_z3guards = [guard for guard in z3regs if
-                          model.eval(self.ra.guard(z3state, z3label, guard))]
+                            translator.z3_to_bool(model.eval(self.ra.guard(z3state, z3label, guard)))]
         for z3guard in enabled_z3guards:
             z3end_state = model.eval(self.ra.transition(z3state, z3label, z3guard))
             if z3end_state not in z3end_state_to_guards:
@@ -105,8 +104,8 @@ class Translator():
             else:
                 return OrGuard(equ_guards)
 
-    def z3_to_acc(self, z3acc):
-        return str(z3acc) == "True"
+    def z3_to_bool(self, z3bool):
+        return str(z3bool) == "True"
 
     def z3_to_state(self, z3state):
         return str(z3state)
@@ -116,6 +115,6 @@ class Translator():
 
     def z3_to_register(self, z3register):
         assert z3register is not self.ra.fresh
-        if self.reg_context[z3register] is None:
-            self.reg_context = Register(self.ra.registers.index(z3register))
-        return self.reg_context[z3register]
+        if str(z3register) not in self.reg_context:
+            self.reg_context[str(z3register)] = Register(self.ra.registers.index(z3register))
+        return self.reg_context[str(z3register)]

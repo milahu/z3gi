@@ -51,7 +51,7 @@ class Transition():
     def __init__(self, start_state, start_label, end_state):
         self.start_state = start_state
         self.start_label = start_label
-        self.end_state = self.end_state
+        self.end_state = end_state
 
 
 """Exception raised when no transition can be fired"""
@@ -61,3 +61,4 @@ class NoTransitionFired(Exception):
 """Exception raised when several transitions can be fired in a deterministic machine"""
 class MultipleTransitionsFired(Exception):
     pass
+
