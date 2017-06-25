@@ -6,7 +6,7 @@ from z3gi.learn import Learner
 
 
 class RALearner(Learner):
-    def __init__(self, labels, encoder=None, solver=None):
+    def __init__(self, labels, encoder=None, solver=None, verbose=False):
         if not encoder:
             encoder = RAEncoder()
         if not solver:
@@ -17,6 +17,7 @@ class RALearner(Learner):
         self.previous_model = None
         self.num_locations = None
         self.num_registers = None
+        self.verbose = verbose
 
     def add(self, trace):
         self.encoder.add(trace)
@@ -33,7 +34,11 @@ class RALearner(Learner):
                 ra = RegisterAutomaton(labels=self.labels, num_locations=num_locations, num_registers=num_registers)
                 constraints = self.encoder.build(ra)
                 self.solver.add(constraints)
-                if self.solver.check() == z3.sat:
+                result = self.solver.check()
+                if self.verbose:
+                    print("Learning with {0} locations and {1} registers. Result: {2}"
+                          .format(num_locations, num_registers, result))
+                if result == z3.sat:
                     model = self.solver.model()
                     # TODO: process model here
                     self.num_locations = num_locations
