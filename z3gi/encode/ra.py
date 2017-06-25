@@ -1,5 +1,4 @@
 import itertools
-
 import z3
 
 from z3gi.encode import Encoder
@@ -125,7 +124,7 @@ class RAEncoder(Encoder):
         return axioms
 
     def output_constraints(self, ra, mapper):
-        return [ra.output(mapper.map(mapper.element(node))) == accept for node, accept in self.cache.items()]
+        return [ra.output(mapper.map(mapper.element(node.id))) == accept for node, accept in self.cache.items()]
 
     def transition_constraints(self, ra, mapper):
         constraints = [ra.start == mapper.map(mapper.start)]
@@ -228,14 +227,16 @@ class RAEncoder(Encoder):
             self.Value = z3.DeclareSort('Value')
             self.Element = z3.DeclareSort('Element')
             self.start = self.element(0)
-            self.init = self.value(-1)
+            self.init = self.value("_")
             self.map = z3.Function('map', self.Element, ra.Location)
             self.valuation = z3.Function('valuation', self.Element, ra.Register, self.Value)
 
         def value(self, name):
+            print("value ",name)
             return z3.Const(name, self.Value)
 
         def element(self, name):
+            print("name ",name)
             return z3.Const(name, self.Element)
 
 

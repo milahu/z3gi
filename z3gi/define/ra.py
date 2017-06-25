@@ -19,7 +19,7 @@ class RegisterAutomaton(Automaton):
         self.transition = z3.Function('transition', self.Location, self.Label, self.Register, self.Location)
         self.output = z3.Function('output', self.Location, z3.BoolSort())
         self.used = z3.Function('used', self.Location, self.Register, z3.BoolSort())
-        self.guard = z3.Function('guard', self.Location, self.Label, self.Register)
+        self.guard = z3.Function('guard', self.Location, self.Label, self.Register, z3.BoolSort())
         self.update = z3.Function('update', self.Location, self.Label, self.Register)
 
     def export(self, model):

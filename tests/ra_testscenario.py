@@ -2,9 +2,11 @@ import collections
 
 from z3gi.model.ra import Action
 
+labels = ["label"]
+
 def act(val, label=None):
     if label is None:
-        return Action("label", val)
+        return Action(labels[0], val)
     else:
         return Action(label, val)
 

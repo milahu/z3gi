@@ -2,22 +2,53 @@ from z3gi.model import Transition, Acceptor, NoTransitionFired, MultipleTransiti
 from abc import ABCMeta, abstractmethod
 import itertools
 import collections
+from typing import List
 
 Action = collections.namedtuple('Action', ('label', 'value'))
+
+
+class RATransition(Transition):
+    def __init__(self, start_state, start_label, guard, assignment, end_state):
+        super.__init__(start_state, start_label, end_state)
+        self.guard = guard
+        self.assignment = assignment
+
+    def is_enabled(self, action, valuation):
+        if action.label is self.start_label:
+            satisfied = self.guard.is_satisfied(action.value, valuation)
+            return satisfied
+        return False
+
+    def update(self, action, valuation):
+        return self.assignment.update(valuation, action.value)
+
+class SymbolicValue(metaclass=ABCMeta):
+    """Symbolic values can be used to symbolically express registers, constants and parameters."""
+    def __init__(self, index):
+        super.__init__()
+        self.index = index
+
+class Register(SymbolicValue):
+    def __init__(self, index):
+        super.__init__(index)
+
+    def __str__(self):
+        return "r" + str(self.index)
+
 
 class RegisterAutomaton(Acceptor):
     def __init__(self, locations, loc_to_acc, loc_to_trans, registers):
       super.__init__(locations, loc_to_trans, loc_to_acc)
       self._registers = registers
 
-    def get_registers(self) -> list[str]:
+    def get_registers(self) -> List[Register]:
         return self._registers
 
-    def transitions(self, state: str, label:str =None) -> list[RATransition]:
+    def transitions(self, state: str, label:str =None) -> List[RATransition]:
         return self.transitions(state, label)
 
 
-    def state(self, trace: list[Action]) -> str:
+    def state(self, trace: List[Action]) -> str:
         init = -1
         reg_val = dict()
         for reg in self.get_registers():
@@ -62,23 +93,6 @@ class MutableRegisterAutomaton(RegisterAutomaton):
 
     def to_immutable(self) -> RegisterAutomaton:
         return RegisterAutomaton(self._states, self._state_to_acc, self._state_to_trans, self._registers)
-
-
-class RATransition(Transition):
-    def __init__(self, start_state, start_label, guard, assignment, end_state):
-        super.__init__(start_state, start_label, end_state)
-        self.guard = guard
-        self.assignment = assignment
-
-    def is_enabled(self, action, valuation):
-        if action.label is self.start_label:
-            satisfied = self.guard.is_satisfied(action.value, valuation)
-            return satisfied
-        return False
-
-    def update(self, action, valuation):
-        return self.assignment.update(valuation, action.value)
-
 
 class Guard(metaclass=ABCMeta):
     """A guard with is_satisfied implements a predicate over the current register valuation and the parameter value. """
@@ -171,16 +185,3 @@ class NoAssignment(Assignment):
         return dict(valuation)
 
 
-class SymbolicValue(metaclass=ABCMeta):
-    """Symbolic values can be used to symbolically express registers, constants and parameters."""
-    def __init__(self, index):
-        super.__init__()
-        self.index = index
-
-
-class Register(SymbolicValue):
-    def __init__(self, index):
-        super.__init__(index)
-
-    def __str__(self):
-        return "r" + str(self.index)
