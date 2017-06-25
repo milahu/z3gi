@@ -26,7 +26,7 @@ class Automaton(metaclass=ABCMeta):
 """An automaton model that generates output"""
 class Transducer(Automaton, metaclass=ABCMeta):
     def __init__(self, states, state_to_trans):
-        super.__init__(states, state_to_trans)
+        super().__init__(states, state_to_trans)
 
     @abstractmethod
     def outputs(self, trace):
@@ -35,7 +35,7 @@ class Transducer(Automaton, metaclass=ABCMeta):
 """An automaton model whose states are accepting/rejecting"""
 class Acceptor(Automaton, metaclass=ABCMeta):
     def __init__(self, states, state_to_trans, state_to_acc):
-        super.__init__(states, state_to_trans)
+        super().__init__(states, state_to_trans)
         self._state_to_acc = state_to_acc
 
     def is_accepting(self, state):

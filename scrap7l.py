@@ -434,7 +434,7 @@ data_m7 = [
 #    ([act(0), act(1), act(2)], True),
 ]
 
-data = data_m7
+data = data_m1
 # from random import shuffle
 # shuffle(data)
 
@@ -498,47 +498,6 @@ for n, a, c in trie.transitions():
             ra.transition(m.map(n.node), a.label, fresh) == m.map(c.node)),
     ])
 
-
-   # If we update a non-fresh register on a transition from a state,
-   # then the register is assigned the value.
-   # Else, the register keeps its previous value.
-   # transition_constraints.append(
-   #     z3.ForAll(
-   #         [r, rp],
-   #         z3.Implies(
-   #             z3.And(
-   #                 ra.transition(m.map(n.node), a.label, r) == m.map(c.node),
-   #                 ra.guard(m.map(n.node), a.label, r) == True
-   #             ),
-   #             z3.If(
-   #                 r != fresh,
-   #                 m.val(c.node, r) == m.val(n.node, r),
-   #                 z3.Implies(
-   #                     ra.update(m.map(n.node), a.label, r) == rp,
-   #                     m.val(c.node, rp) == a.value
-   #                 )
-   #             )
-   #         )
-   #     )
-   # )
-
-   # # for all n - v -> c where n.r != c.r -> update r
-   # transition_constraints.append(
-   #     z3.ForAll(
-   #         [r, rp],
-   #         z3.Implies(
-   #             z3.And(
-   #                 r != fresh,
-   #                 m.val(c.node, r) != m.val(n.node, r),
-   #                 ra.transition(m.map(n.node), a.label, rp) == m.map(c.node),
-   #                 ra.guard(m.map(n.node), a.label, rp) == True
-   #             ),
-   #             ra.update(m.map(n.node), a.label, rp) == r
-   #         )
-   #     )
-   # )
-
-
 # Create an empty value and assert that all (neat) values are different
 values = {init}
 for n, a, c in trie.transitions():
@@ -553,6 +512,7 @@ s.add(output_constraints)
 s.add(distinct_values)
 #s2 = z3.Solver()
 #all = transition_constraints + output_constraints + output_constraints + [distinct_values]
+print(s.assertions())
 chk = s.check()
 if str(chk) == "unsat":
    print(chk)
@@ -563,10 +523,6 @@ model = s.model()
 print(s.statistics())
 print(model)
 print(locations)
-for seq, accept in data:
-   print(model.eval(ra.output(m.map(trie[seq].node)) == accept))
-for n in trie:
-   print('{0} maps to {1}'.format(n.node, model.eval(m.map(n.node))))
 
 """
 Visitor class for implementing procedures on inferred RAs.
@@ -702,10 +658,8 @@ class SimpleRaBuilder(RaVisitor):
    def _visit_transition(self, start_loc, label, guard, asg, end_loc):
       self.loc_to_trans[start_loc].append((start_loc, label, guard, asg, end_loc))
       if not is_fresh(guard) and guard not in self.registers:
-         print("guard",guard)
          self.registers.append(guard)
       if not is_fresh(asg) and asg not in self.registers:
-         print("asg", asg, asg is not fresh)
          self.registers.append(asg)
    """
    Builds a SRA from the RA generated functions. It uses as locations and registers the actual Z3 constants.
@@ -732,8 +686,3 @@ builder.process(model, ra, labels, registers, locations)
 sra = builder.build_ra()
 conforms = conforms_to_obs(sra, data)
 print(conforms)
-#runner = SimpleRaSimulator(sra)
-#print(runner.accepts([0, 1, 1]))
-#print(runner.accepts([0, 1, 0, 1]))
-#print(runner.accepts([0, 1, 0, 1, 0, 1]))
-#n = z3.Const('n', Node)

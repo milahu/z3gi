@@ -232,10 +232,10 @@ class RAEncoder(Encoder):
             self.valuation = z3.Function('valuation', self.Element, ra.Register, self.Value)
 
         def value(self, name):
-            return z3.Const(name, self.Value)
+            return z3.Const("v"+str(name), self.Value)
 
         def element(self, name):
-            return z3.Const(name, self.Element)
+            return z3.Const("n"+str(name), self.Element)
 
 
 def determinize(seq):

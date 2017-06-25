@@ -2,7 +2,6 @@ from collections import namedtuple
 
 import z3
 from z3gi.model.ra import *
-from abc import ABCMeta, abstractmethod
 
 
 from z3gi.define import Automaton
@@ -48,7 +47,7 @@ class RegisterAutomatonBuilder():
     def build_ra(self, model, states, labels, regs):
         mut_ra = MutableRegisterAutomaton()
         translator = Translator(self.ra)
-        self._add_states(model, translator, mut_ra, states, labels, regs)
+        self._add_states(model, translator, mut_ra, states)
         self._add_transitions(model, translator, mut_ra, states, labels, regs)
         return mut_ra.to_immutable()
 
@@ -85,7 +84,6 @@ class RegisterAutomatonBuilder():
 class Translator():
     """Provides translation from z3 constants to RA elements. """
     def __init__(self, ra):
-        super.__init__()
         self.reg_context = dict()
         self.ra = ra
 

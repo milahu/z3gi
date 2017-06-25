@@ -9,7 +9,7 @@ Action = collections.namedtuple('Action', ('label', 'value'))
 
 class RATransition(Transition):
     def __init__(self, start_state, start_label, guard, assignment, end_state):
-        super.__init__(start_state, start_label, end_state)
+        super().__init__(start_state, start_label, end_state)
         self.guard = guard
         self.assignment = assignment
 
@@ -25,12 +25,12 @@ class RATransition(Transition):
 class SymbolicValue(metaclass=ABCMeta):
     """Symbolic values can be used to symbolically express registers, constants and parameters."""
     def __init__(self, index):
-        super.__init__()
+        super().__init__()
         self.index = index
 
 class Register(SymbolicValue):
     def __init__(self, index):
-        super.__init__(index)
+        super().__init__(index)
 
     def __str__(self):
         return "r" + str(self.index)
@@ -38,7 +38,7 @@ class Register(SymbolicValue):
 
 class RegisterAutomaton(Acceptor):
     def __init__(self, locations, loc_to_acc, loc_to_trans, registers):
-      super.__init__(locations, loc_to_trans, loc_to_acc)
+      super().__init__(locations, loc_to_trans, loc_to_acc)
       self._registers = registers
 
     def get_registers(self) -> List[Register]:
@@ -75,7 +75,7 @@ class RegisterAutomaton(Acceptor):
 
 class MutableRegisterAutomaton(RegisterAutomaton):
     def __init__(self):
-        super.__init__([], dict(), dict())
+        super().__init__([], dict(), dict(), [])
 
     def add_state(self, state, accepts):
         if state not in self._states:
@@ -113,7 +113,7 @@ class Guard(metaclass=ABCMeta):
 class EqualityGuard(Guard):
     """An equality guard holds iff. the parameter value is equal to the value assigned to its register."""
     def __init__(self, register):
-        super.__init__()
+        super().__init__()
         self.register = register
 
     def is_satisfied(self, valuation, value):
@@ -144,7 +144,7 @@ class OrGuard(Guard):
 class FreshGuard(Guard):
     """An fresh guard holds if the parameter value is different from the value assigned to any of its registers."""
     def __init__(self, guarded_registers = []):
-        super.__init__()
+        super().__init__()
         self.registers = guarded_registers
 
     def is_satisfied(self, valuation, value):
@@ -169,7 +169,7 @@ class Assignment(metaclass=ABCMeta):
 
 class RegisterAssignment(Assignment):
     def __init__(self, register):
-        super.__init__()
+        super().__init__()
         self.register = register
 
     def update(self, valuation, value):
@@ -180,7 +180,7 @@ class RegisterAssignment(Assignment):
 
 class NoAssignment(Assignment):
     def __init__(self):
-        super.__init__()
+        super().__init__()
     def update(self, valuation):
         return dict(valuation)
 
