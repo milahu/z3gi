@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 import z3
-from z3gi.model.ra import *
+from model.ra import *
 
 
 from z3gi.define import Automaton

@@ -1,9 +1,9 @@
 import z3
 
-from z3gi.define.ra import RegisterAutomaton
-from z3gi.encode.ra import RAEncoder
-from z3gi.learn import Learner
-import z3gi.model.ra
+from define.ra import RegisterAutomaton
+from encode.ra import RAEncoder
+from learn import Learner
+import model.ra
 
 
 class RALearner(Learner):
@@ -23,7 +23,7 @@ class RALearner(Learner):
     def add(self, trace):
         self.encoder.add(trace)
 
-    def model(self, min_locations=1, max_locations=20, num_registers=0) -> z3gi.model.ra.RegisterAutomaton:
+    def model(self, min_locations=1, max_locations=20, num_registers=0) -> model.ra.RegisterAutomaton:
         (succ, ra_def, m) = self._learn_model(min_locations=min_locations,
                                         max_locations=max_locations, num_registers=num_registers)
         if succ:
