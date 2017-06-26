@@ -24,7 +24,6 @@ class RaLearnerTest(unittest.TestCase):
 
     def check_scenario(self, test_scenario : RaTestScenario):
         print("Scenario " + test_scenario.description)
-        #result = self.learn_model(test_scenario)
         (succ, ra, model) = self.learn_model(test_scenario)
 
         self.assertTrue(succ, msg="Register Automaton could not be inferred")
@@ -35,9 +34,9 @@ class RaLearnerTest(unittest.TestCase):
         exported = ra.export(model)
         print("Learned model:  \n",exported)
         self.assertEqual(len(exported.states()), test_scenario.nr_locations,
-                         "Wrong number of locations in exported model. ")
-        self.assertEqual(len(exported.registers()), test_scenario.nr_locations,
-                         "Wrong number of registers in exported model. ")
+                          "Wrong number of locations in exported model. ")
+        self.assertEqual(len(exported.registers()), test_scenario.nr_registers,
+                          "Wrong number of registers in exported model. ")
         self.check_ra_against_obs(exported, test_scenario)
 
 
@@ -45,7 +44,7 @@ class RaLearnerTest(unittest.TestCase):
         """Checks if the learned RA corresponds to the scenario observations"""
         for trace, acc in test_scenario.traces:
             self.assertEqual(learned_ra.accepts(trace), acc,
-                             "Register automaton output doesn't correspond to observation {1}".format(str(trace)))
+                             "Register automaton output doesn't correspond to observation {0}".format(str(trace)))
     
     def learn_model(self, test_scenario : RaTestScenario) -> \
             (bool, RegisterAutomaton, z3.ModelRef):

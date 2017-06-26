@@ -42,7 +42,7 @@ class RALearner(Learner):
             self.num_registers = num_registers
         num_values = len(self.encoder.values)
         for num_locations in range(max(self.num_locations, min_locations), max_locations + 1):
-            for num_registers in range(self.num_registers, max(self.num_registers, min(num_values, max_locations))):
+            for num_registers in range(self.num_registers, max(self.num_registers, min(num_values, num_locations))):
                 if self.io:
                     ra = IORegisterAutomaton(inputs=self.labels, outputs=self.outputs, num_locations=num_locations, num_registers=num_registers)
                 else:

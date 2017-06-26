@@ -108,7 +108,7 @@ class Guard(metaclass=ABCMeta):
 
 
     @abstractmethod
-    def get_registers(self):
+    def registers(self):
         """Returns the registers/constants over which the guard is formed"""
         pass
 
@@ -121,16 +121,16 @@ class EqualityGuard(Guard):
     """An equality guard holds iff. the parameter value is equal to the value assigned to its register."""
     def __init__(self, register):
         super().__init__()
-        self.register = register
+        self._register = register
 
     def is_satisfied(self, valuation, value):
-        return valuation[self.register] == value
+        return valuation[self._register] == value
 
-    def get_registers(self):
-        return [self.register]
+    def registers(self):
+        return [self._register]
 
     def __str__(self):
-        return "p=={0}".format(str(self.register))
+        return "p=={0}".format(str(self._register))
 
 class OrGuard(Guard):
     def __init__(self, guards):
@@ -142,7 +142,7 @@ class OrGuard(Guard):
                 return True
         return False
 
-    def get_registers(self):
+    def registers(self):
         regs_of_guards = [guard.registers() for guard in self.guards]
         regs = itertools.chain.from_iterable(regs_of_guards)
         seen = set()
@@ -151,30 +151,30 @@ class OrGuard(Guard):
 
     def __str__(self):
         all_guards = [str(guard) for guard in self.guards]
-        return "\\/".join(all_guards)
+        return " \\/ ".join(all_guards)
 
 
 class FreshGuard(Guard):
     """An fresh guard holds if the parameter value is different from the value assigned to any of its registers."""
     def __init__(self, guarded_registers = []):
         super().__init__()
-        self.registers = guarded_registers
+        self._registers = guarded_registers
 
     def is_satisfied(self, valuation, value):
-        for register in self.registers:
+        for register in self._registers:
             if valuation[register] == value:
                 return False
         return True
 
-    def get_registers(self):
-        return self.registers
+    def registers(self):
+        return self._registers
 
     def __str__(self):
-        if len(self.registers) == 0:
+        if len(self._registers) == 0:
             return "True"
         else:
-            all_deq = ["p!={0}".format(str(reg)) for reg in self.registers]
-            return "/\\".join(all_deq)
+            all_deq = ["p!={0}".format(str(reg)) for reg in self._registers]
+            return " /\\ ".join(all_deq)
 
 class Assignment(metaclass=ABCMeta):
     """An assignment updates the valuation of registers using the old valuation and the current parameter value"""
