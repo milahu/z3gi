@@ -49,7 +49,7 @@ class RegisterAutomaton(Acceptor):
       super().__init__(locations, loc_to_trans, loc_to_acc)
       self._registers = registers
 
-    def get_registers(self) -> List[Register]:
+    def registers(self) -> List[Register]:
         return self._registers
 
     def transitions(self, state: str, label:str = None) -> List[RATransition]:
@@ -58,7 +58,7 @@ class RegisterAutomaton(Acceptor):
     def state(self, trace: List[Action]) -> str:
         init = -1
         reg_val = dict()
-        for reg in self.get_registers():
+        for reg in self.registers():
             reg_val[reg] = init
 
         crt_state = self.start_state()
@@ -94,7 +94,7 @@ class MutableRegisterAutomaton(RegisterAutomaton):
         if state not in self._state_to_trans:
             self._state_to_trans[state]=[]
         self._state_to_trans[state].append(transition)
-        for reg in transition.guard.get_registers():
+        for reg in transition.guard.registers():
             if reg not in self._registers:
                 self._registers.append(reg)
 
@@ -143,7 +143,7 @@ class OrGuard(Guard):
         return False
 
     def get_registers(self):
-        regs_of_guards = [guard.get_registers() for guard in self.guards]
+        regs_of_guards = [guard.registers() for guard in self.guards]
         regs = itertools.chain.from_iterable(regs_of_guards)
         seen = set()
         distinct_regs = [x for x in regs if x not in seen and not seen.add(x)]

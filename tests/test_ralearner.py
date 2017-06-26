@@ -3,9 +3,10 @@ import unittest
 from tests.ra_testscenario import *
 from z3gi.learn.ra import RALearner
 from z3gi.define.ra import RegisterAutomaton
+import model.ra
 import z3
 
-class RaTest(unittest.TestCase):
+class RaLearnerTest(unittest.TestCase):
 
     def setUp(self):
         self.ralearner = RALearner(labels, verbose=True)
@@ -25,13 +26,29 @@ class RaTest(unittest.TestCase):
         print("Scenario " + test_scenario.description)
         #result = self.learn_model(test_scenario)
         (succ, ra, model) = self.learn_model(test_scenario)
+
         self.assertTrue(succ, msg="Register Automaton could not be inferred")
         self.assertEqual(len(ra.locations), test_scenario.nr_locations,
                          "Wrong number of locations." )
         self.assertEqual(len(ra.locations), test_scenario.nr_locations,
                          "Wrong number of registers.")
+        exported = ra.export(model)
+        print("Learned model:  \n",exported)
+        self.assertEqual(len(exported.states()), test_scenario.nr_locations,
+                         "Wrong number of locations in exported model. ")
+        self.assertEqual(len(exported.registers()), test_scenario.nr_locations,
+                         "Wrong number of registers in exported model. ")
+        self.check_ra_against_obs(exported, test_scenario)
+
+
+    def check_ra_against_obs(self, learned_ra: model.ra.RegisterAutomaton, test_scenario : RaTestScenario):
+        """Checks if the learned RA corresponds to the scenario observations"""
+        for trace, acc in test_scenario.traces:
+            self.assertEqual(learned_ra.accepts(trace), acc,
+                             "Register automaton output doesn't correspond to observation {1}".format(str(trace)))
     
-    def learn_model(self, test_scenario : RaTestScenario):
+    def learn_model(self, test_scenario : RaTestScenario) -> \
+            (bool, RegisterAutomaton, z3.ModelRef):
         for trace in test_scenario.traces:
             self.ralearner.add(trace)
         #ra_def = None

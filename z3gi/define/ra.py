@@ -21,7 +21,7 @@ class RegisterAutomaton(Automaton):
         self.guard = z3.Function('guard', self.Location, self.Label, self.Register, z3.BoolSort())
         self.update = z3.Function('update', self.Location, self.Label, self.Register)
 
-    def export(self, model):
+    def export(self, model : z3.ModelRef) -> RegisterAutomaton:
         builder = RegisterAutomatonBuilder(self)
         ra = builder.build_ra(model, self.locations, list(self.labels.values()), self.registers)
         return ra
@@ -66,19 +66,27 @@ class RegisterAutomatonBuilder():
             if z3end_state not in z3end_state_to_guards:
                 z3end_state_to_guards[z3end_state] = []
             z3end_state_to_guards[z3end_state].append(z3guard)
-
+        print(enabled_z3guards)
         update = model.eval(self.ra.update(z3state, z3label))
         start_state = translator.z3_to_state(z3state)
 
         for (z3end_state, z3guards) in z3end_state_to_guards.items():
-            guard = translator.z3_to_guard(z3guards)
-            z3asg = update if self.ra.fresh in z3guards else None
-            asg = translator.z3_to_assignment(z3asg)
-            end_state = translator.z3_to_state(z3end_state)
-            transition = RATransition(start_state, translator.z3_to_label(z3label),
-                                      guard, asg, end_state)
-            mut_ra.add_transition(start_state, transition)
+            # a transition which makes an assignment is never merged
+            if self.ra.fresh in z3guards and update is not self.ra.fresh:
+                self._add_transition(translator, mut_ra, start_state, z3label,
+                                     z3guards, update, z3end_state)
+                z3guards.remove(self.ra.fresh)
+            if len(z3guards) > 0:
+                self._add_transition(translator, mut_ra, start_state, z3label,
+                                     z3guards, None, z3end_state)
 
+    def _add_transition(self,  translator, mut_ra, start_state, z3label, z3guards, z3asg, z3end_state):
+        guard = translator.z3_to_guard(z3guards)
+        asg = translator.z3_to_assignment(z3asg)
+        end_state = translator.z3_to_state(z3end_state)
+        transition = RATransition(start_state, translator.z3_to_label(z3label),
+                                  guard, asg, end_state)
+        mut_ra.add_transition(start_state, transition)
 
 class Translator():
     """Provides translation from z3 constants to RA elements. """
@@ -87,7 +95,7 @@ class Translator():
         self.ra = ra
 
     def z3_to_assignment(self, z3asg):
-        if z3asg is None:
+        if z3asg is None or z3asg == self.ra.fresh:
             asg = NoAssignment()
         else:
             asg = RegisterAssignment(self.z3_to_register(z3asg))
@@ -96,7 +104,9 @@ class Translator():
     def z3_to_guard(self, z3guards):
         guard_regs = [self.z3_to_register(z3reg) for z3reg in z3guards if z3reg is not self.ra.fresh]
         if self.ra.fresh in z3guards:
-            return FreshGuard(guard_regs)
+            diff_from = [self.z3_to_register(z3reg) for z3reg in self.ra.registers
+                         if z3reg not in guard_regs and z3reg is not self.ra.fresh]
+            return FreshGuard(diff_from)
         else:
             equ_guards = [EqualityGuard(guard_reg) for guard_reg in guard_regs]
             if len(equ_guards) == 1:
