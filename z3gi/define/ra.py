@@ -79,22 +79,23 @@ class RegisterAutomatonBuilder():
             if z3end_state not in z3end_state_to_guards:
                 z3end_state_to_guards[z3end_state] = []
             z3end_state_to_guards[z3end_state].append(z3guard)
-        print(enabled_z3guards)
         update = model.eval(self.ra.update(z3state, z3label))
         start_state = translator.z3_to_state(z3state)
+        enabled_z3regs = [reg for reg in enabled_z3guards if reg is not self.ra.fresh]
+
 
         for (z3end_state, z3guards) in z3end_state_to_guards.items():
             # a transition which makes an assignment is never merged
             if self.ra.fresh in z3guards and update is not self.ra.fresh:
                 self._add_transition(translator, mut_ra, start_state, z3label,
-                                     z3guards, update, z3end_state)
+                                     z3guards, update, z3end_state, enabled_z3regs)
                 z3guards.remove(self.ra.fresh)
             if len(z3guards) > 0:
                 self._add_transition(translator, mut_ra, start_state, z3label,
-                                     z3guards, None, z3end_state)
+                                     z3guards, None, z3end_state, enabled_z3regs)
 
-    def _add_transition(self,  translator, mut_ra, start_state, z3label, z3guards, z3asg, z3end_state):
-        guard = translator.z3_to_guard(z3guards)
+    def _add_transition(self, translator, mut_ra, start_state, z3label, z3guards, z3asg, z3end_state, enabled_z3regs):
+        guard = translator.z3_to_guard(z3guards, enabled_z3regs)
         asg = translator.z3_to_assignment(z3asg)
         end_state = translator.z3_to_state(z3end_state)
         transition = RATransition(start_state, translator.z3_to_label(z3label),
@@ -108,20 +109,20 @@ class Translator():
         self.ra = ra
 
     def z3_to_assignment(self, z3asg):
-        if z3asg is None or z3asg == self.ra.fresh:
+        if (z3asg is None) or (z3asg == self.ra.fresh):
             asg = NoAssignment()
         else:
             asg = RegisterAssignment(self.z3_to_register(z3asg))
         return asg
 
-    def z3_to_guard(self, z3guards):
-        guard_regs = [self.z3_to_register(z3reg) for z3reg in z3guards if z3reg is not self.ra.fresh]
+    def z3_to_guard(self, z3guards, enabled_z3regs):
+        z3guard_regs = [z3reg for z3reg in z3guards if z3reg is not self.ra.fresh]
         if self.ra.fresh in z3guards:
-            diff_from = [self.z3_to_register(z3reg) for z3reg in self.ra.registers
-                         if z3reg not in guard_regs and z3reg is not self.ra.fresh]
+            diff_from = [self.z3_to_register(z3reg) for z3reg in enabled_z3regs
+                         if z3reg not in z3guard_regs and z3reg is not self.ra.fresh]
             return FreshGuard(diff_from)
         else:
-            equ_guards = [EqualityGuard(guard_reg) for guard_reg in guard_regs]
+            equ_guards = [EqualityGuard(self.z3_to_register(guard_reg)) for guard_reg in z3guard_regs]
             if len(equ_guards) == 1:
                 return equ_guards[0]
             else:
@@ -131,12 +132,14 @@ class Translator():
         return str(z3bool) == "True"
 
     def z3_to_state(self, z3state):
-        return str(z3state)
+        return "l"+str(self.ra.locations.index(z3state))
 
     def z3_to_label(self, z3label):
         return str(z3label)
 
     def z3_to_register(self, z3register):
+        if str(z3register) == "fresh":
+            raise Exception
         assert z3register is not self.ra.fresh
         if str(z3register) not in self.reg_context:
             self.reg_context[str(z3register)] = Register(self.ra.registers.index(z3register))

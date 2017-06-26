@@ -32,6 +32,7 @@ class RaLearnerTest(unittest.TestCase):
         self.assertEqual(len(ra.locations), test_scenario.nr_locations,
                          "Wrong number of registers.")
         exported = ra.export(model)
+        print(model)
         print("Learned model:  \n",exported)
         self.assertEqual(len(exported.states()), test_scenario.nr_locations,
                           "Wrong number of locations in exported model. ")

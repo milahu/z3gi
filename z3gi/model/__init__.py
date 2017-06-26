@@ -23,6 +23,7 @@ class Automaton(metaclass=ABCMeta):
    def state(self, trace):
        pass
 
+# Basic __str__ function which works for most FSMs.
    def __str__(self):
        str_rep = ""
        for state in self.states():
@@ -55,6 +56,9 @@ class Acceptor(Automaton, metaclass=ABCMeta):
         state = self.state(trace)
         is_acc = self.is_accepting(state)
         return is_acc
+
+    def __str__(self):
+        return str(self._state_to_acc) + "\n" + super().__str__()
 
 """The most basic transition class available"""
 class Transition():

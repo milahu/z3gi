@@ -13,13 +13,13 @@ class RATransition(Transition):
         self.guard = guard
         self.assignment = assignment
 
-    def is_enabled(self, action, valuation):
-        if action.label is self.start_label:
-            satisfied = self.guard.is_satisfied(action.value, valuation)
+    def is_enabled(self, valuation, action):
+        if action.label == self.start_label:
+            satisfied = self.guard.is_satisfied(valuation, action.value)
             return satisfied
         return False
 
-    def update(self, action, valuation):
+    def update(self, valuation, action):
         return self.assignment.update(valuation, action.value)
 
     def __str__(self, shortened = False):
@@ -43,6 +43,9 @@ class Register(SymbolicValue):
     def __str__(self):
         return "r" + str(self.index)
 
+    def __repr__(self):
+        return self.__str__()
+
 
 class RegisterAutomaton(Acceptor):
     def __init__(self, locations, loc_to_acc, loc_to_trans, registers):
@@ -62,9 +65,10 @@ class RegisterAutomaton(Acceptor):
             reg_val[reg] = init
 
         crt_state = self.start_state()
+        tr_str = "({0}:{1})".format(crt_state, reg_val)
         for action in trace:
             transitions = self.transitions(crt_state, action.label)
-            fired_transitions = [trans for trans in transitions if trans.is_enabled(action, reg_val)]
+            fired_transitions = [trans for trans in transitions if trans.is_enabled(reg_val, action)]
 
             # the number of fired transitions can be more than one since we could have multiple equalities
             # todo (merge into or guard?)
@@ -77,7 +81,9 @@ class RegisterAutomaton(Acceptor):
             fired_transition = fired_transitions[0]
             reg_val = fired_transition.update(reg_val, action)
             crt_state = fired_transition.end_state
+            tr_str += " {0} ({1}:{2})".format(action, crt_state, reg_val)
 
+        # print(tr_str)
         return crt_state
 
 class MutableRegisterAutomaton(RegisterAutomaton):
@@ -190,22 +196,22 @@ class Assignment(metaclass=ABCMeta):
 class RegisterAssignment(Assignment):
     def __init__(self, register):
         super().__init__()
-        self.register = register
+        self._register = register
 
     def update(self, valuation, value):
         new_valuation = dict(valuation)
-        new_valuation[self.register] = value
+        new_valuation[self._register] = value
         return new_valuation
 
     def __str__(self):
-        return "{0}:=p".format(str(self.register))
+        return "{0}:=p".format(str(self._register))
 
 
 class NoAssignment(Assignment):
     def __init__(self):
         super().__init__()
 
-    def update(self, valuation):
+    def update(self, valuation, value):
         return dict(valuation)
 
     def __str__(self):
