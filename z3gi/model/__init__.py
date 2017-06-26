@@ -23,6 +23,16 @@ class Automaton(metaclass=ABCMeta):
    def state(self, trace):
        pass
 
+   def __str__(self):
+       str_rep = ""
+       for state in self.states():
+           str_rep += str(state) + "\n"
+           for tran in self.transitions(state):
+               str_rep += "\t"+tran.__str__(shortened=True) + "\n"
+
+       return str_rep
+
+
 """An automaton model that generates output"""
 class Transducer(Automaton, metaclass=ABCMeta):
     def __init__(self, states, state_to_trans):
@@ -53,6 +63,11 @@ class Transition():
         self.start_label = start_label
         self.end_state = end_state
 
+    def __str__(self, shortened=False):
+        if not shortened:
+            return "{0} {1} -> {2}".format(self.start_state, self.start_label, self.end_state)
+        else:
+            "{1} -> {2}".format(self.start_label, self.end_state)
 
 """Exception raised when no transition can be fired"""
 class NoTransitionFired(Exception):

@@ -22,6 +22,14 @@ class RATransition(Transition):
     def update(self, action, valuation):
         return self.assignment.update(valuation, action.value)
 
+    def __str__(self, shortened = False):
+        if not shortened:
+            return "{0} {1}({2}) -> {3} {4}".format(self.start_state, self.start_label, self.guard,
+                                               self.assignment, self.end_state)
+        else:
+            return "{0}({1}) -> {2} {3}".format(self.start_label, self.guard,
+                                                    self.assignment, self.end_state)
+
 class SymbolicValue(metaclass=ABCMeta):
     """Symbolic values can be used to symbolically express registers, constants and parameters."""
     def __init__(self, index):
@@ -44,9 +52,8 @@ class RegisterAutomaton(Acceptor):
     def get_registers(self) -> List[Register]:
         return self._registers
 
-    def transitions(self, state: str, label:str =None) -> List[RATransition]:
-        return self.transitions(state, label)
-
+    def transitions(self, state: str, label:str = None) -> List[RATransition]:
+        return super().transitions(state, label)
 
     def state(self, trace: List[Action]) -> str:
         init = -1
@@ -122,6 +129,8 @@ class EqualityGuard(Guard):
     def get_registers(self):
         return [self.register]
 
+    def __str__(self):
+        return "p=={0}".format(str(self.register))
 
 class OrGuard(Guard):
     def __init__(self, guards):
@@ -140,6 +149,10 @@ class OrGuard(Guard):
         distinct_regs = [x for x in regs if x not in seen and not seen.add(x)]
         return list(distinct_regs)
 
+    def __str__(self):
+        all_guards = [str(guard) for guard in self.guards]
+        return "\\/".join(all_guards)
+
 
 class FreshGuard(Guard):
     """An fresh guard holds if the parameter value is different from the value assigned to any of its registers."""
@@ -155,6 +168,13 @@ class FreshGuard(Guard):
 
     def get_registers(self):
         return self.registers
+
+    def __str__(self):
+        if len(self.registers) == 0:
+            return "True"
+        else:
+            all_deq = ["p!={0}".format(str(reg)) for reg in self.registers]
+            return "/\\".join(all_deq)
 
 class Assignment(metaclass=ABCMeta):
     """An assignment updates the valuation of registers using the old valuation and the current parameter value"""
@@ -177,11 +197,17 @@ class RegisterAssignment(Assignment):
         new_valuation[self.register] = value
         return new_valuation
 
+    def __str__(self):
+        return "{0}:=p".format(str(self.register))
+
 
 class NoAssignment(Assignment):
     def __init__(self):
         super().__init__()
+
     def update(self, valuation):
         return dict(valuation)
 
+    def __str__(self):
+        return "r:=r"
 
