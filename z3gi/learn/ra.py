@@ -1,17 +1,19 @@
 import z3
 
-from define.ra import RegisterAutomaton
+from define.ra import RegisterAutomaton, IORegisterAutomaton
 from encode.ra import RAEncoder
 from learn import Learner
 import model.ra
 
 
 class RALearner(Learner):
-    def __init__(self, labels, encoder=None, solver=None, verbose=False):
+    def __init__(self, labels, io=False, outputs=None, encoder=None, solver=None, verbose=False):
         if not encoder:
             encoder = RAEncoder()
         if not solver:
             solver = z3.Solver()
+        if outputs:
+            self.outputs = outputs
         self.labels = labels
         self.encoder = encoder
         self.solver = solver
@@ -19,6 +21,7 @@ class RALearner(Learner):
         self.num_locations = None
         self.num_registers = None
         self.verbose = verbose
+        self.io = io
 
     def add(self, trace):
         self.encoder.add(trace)
@@ -39,8 +42,11 @@ class RALearner(Learner):
             self.num_registers = num_registers
         num_values = len(self.encoder.values)
         for num_locations in range(max(self.num_locations, min_locations), max_locations + 1):
-            for num_registers in range(self.num_registers, max(self.num_registers, min(num_values, num_locations))):
-                ra = RegisterAutomaton(labels=self.labels, num_locations=num_locations, num_registers=num_registers)
+            for num_registers in range(self.num_registers, max(self.num_registers, min(num_values, max_locations))):
+                if self.io:
+                    ra = IORegisterAutomaton(inputs=self.labels, outputs=self.outputs, num_locations=num_locations, num_registers=num_registers)
+                else:
+                    ra = RegisterAutomaton(labels=self.labels, num_locations=num_locations, num_registers=num_registers)
                 constraints = self.encoder.build(ra)
                 self.solver.add(constraints)
                 result = self.solver.check()

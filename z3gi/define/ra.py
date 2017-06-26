@@ -30,9 +30,8 @@ class RegisterAutomaton(Automaton):
 class IORegisterAutomaton(RegisterAutomaton):
 
     def __init__(self, inputs, outputs, num_locations, num_registers):
-        super().__init__(inputs + outputs, num_locations, num_registers)
+        super().__init__(inputs + outputs, num_locations + 1, num_registers)
         del self.output
-        self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations)] + ['sink'])
         self.sink = self.locations[-1]
         self.statetype = z3.Function('statetype', self.Location, z3.BoolSort())
 

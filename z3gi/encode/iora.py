@@ -8,20 +8,21 @@ class IORAEncoder(RAEncoder):
 
     def __init__(self):
         super().__init__()
+        del self.cache
         self.inputs = set()
         self.outputs = set()
 
     def add(self, trace):
-        seq = itertools.chain(*map(iter, trace))
+        seq = list(itertools.chain(*map(iter, trace)))
+        print(list(seq))
         node = self.trie[determinize(seq)]
-        self.cache[node] = True
         self.values.update([action.value for action in seq])
         self.inputs.update([action.label for action in [i for (i, o) in trace]])
         self.outputs.update([action.label for action in [o for (i, o) in trace]])
 
     def build(self, iora: IORegisterAutomaton, initialized=True):
         mapper = IORAEncoder.Mapper(iora)
-        return self.axioms(iora, mapper, initialized) + self.io_axioms(iora) + self.transition_constraints(iora, mapper)
+        return self.axioms(iora, mapper, initialized) + self.transition_constraints(iora, mapper) + self.io_axioms(iora)
 
     def io_axioms(self, iora):
         l, lp = z3.Consts('l lp', iora.Label)
@@ -34,24 +35,26 @@ class IORAEncoder(RAEncoder):
             # All false guards go to sink, and al true guards don't go to sink
             z3.ForAll(
                 [q, l, r],
-                z3.If(
-                    iora.guard(q, l, r) == True,
-                    iora.transition(q, l, r) != iora.sink,
-                    iora.transition(q, l, r) == iora.sink
+                z3.Implies(
+                    z3.And(
+                        iora.guard(q, l, r) == True,
+                        q != iora.sink
+                    ),
+                    iora.transition(q, l, r) != iora.sink
                 )
             ),
 
             # Alternating input and output locations
             z3.ForAll(
                 [q, l, r],
-                z3.If(
-                    iora.statetype(q) == True,
-                    z3.Implies(
-                        iora.transition(q, l, r) != iora.sink,
-                        iora.statetype(iora.transition(q, l, r)) == False,
+                z3.Implies(
+                    z3.And(
+                        q != iora.sink,
+                        iora.guard(q, l, r) == True
                     ),
-                    z3.Implies(
-                        iora.transition(q, l, r) != iora.sink,
+                    z3.If(
+                        iora.statetype(q) == True,
+                        iora.statetype(iora.transition(q, l, r)) == False,
                         iora.statetype(iora.transition(q, l, r)) == True
                     )
                 )
@@ -96,7 +99,10 @@ class IORAEncoder(RAEncoder):
             [z3.ForAll(
                 [q, r],
                 z3.Implies(
-                    iora.statetype(q) == True,
+                    z3.And(
+                        iora.statetype(q) == True,
+                        r != iora.fresh
+                    ),
                     iora.guard(q, lo, r) == False
                 )
             ) for lo in outputs]
@@ -105,8 +111,11 @@ class IORAEncoder(RAEncoder):
             [z3.ForAll(
                 [q, r],
                 z3.Implies(
-                    iora.statetype(q) == False,
-                    iora.guard(q, li, r) == True
+                    z3.And(
+                        iora.statetype(q) == False,
+                        r != iora.fresh
+                    ),
+                    iora.guard(q, li, r) == False
                 )
             ) for li in inputs]
         )

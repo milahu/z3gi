@@ -22,7 +22,6 @@ RaTestScenario = collections.namedtuple('RaTestCase',
                                     'nr_registers'
                                     ))
 
-
 # Define data
 
 # store something and accept, as long as you give the stored value, accept, otherwise go back to start and reject
@@ -229,4 +228,11 @@ data_m7 = [
 #    ([act(0), act(1), act(2)], True),
 ]
 
-
+# IO
+data_m8 = [
+    [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))],
+    [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(1, 'in'), act(103, 'NOK'))],
+    [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(1, 'in'), act(102, 'NOK')), (act(0, 'in'), act(103, 'OK'))],
+    [(act(0, 'in'), act(100, 'OK')), (act(1, 'in'), act(101, 'NOK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))],
+    [(act(1, 'in'), act(100, 'NOK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))],
+]
