@@ -27,6 +27,20 @@ class RegisterAutomaton(Automaton):
         return ra
 
 
+class IORegisterAutomaton(RegisterAutomaton):
+
+    def __init__(self, inputs, outputs, num_locations, num_registers):
+        super().__init__(inputs + outputs, num_locations, num_registers)
+        del self.output
+        self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations)] + ['sink'])
+        self.sink = self.locations[-1]
+        self.statetype = z3.Function('statetype', self.Location, z3.BoolSort())
+
+    def export(self, model):
+        raise NotImplementedError()
+
+
+
 def enum(name, elements):
     d = z3.Datatype(name)
     for element in elements:

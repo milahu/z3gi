@@ -14,7 +14,7 @@ class RAEncoder(Encoder):
         seq, accept = trace
         node = self.trie[determinize(seq)]
         self.cache[node] = accept
-        self.values.update(seq)
+        self.values.update([action.value for action in seq])
 
     def build(self, ra, initialized=True):
         mapper = RAEncoder.Mapper(ra)
