@@ -1,7 +1,7 @@
 import itertools
 import z3
 
-from z3gi.encode import Encoder
+from encode import Encoder
 
 
 class RAEncoder(Encoder):
