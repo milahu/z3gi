@@ -58,6 +58,7 @@ class RALearner(Learner):
                     self.num_locations = num_locations
                     self.num_registers = num_registers
                     self.previous_model = model
+                    self.solver.reset()
                     return (True, ra, model)
                 else:
                     self.solver.reset()
