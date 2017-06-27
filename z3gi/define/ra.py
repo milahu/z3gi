@@ -83,12 +83,11 @@ class RegisterAutomatonBuilder():
         start_state = translator.z3_to_state(z3state)
         enabled_z3regs = [reg for reg in enabled_z3guards if reg is not self.ra.fresh]
 
-
         for (z3end_state, z3guards) in z3end_state_to_guards.items():
             # a transition which makes an assignment is never merged
             if self.ra.fresh in z3guards and update is not self.ra.fresh:
                 self._add_transition(translator, mut_ra, start_state, z3label,
-                                     z3guards, update, z3end_state, enabled_z3regs)
+                                     [self.ra.fresh], update, z3end_state, enabled_z3regs)
                 z3guards.remove(self.ra.fresh)
             if len(z3guards) > 0:
                 self._add_transition(translator, mut_ra, start_state, z3label,
