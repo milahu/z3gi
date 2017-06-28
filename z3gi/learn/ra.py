@@ -35,21 +35,19 @@ class RALearner(Learner):
     def print_tree(self):
         self.encoder.print_tree()
 
-    def _learn_model(self, min_locations, max_locations, num_registers):
+    def _learn_model(self, min_locations=1, max_locations=20, max_registers=10):
         """generates the definition and model for an ra whose traces include the traces added so far"""
-        if self.num_locations is None:
-            self.num_locations = min_locations
-        if self.num_registers is None:
-            self.num_registers = num_registers
         num_values = len(self.encoder.values)
-        for num_locations in range(max(self.num_locations, min_locations), max_locations + 1):
-            for num_registers in range(self.num_registers, max(self.num_registers, min(num_values, num_locations))):
+        for num_locations in range(min_locations, max_locations + 1):
+            # TODO: calculate max registers based on repeating values
+            for num_registers in range(0, min(max_registers, num_locations) + 1):
                 ra, constraints = self.encoder.build(num_locations, num_registers)
                 self.solver.add(constraints)
+                print(num_locations, num_registers)
                 result = self.solver.check()
                 if self.verbose:
                     print("Learning with {0} locations and {1} registers. Result: {2}"
-                          .format(num_locations, num_registers, result))
+                      .format(num_locations, num_registers, result))
                 if result == z3.sat:
                     model = self.solver.model()
                     self.num_locations = num_locations

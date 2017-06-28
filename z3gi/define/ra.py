@@ -27,6 +27,28 @@ class RegisterAutomaton(Automaton):
         return ra
 
 
+class IORegisterAutomaton(Automaton):
+
+    def __init__(self, input_labels, output_labels, num_locations, num_registers):
+        labels = input_labels + output_labels
+        self.Label, elements = enum('Label', input_labels + output_labels)
+        self.labels = {labels[i]: elements[i] for i in range(len(labels))}
+        self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations + 1)])
+        self.sink = self.locations[-1]
+        self.Register, self.registers = enum('Register', ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
+        self.start = self.locations[0]
+        self.fresh = self.registers[-1]
+        self.transition = z3.Function('transition', self.Location, self.Label, self.Register, self.Location)
+        self.output = z3.Function('output', self.Location, z3.BoolSort())
+        self.used = z3.Function('used', self.Location, self.Register, z3.BoolSort())
+        self.update = z3.Function('update', self.Location, self.Label, self.Register)
+        self.loctype = z3.Function('loctype', self.Location, z3.BoolSort())
+
+
+    def export(self, model : z3.ModelRef) -> RegisterAutomaton:
+        raise NotImplementedError()
+
+
 class Mapper(object):
     def __init__(self, ra):
         self.Value = z3.DeclareSort('Value')
