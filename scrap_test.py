@@ -1,6 +1,6 @@
 from z3gi.learn.ra import RALearner
 from tests.ra_testscenario import *
-from encode.ran import RANEncoder
+from encode.ra import RAEncoder
 
 
 def check_ra_against_obs(learner, learned_ra, m,  test_scenario):
@@ -14,7 +14,7 @@ def check_ra_against_obs(learner, learned_ra, m,  test_scenario):
 
 for i in range(1,10):
     print("Experiment ",i)
-    learner = RALearner(labels, encoder=RANEncoder())
+    learner = RALearner(labels, encoder=RAEncoder())
     exp = sut_m1
     for trace in exp.traces:
         learner.add(trace)

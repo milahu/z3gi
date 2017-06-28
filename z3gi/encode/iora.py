@@ -15,7 +15,7 @@ class IORAEncoder(RAEncoder):
     def add(self, trace):
         seq = list(itertools.chain(*map(iter, trace)))
         print(list(seq))
-        node = self.trie[determinize(seq)]
+        node = self.tree[determinize(seq)]
         self.values.update([action.value for action in seq])
         self.inputs.update([action.label for action in [i for (i, o) in trace]])
         self.outputs.update([action.label for action in [o for (i, o) in trace]])

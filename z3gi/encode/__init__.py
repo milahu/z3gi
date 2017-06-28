@@ -6,5 +6,5 @@ class Encoder(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def build(self, automaton):
+    def build(self, *args):
         pass

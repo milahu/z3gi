@@ -1,6 +1,5 @@
 import z3
 
-from define.ra import RegisterAutomaton, IORegisterAutomaton, SimpleRegisterAutomaton
 from encode.ra import RAEncoder
 from learn import Learner
 import model.ra
@@ -36,8 +35,7 @@ class RALearner(Learner):
     def print_tree(self):
         self.encoder.print_tree()
 
-    def _learn_model(self, min_locations, max_locations, num_registers) -> \
-            (bool, RegisterAutomaton, z3.ModelRef):
+    def _learn_model(self, min_locations, max_locations, num_registers):
         """generates the definition and model for an ra whose traces include the traces added so far"""
         if self.num_locations is None:
             self.num_locations = min_locations
@@ -46,11 +44,7 @@ class RALearner(Learner):
         num_values = len(self.encoder.values)
         for num_locations in range(max(self.num_locations, min_locations), max_locations + 1):
             for num_registers in range(self.num_registers, max(self.num_registers, min(num_values, num_locations))):
-                if self.io:
-                    ra = IORegisterAutomaton(inputs=self.labels, outputs=self.outputs, num_locations=num_locations, num_registers=num_registers)
-                else:
-                    ra = SimpleRegisterAutomaton(labels=self.labels, num_locations=num_locations, num_registers=num_registers)
-                constraints = self.encoder.build(ra)
+                ra, constraints = self.encoder.build(num_locations, num_registers)
                 self.solver.add(constraints)
                 result = self.solver.check()
                 if self.verbose:
