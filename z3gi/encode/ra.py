@@ -158,7 +158,7 @@ class RAEncoder(Encoder):
                     )
                 ),
 
-                # If a non-fresh register is updated, and c and n are connect by fresh,
+                # If a non-fresh register is updated, and c and n are connected by fresh,
                 # then in c there is a register whose value is v,
                 # else the valuation is maintained.
                 z3.ForAll(
