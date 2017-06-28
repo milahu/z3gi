@@ -19,9 +19,27 @@ class Automaton(metaclass=ABCMeta):
       else:
          return list([trans for trans in self._state_to_trans[state] if trans.start_label == label])
 
-   @abstractmethod
    def state(self, trace):
-       pass
+       """state function which also provides a basic implementation"""
+       crt_state = self.start_state()
+       tr_str = crt_state
+       for symbol in trace:
+           transitions = self.transitions(crt_state, symbol)
+           fired_transitions = [trans for trans in transitions if trans.start_label == symbol]
+
+           # the number of fired transitions can be more than one since we could have multiple equalities
+           if len(fired_transitions) == 0:
+               raise NoTransitionFired
+
+           if len(fired_transitions) > 1:
+               raise MultipleTransitionsFired
+
+           fired_transition = fired_transitions[0]
+           crt_state = fired_transition.end_state
+           tr_str += " {0} {1}".format(symbol, crt_state)
+
+       # print(tr_str)
+       return crt_state
 
 # Basic __str__ function which works for most FSMs.
    def __str__(self):
@@ -40,7 +58,7 @@ class Transducer(Automaton, metaclass=ABCMeta):
         super().__init__(states, state_to_trans)
 
     @abstractmethod
-    def outputs(self, trace):
+    def output(self, trace):
         pass
 
 """An automaton model whose states are accepting/rejecting"""
