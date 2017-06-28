@@ -25,11 +25,18 @@ RaTestScenario = collections.namedtuple('RaTestCase',
 
 # Define data
 
+sut_m1 = RaTestScenario("Accept everything", [
+    [(act(0, 'in'), act(100, 'OK'))],
+    [(act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK'))]
+    ],
+    4, 1
+)
+
 # IO
-sut_m1 = RaTestScenario( "Store value and produce OK output if you get that same value", [
+sut_m2 = RaTestScenario( "Store value and produce OK output if you get that same value", [
     [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))],
     [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(1, 'in'), act(103, 'NOK'))],
     [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(1, 'in'), act(102, 'NOK')), (act(0, 'in'), act(103, 'OK'))],
     [(act(0, 'in'), act(100, 'OK')), (act(1, 'in'), act(101, 'NOK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))],
     [(act(1, 'in'), act(100, 'NOK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))]],
-                          5, 1)
+                          20, 2)

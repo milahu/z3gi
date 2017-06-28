@@ -6,12 +6,15 @@ class Tree(object):
         self.id = next(counter)
         self.counter = counter
         self.children = {}
+        self.parent = None
 
     def __getitem__(self, seq):
         trie = self
         for action in seq:
             if action not in trie.children:
-                trie.children[action] = Tree(self.counter)
+                child = Tree(self.counter)
+                child.parent = trie
+                trie.children[action] = child
             trie = trie.children[action]
         return trie
 
@@ -22,8 +25,8 @@ class Tree(object):
 
     def transitions(self):
         for node in self:
-            for label, value in node.children:
-                yield node, label, value, node.children[(label, value)]
+            for action in node.children:
+                yield node, action, node.children[action]
 
     def __str__(self, tabs=0):
         space = "".join(["\t" for _ in range(0, tabs)])
@@ -32,6 +35,20 @@ class Tree(object):
             tree += "\n" + space + " {0} -> {1}".format(value, self.children[(label, value)].__str__(tabs=tabs + 1))
         tree += ")"
         return tree
+
+    def path(self):
+        seq = []
+        node = self
+        parent = node.parent
+        while parent:
+            for action in parent.children:
+                if parent.children[action] == node:
+                    seq.append(action)
+                    break
+            node = parent
+            parent = node.parent
+        seq.reverse()
+        return seq
 
 
 def determinize(seq):
