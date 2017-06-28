@@ -20,7 +20,7 @@ class RAEncoder(Encoder):
         self.values.update([action.value for action in seq])
         self.labels.update([action.label for action in seq])
 
-    def build(self, num_locations, num_registers):
+    def build(self, num_locations, num_registers) -> (RegisterAutomaton, z3.ExprRef):
         ra = RegisterAutomaton(list(self.labels), num_locations, num_registers)
         mapper = Mapper(ra)
         constraints = self.axioms(ra, mapper) + \

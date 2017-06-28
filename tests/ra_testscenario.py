@@ -48,13 +48,17 @@ sut_m2 = RaTestScenario("store_1_true_then_remember", [
     ([act(1), act(2), act(1)], True),
     ([act(1), act(2), act(3)], False),
     ([act(1), act(1), act(1), act(1)], False),
-    ([act(1), act(2), act(1), act(1)], False),
-    ([act(1), act(1), act(2), act(1)], False),
     ([act(1), act(1), act(1), act(2)], False),
+    ([act(1), act(1), act(2), act(1)], False),
+    ([act(1), act(1), act(2), act(2)], False),
+    ([act(1), act(2), act(1), act(1)], False),
+    ([act(1), act(2), act(1), act(2)], False),
+    ([act(1), act(2), act(2), act(1)], False),
+    ([act(1), act(2), act(2), act(2)], False),
     # This is a check for Rick, ignore the traces below
-    ([act(1), act(1), act(2), act(1), act(1)], False),
-    ([act(1), act(1), act(2), act(1), act(2)], True)
-], 3, 1)
+    # ([act(1), act(1), act(2), act(1), act(1)], False),
+    # ([act(1), act(1), act(2), act(1), act(2)], True)
+], 5, 1)
 
 # check for unique valuedness (non-UV 4 LOC, UV 5 LOC)
 sut_m3 = RaTestScenario ("store_2_select_either_UV", [
