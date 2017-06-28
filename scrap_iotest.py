@@ -1,6 +1,6 @@
 from z3gi.learn.ra import RALearner
 from tests.iora_testscenario import *
-from encode.ra import IORAEncoder
+from encode.iora import IORAEncoder
 
 
 def check_ra_against_obs(learner, learned_ra, m,  test_scenario):

@@ -7,7 +7,7 @@ def check_ra_against_obs(learner, learned_ra, m,  test_scenario):
     """Checks if the learned RA corresponds to the scenario observations"""
     for trace, acc in test_scenario.traces:
         if learned_ra.accepts(trace) != acc:
-            learner.print_tree()
+            print(learner.encoder.tree)
             print("Register automaton {0} \n\n with model {1} \n doesn't correspond to the observation {2}"
                   .format(learned_ra, m, str((trace, acc))))
             return
@@ -15,7 +15,7 @@ def check_ra_against_obs(learner, learned_ra, m,  test_scenario):
 for i in range(1,10):
     print("Experiment ",i)
     learner = RALearner(labels, encoder=RAEncoder())
-    exp = sut_m1
+    exp = sut_m5
     for trace in exp.traces:
         learner.add(trace)
     (_, ra, m) = learner._learn_model(exp.nr_locations,exp.nr_locations+1,exp.nr_registers)
@@ -25,5 +25,6 @@ for i in range(1,10):
         lbl = ra.labels[labels[0]]
         fresh = ra.fresh
         check_ra_against_obs(learner, model, m, exp)
+        print("Learning successful")
     else:
         print("unsat")
