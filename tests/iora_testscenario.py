@@ -11,7 +11,8 @@ def act(val, label=None):
     else:
         return Action(label, val)
 
-
+def io(val, label, oval, output):
+    return (act(val, label), act(oval, output))
 
 """Test scenarios contain a list of traces together with the number of locations and registers of the SUT generating
  these traces.
@@ -29,14 +30,42 @@ sut_m1 = RaTestScenario("Accept everything", [
     [(act(0, 'in'), act(100, 'OK'))],
     [(act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK'))]
     ],
-    4, 1
+    2, 1
 )
 
+sut_m2 = RaTestScenario("OK first then always NOK", [
+    [io(0, 'in', 100, 'OK')],
+    [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK'), io(0, 'in', 102, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK'), io(1, 'in', 102, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK'), io(2, 'in', 102, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(0, 'in', 102, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(1, 'in', 102, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(2, 'in', 102, 'NOK')],
+    ],
+                        4, 1)
+
+sut_m3 = RaTestScenario("Alternating OK/NOK", [
+    [io(0, 'in', 100, 'OK')],
+    [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK')],
+    [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK'), io(0, 'in', 102, 'OK')],
+    [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK'), io(1, 'in', 102, 'OK')],
+    [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK'), io(2, 'in', 102, 'OK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(0, 'in', 102, 'OK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(1, 'in', 102, 'OK')],
+    [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(2, 'in', 102, 'OK')],
+    ],
+                        4, 1)
+
 # IO
-sut_m2 = RaTestScenario( "Store value and produce OK output if you get that same value", [
+sut_m4 = RaTestScenario( "Store value and produce OK output if you get that same value", [
     [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))],
     [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(1, 'in'), act(103, 'NOK'))],
     [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(1, 'in'), act(102, 'NOK')), (act(0, 'in'), act(103, 'OK'))],
     [(act(0, 'in'), act(100, 'OK')), (act(1, 'in'), act(101, 'NOK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))],
     [(act(1, 'in'), act(100, 'NOK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))]],
-                          20, 2)
+                         20, 2)

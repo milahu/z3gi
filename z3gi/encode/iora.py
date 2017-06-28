@@ -286,7 +286,6 @@ class IORAEncoder(Encoder):
 
             # Map to the right transition
             path = [v for (l, v) in node.path()]
-            print(path)
             if value in path:
                 if label in self.input_labels:
                     constraints.append(
