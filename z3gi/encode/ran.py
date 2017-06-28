@@ -36,10 +36,7 @@ class RANEncoder(Encoder):
             # all registers contain an uninitialized value.
             z3.ForAll(
                 [r],
-                z3.Implies(
-                    r != ra.fresh,
-                    mapper.valuation(mapper.start, r) == mapper.init
-                )
+                mapper.valuation(mapper.start, r) == mapper.init
             ),
 
             # If two locations are connected with both register and fresh transitions,
@@ -73,7 +70,10 @@ class RANEncoder(Encoder):
                     ),
                     z3.Or(
                         ra.used(q, r) == True,
-                        ra.update(q, l) == r
+                        z3.And(
+                            ra.update(q, l) == r,
+                            rp == ra.fresh
+                        ),
                     )
                 )
             ),
@@ -88,17 +88,39 @@ class RANEncoder(Encoder):
                     ),
                     ra.used(ra.transition(q, l, ra.fresh), r) == True
                 )
+            ),
+
+            # Registers are not used in the start state
+            z3.ForAll(
+                [r],
+                ra.used(ra.start, r) == False
             )
         ]
-
-        #if not initialized:
-            # Registers are not used in the start state
-        axioms.append(z3.ForAll([r], ra.used(ra.start, r) == False))
 
         return axioms
 
     def output_constraints(self, ra, mapper):
-        return [ra.output(mapper.map(mapper.element(node.id))) == accept for node, accept in self.cache.items()]
+        constraints = []
+        r = z3.Const('r', ra.Register)
+        rp = z3.Const('rp', ra.Register)
+        for node, accept in self.cache.items():
+            n = mapper.element(node.id)
+            constraints.extend(
+                [ra.output(mapper.map(n)) == accept,
+                 # z3.ForAll([r,rp],
+                 #           z3.Implies(
+                 #               z3.And(
+                 #               r != rp,
+                 #               r != ra.fresh,
+                 #               rp != ra.fresh
+                 #               ),
+                 #               mapper.valuation(n, r) != mapper.valuation(n, rp)
+                 #           )
+                 #        )
+                ]
+            )
+
+        return constraints
 
     def transition_constraints(self, ra, mapper):
         constraints = [ra.start == mapper.map(mapper.start)]
@@ -109,7 +131,7 @@ class RANEncoder(Encoder):
             v = mapper.value(value)
             c = mapper.element(child.id)
             r = z3.Const('r', ra.Register)
-            #rp = z3.Const('rp', ra.Register)
+            rp = z3.Const('rp', ra.Register)
 
             constraints.extend([
                 # If the transition is over a register, then the register is in use.
@@ -118,12 +140,14 @@ class RANEncoder(Encoder):
                     z3.Implies(
                         z3.And(
                             r!= ra.fresh,
-                            ra.transition(mapper.map(n), l, r) == mapper.map(c)),
+                            ra.transition(mapper.map(n), l, r) == mapper.map(c)
+                        ),
                         ra.used(mapper.map(n), r) == True
                     )
                 ),
 
                 # If a non-fresh register has changed, it must have been updated
+                # and the transition
                 # what if not used?
                 z3.ForAll(
                     [r],
@@ -135,16 +159,52 @@ class RANEncoder(Encoder):
                     )
                 ),
 
-                # If a register is updated, it must contain the current value
                 z3.ForAll(
                     [r],
                     z3.Implies(
                         z3.And(
                             r != ra.fresh,
-                            ra.update(mapper.map(n), l) == r),
-                        mapper.valuation(c, r) == v
+                            mapper.valuation(c, r) == mapper.valuation(n, r),
+                            ra.used(mapper.map(n), r) == True
+                        ),
+                        ra.update(mapper.map(n), l) != r
                     )
                 ),
+
+
+                z3.ForAll(
+                    [r],
+                    z3.If(
+                        z3.And(
+                            r != ra.fresh,
+                            ra.update(mapper.map(n), l) == r,
+                            ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
+                        ),
+                        z3.Exists(
+                            [rp],
+                            z3.And(
+                                rp != ra.fresh,
+                                mapper.valuation(c, rp) == v
+                            )
+                        ),
+                        mapper.valuation(c, r) == mapper.valuation(n, r)
+                    )
+                ),
+
+                # If a register is updated, then the node reached with a fresh transition must contain the new value
+                # or
+                # z3.ForAll(
+                #     [r],
+                #     z3.If(
+                #         z3.And(
+                #             r != ra.fresh,
+                #             ra.update(mapper.map(n), l) == r,
+                #             ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
+                #         ),
+                #         mapper.valuation(c, r) == v,
+                #         mapper.valuation(c, r) == mapper(n, r)
+                #     )
+                # ),
 
                 # Map to the right transition
                 z3.If(
@@ -164,6 +224,7 @@ class RANEncoder(Encoder):
                             ),
                             z3.If(
                                 ra.used(mapper.map(n), r) == True,
+                                # it might not keep the valuation
                                 ra.transition(mapper.map(n), l, r) == mapper.map(c),
                                 ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c),
                             )
