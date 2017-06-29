@@ -78,9 +78,9 @@ class IORATransition(RATransition):
         return self.output_assignment.update(valuation, action.value)
 
     def __str__(self, shortened=False):
-        trans_str = "{0}({1}) {2} {3} / {4}({5}) {6}  {7}"\
+        trans_str = "{0}({1}) {2} / {3}({4}) {5}  {6}"\
             .format(self.start_label, self.guard, self.assignment, self.output_label,\
-                    self.output_mapping, self.output_mapping, self.end_state)
+                    self.output_mapping, self.output_assignment, self.end_state)
 
         if not shortened:
             trans_str = self.start_label + "  " + trans_str

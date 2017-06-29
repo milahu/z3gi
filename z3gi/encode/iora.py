@@ -44,20 +44,20 @@ class IORAEncoder(Encoder):
 
             # # If two locations are connected with both register and fresh transitions,
             # # then you have to do an update on a different register (otherwise you should merge the two transitions)
-            z3.ForAll(
-                [q, l, r],
-                z3.Implies(
-                    z3.And(
-                        r != ra.fresh,
-                        ra.transition(q, l, ra.fresh) == ra.transition(q, l, r),
-                        ra.transition(q, l, ra.fresh) != ra.sink
-                    ),
-                    z3.And(
-                        ra.update(q, l) != ra.fresh,
-                        ra.update(q, l) != r
-                    )
-                )
-            ),
+            # z3.ForAll(
+            #     [q, l, r],
+            #     z3.Implies(
+            #         z3.And(
+            #             r != ra.fresh,
+            #             ra.transition(q, l, ra.fresh) == ra.transition(q, l, r),
+            #             ra.transition(q, l, ra.fresh) != ra.sink
+            #         ),
+            #         z3.And(
+            #             ra.update(q, l) != ra.fresh,
+            #             ra.update(q, l) != r
+            #         )
+            #     )
+            # ),
 
             # The fresh register is never used
             z3.ForAll(
@@ -74,7 +74,8 @@ class IORAEncoder(Encoder):
                 z3.Implies(
                     z3.And(
                         ra.used(ra.transition(q, l, rp), r) == True,
-                        q != ra.sink
+                        q != ra.sink,
+                        r != ra.fresh
                     ),
                     z3.Or(
                         ra.used(q, r) == True,
@@ -150,7 +151,10 @@ class IORAEncoder(Encoder):
                             l != lp
                         )
                     ),
-                    ra.transition(q, lp, rp) == ra.sink
+                    z3.Or(
+                        ra.transition(q, lp, rp) == ra.sink,
+                        rp != ra.fresh
+                    )
                 )
             ),
 
@@ -184,7 +188,7 @@ class IORAEncoder(Encoder):
                 [q, r],
                 z3.Implies(
                     ra.loctype(q) == False,
-                    ra.transition(q, ra. labels[l], r) == ra.sink
+                    ra.transition(q, ra.labels[l], r) == ra.sink
                 )
             )
         for l in self.input_labels])
@@ -317,64 +321,20 @@ class IORAEncoder(Encoder):
                     )
                 elif label in self.output_labels:
                     constraints.append(
-                        z3.If(
-                            z3.Exists(
+
+                           z3.Exists(
                                 [r],
                                 z3.And(
                                     r != ra.fresh,
                                     mapper.valuation(n, r) == v
                                 )
-                            ),
-                            z3.ForAll(
-                                [r],
-                                z3.Implies(
-                                    z3.And(
-                                        r != ra.fresh,
-                                        mapper.valuation(n, r) == v
-                                    ),
-                                    z3.And(
-                                        ra.used(mapper.map(n), r) == True,
-                                        ra.transition(mapper.map(n), l, r) == mapper.map(c),
-                                    )
-                                )
-                            ),
-                            False
-                        )
+                            )
                     )
                 else:
                     raise Exception("We did something wrong")
 
             else:
-                # Take the fresh transition
-                constraints.append(ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c))
-
-                # # Map to the right transition
-                # z3.If(
-                #     z3.Exists(
-                #         [r],
-                #         z3.And(
-                #             r != ra.fresh,
-                #             mapper.valuation(n, r) == v
-                #         )
-                #     ),
-                #     z3.ForAll(
-                #         [r],
-                #         z3.Implies(
-                #             z3.And(
-                #                 r != ra.fresh,
-                #                 mapper.valuation(n, r) == v
-                #             ),
-                #             z3.If(
-                #                 ra.used(mapper.map(n), r) == True,
-                #                 # it might not keep the valuation
-                #                 ra.transition(mapper.map(n), l, r) == mapper.map(c),
-                #                 ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
-                #             )
-                #         )
-                #     ),
-                #     ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
-                # )
-
+                 constraints.append(ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c))
 
             values.add(v)
 
