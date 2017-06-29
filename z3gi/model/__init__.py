@@ -51,18 +51,15 @@ class Automaton(metaclass=ABCMeta):
 
        return str_rep
 
-class MutableAutomaton(Automaton):
-    def __init__(self):
-        super().__init__([], dict())
-
+class MutableAutomatonMixin(metaclass=ABCMeta):
     def add_state(self, state):
-        if state not in super()._states:
-            super()._states.append(state)
+        if state not in self._states:
+            self._states.append(state)
 
     def add_transition(self, state, transition):
-        if state not in super()._state_to_trans:
-            super()._state_to_trans[state] = []
-        super()._state_to_trans[state].append(transition)
+        if state not in self._state_to_trans:
+            self._state_to_trans[state] = []
+        self._state_to_trans[state].append(transition)
 
     @abstractmethod
     def to_immutable(self) -> Automaton:
@@ -93,6 +90,13 @@ class Acceptor(Automaton, metaclass=ABCMeta):
 
     def __str__(self):
         return str(self._state_to_acc) + "\n" + super().__str__()
+
+class MutableAcceptorMixin(MutableAutomatonMixin, metaclass=ABCMeta):
+    def add_state(self, state, accepts):
+        super().add_state(state)
+        self._state_to_acc[state] = accepts
+
+
 
 """The most basic transition class available"""
 class Transition():

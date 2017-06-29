@@ -1,4 +1,5 @@
-from z3gi.model import Transition, Acceptor, NoTransitionFired, MultipleTransitionsFired, Transducer
+from z3gi.model import Transition, Acceptor, NoTransitionFired, MultipleTransitionsFired, Transducer, \
+    MutableAcceptorMixin, MutableAutomatonMixin
 from abc import ABCMeta, abstractmethod
 import itertools
 import collections
@@ -131,8 +132,8 @@ class RegisterAutomaton(Acceptor, RegisterMachine):
 
 
 class IORegisterAutomaton(Transducer, RegisterMachine):
-    def __init__(self, locations, loc_to_acc, loc_to_trans, registers):
-      super().__init__(locations, loc_to_trans, loc_to_acc)
+    def __init__(self, locations, loc_to_trans, registers):
+      super().__init__(locations, loc_to_trans)
       self._registers = registers
 
     def registers(self) -> List[Register]:
@@ -179,26 +180,32 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
             output = fired_transition.output(valuation, values)
             return output
 
-class MutableRegisterAutomaton(RegisterAutomaton):
+class MutableRegisterAutomaton(RegisterAutomaton, MutableAcceptorMixin):
     def __init__(self):
         super().__init__([], dict(), dict(), [])
 
-    def add_state(self, state, accepts):
-        if state not in self._states:
-            self._states.append(state)
-        self._state_to_acc[state] = accepts
-
-
-    def add_transition(self, state, transition):
-        if state not in self._state_to_trans:
-            self._state_to_trans[state]=[]
-        self._state_to_trans[state].append(transition)
+    def add_transition(self, state:str, transition:RATransition):
+        super().add_transition(state, transition)
         for reg in transition.guard.registers():
             if reg not in self._registers:
                 self._registers.append(reg)
 
     def to_immutable(self) -> RegisterAutomaton:
         return RegisterAutomaton(self._states, self._state_to_acc, self._state_to_trans, self._registers)
+
+class MutableIORegisterAutomaton(IORegisterAutomaton, MutableAutomatonMixin):
+    def __init__(self):
+        super().__init__([], dict(), [])
+
+    def add_transition(self, state:str, transition:IORATransition):
+        super().add_transition(state, transition)
+        for reg in transition.guard.registers():
+            if reg not in self._registers:
+                self._registers.append(reg)
+
+    def to_immutable(self):
+        return IORegisterAutomaton(self._states, self._state_to_trans, self._registers)
+
 
 class Guard(metaclass=ABCMeta):
     """A guard with is_satisfied implements a predicate over the current register valuation and the parameter value. """

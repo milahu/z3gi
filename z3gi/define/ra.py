@@ -64,7 +64,6 @@ class Mapper(object):
     def element(self, name):
         return z3.Const("n"+str(name), self.Element)
 
-
 class RegisterAutomatonBuilder(object):
     """
     Builder class that construct a register automaton out of a model definition.
@@ -98,26 +97,106 @@ class RegisterAutomatonBuilder(object):
                 z3end_state_to_guards[z3end_state] = []
             z3end_state_to_guards[z3end_state].append(z3guard)
         update = model.eval(self.ra.update(z3state, z3label))
-        start_state = translator.z3_to_state(z3state)
-        enabled_z3regs = [reg for reg in enabled_z3guards if reg is not self.ra.fresh]
+        used_z3regs = [reg for reg in enabled_z3guards if reg is not self.ra.fresh]
 
         for (z3end_state, z3guards) in z3end_state_to_guards.items():
             # a transition which makes an assignment is never merged
             if self.ra.fresh in z3guards and update is not self.ra.fresh:
-                self._add_transition(translator, mut_ra, start_state, z3label,
-                                     [self.ra.fresh], update, z3end_state, enabled_z3regs)
+                self._add_transition(translator, mut_ra, z3state, z3label,
+                                     [self.ra.fresh], update, z3end_state, used_z3regs)
                 z3guards.remove(self.ra.fresh)
             if len(z3guards) > 0:
-                self._add_transition(translator, mut_ra, start_state, z3label,
-                                     z3guards, None, z3end_state, enabled_z3regs)
+                self._add_transition(translator, mut_ra, z3state, z3label,
+                                     z3guards, None, z3end_state, used_z3regs)
 
-    def _add_transition(self, translator, mut_ra, start_state, z3label, z3guards, z3asg, z3end_state, enabled_z3regs):
-        guard = translator.z3_to_guard(z3guards, enabled_z3regs)
-        asg = translator.z3_to_assignment(z3asg)
+    def _add_transition(self, translator, mut_ra, z3start_state, z3label, z3guards, z3update, z3end_state, used_z3regs):
+        start_state = translator.z3_to_state(z3start_state)
+        guard = translator.z3_to_guard(z3guards, used_z3regs)
+        asg = translator.z3_to_assignment(z3update)
         end_state = translator.z3_to_state(z3end_state)
         transition = RATransition(start_state, translator.z3_to_label(z3label),
                                   guard, asg, end_state)
         mut_ra.add_transition(start_state, transition)
+
+
+class IORegisterAutomatonBuilder(object):
+    """
+    Builder class that construct a register automaton out of a model definition.
+    """
+    def __init__(self, ra : IORegisterAutomaton):
+        super().__init__()
+        self.ra = ra
+
+
+    def build_ra(self, model, input_labels, output_labels):
+        mut_ra = MutableIORegisterAutomaton()
+        translator = Translator(self.ra)
+        z3input_states = [z3state for z3state in self.ra.locations if
+            translator.z3_to_bool(model.eval(self.ra.loctype(z3state)))]
+
+        for z3state in z3input_states:
+            self._add_state(translator, mut_ra, z3state)
+            for z3label in input_labels:
+                self._add_transitions(model, translator, mut_ra, z3state, z3label, output_labels)
+        return mut_ra.to_immutable()
+
+    def _add_state(self, translator, mut_ra, z3state):
+        mut_ra.add_state(translator.z3_to_state(z3state))
+
+    def _add_transitions(self, model, translator, mut_ra, z3state, z3label, z3output_labels):
+        z3end_state_to_guards = dict()
+        enabled_z3guards = [guard for guard in self.ra.registers if
+                            translator.z3_to_bool(model.eval(self.ra.used(z3state, guard))) or
+                            guard is self.ra.fresh]
+
+        for z3guard in enabled_z3guards:
+            z3out_state = model.eval(self.ra.transition(z3state, z3label, z3guard))
+
+            if z3out_state not in z3end_state_to_guards:
+                z3end_state_to_guards[z3out_state] = []
+            z3end_state_to_guards[z3out_state].append(z3guard)
+        update = model.eval(self.ra.update(z3state, z3label))
+        used_z3regs = [reg for reg in enabled_z3guards if reg is not self.ra.fresh]
+
+
+        for (z3out_state, z3guards) in z3end_state_to_guards.items():
+            # a transition which makes an assignment is never merged
+            if self.ra.fresh in z3guards and update is not self.ra.fresh:
+                self._add_transition(translator, mut_ra, z3state, z3label,
+                                     [self.ra.fresh], update, z3out_state,
+                                     z3output_labels, used_z3regs)
+                z3guards.remove(self.ra.fresh)
+            if len(z3guards) > 0:
+                self._add_transition(model, translator, mut_ra, z3state, z3label,
+                                     z3guards, None, z3out_state,
+                                     z3output_labels, used_z3regs)
+
+    def _add_transition(self, model, translator, mut_ra, z3start_state, z3label,
+                        z3disjguards, z3input_update, z3out_state, output_labels, used_z3regs):
+
+        enabled_z3guards = [guard for guard in self.ra.registers if
+                            translator.z3_to_bool(model.eval(self.ra.used(z3out_state, guard))) or
+                            guard is self.ra.fresh]
+
+        active_z3action = [(output_label, guard) for output_label in output_labels for guard in enabled_z3guards
+                         if model.eval(self.ra.transition(z3out_state, output_label, guard)) is not self.ra.sink]
+        if len(active_z3action) != 1:
+            raise Exception("Exactly one transition should not lead to sink state")
+
+        (z3output_label, z3output_guard) = active_z3action[0]
+        z3end_state = model.eval(self.ra.transitions(z3output_label, z3output_guard))
+        z3output_update = model.eval(self.ra.update(z3out_state))
+
+        transition = IORATransition(translator.z3_to_state(z3start_state),
+                                    translator.z3_to_label(z3label),
+                                    translator.z3_to_guard(z3disjguards, used_z3regs),
+                                    translator.z3_to_assignment(z3input_update),
+                                    translator.z3_to_label(z3output_label),
+                                    translator.z3_to_mapping(z3output_guard),
+                                    translator.z3_to_assignment(z3output_update),
+                                    translator.z3_to_state(z3end_state),
+                                    )
+        mut_ra.add_transition(z3start_state, transition)
 
 class Translator(object):
     """Provides translation from z3 constants to RA elements. """
@@ -144,6 +223,12 @@ class Translator(object):
                 return equ_guards[0]
             else:
                 return OrGuard(equ_guards)
+
+    def z3_to_mapping(self, z3guard):
+        if z3guard is self.ra.fresh:
+            return Fresh(0)
+        else:
+            return self.z3_to_register(z3guard)
 
     def z3_to_bool(self, z3bool):
         return str(z3bool) == "True"
