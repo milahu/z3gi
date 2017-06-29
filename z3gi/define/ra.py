@@ -148,7 +148,9 @@ class IORegisterAutomatonBuilder(object):
                               self.ra.transition(self.ra.start, z3label, self.ra.fresh) != self.ra.sink))
                           ]
         z3output_labels = [z3label for z3label in self.ra.labels.values() if z3label not in z3input_labels]
-        print("Input labels ", z3input_labels, " output labels", z3output_labels)
+        print("Input labels ", z3input_labels, "; Output labels", z3output_labels,
+              "Input states ", z3input_states, "; Output and sink states",
+              [z3state for z3state in self.ra.locations if z3state not in z3input_states])
 
         for z3state in z3input_states:
             self._add_state(translator, mut_ra, z3state)
@@ -174,7 +176,7 @@ class IORegisterAutomatonBuilder(object):
         update = model.eval(self.ra.update(z3state, z3label))
         used_z3regs = [reg for reg in enabled_z3guards if reg is not self.ra.fresh]
 
-
+        print("For {0} we have the transitions \n {1}".format(z3state, z3end_state_to_guards))
         for (z3out_state, z3guards) in z3end_state_to_guards.items():
             # a transition which makes an assignment is never merged
             if self.ra.fresh in z3guards and update is not self.ra.fresh:
@@ -199,8 +201,8 @@ class IORegisterAutomatonBuilder(object):
                                                              != self.ra.sink))]
         if len(active_z3action) != 1:
             raise Exception("Exactly one transition should not lead to sink state. "
-                            "From location {0} there are {1} transitions which lead to sink"
-                            .format(z3out_state, len(active_z3action)))
+                            "From location {0} there are {1} transitions which lead to sink {2}"
+                            .format(z3out_state, len(active_z3action), self.ra.sink))
 
         (z3output_label, z3output_guard) = active_z3action[0]
         z3end_state = model.eval(self.ra.transition(z3out_state, z3output_label, z3output_guard))

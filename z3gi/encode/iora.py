@@ -193,19 +193,19 @@ class IORAEncoder(Encoder):
             )
         for l in self.input_labels])
 
-        # # Input enabled
-        # axioms.extend([
-        #     z3.ForAll(
-        #         [q, r],
-        #         z3.Implies(
-        #             z3.And(
-        #                 ra.loctype(q) == True,
-        #                 q != ra.sink
-        #             ),
-        #             ra.transition(q, ra.labels[l], r) != ra.sink
-        #         )
-        #     )
-        # for l in self.input_labels])
+        # Input enabled
+        axioms.extend([
+            z3.ForAll(
+                [q, r],
+                z3.Implies(
+                    z3.And(
+                        ra.loctype(q) == True,
+                        q != ra.sink
+                    ),
+                    ra.transition(q, ra.labels[l], r) != ra.sink
+                )
+            )
+        for l in self.input_labels])
 
         return axioms
 
