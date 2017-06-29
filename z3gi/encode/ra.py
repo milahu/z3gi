@@ -179,9 +179,14 @@ class RAEncoder(Encoder):
                         mapper.valuation(c, r) == mapper.valuation(n, r)
                     )
                 ),
+            ])
 
-                # Map to the right transition
-                z3.If(
+            path = [v for (l, v) in node.path()]
+
+            # Map to the right transition
+            if value in path:
+                constraints.append(
+                    z3.If(
                     z3.Exists(
                         [r],
                         z3.And(
@@ -204,8 +209,12 @@ class RAEncoder(Encoder):
                             )
                         )
                     ),
-                    ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)),
-            ])
+                    ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c))
+                )
+            else:
+                constraints.append(
+                    ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
+                )
 
         constraints.append(z3.Distinct(list(values)))
         return constraints

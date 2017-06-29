@@ -111,7 +111,7 @@ sut_m4 = RaTestScenario ("store_2_toggle_select_NS", [
    ([act(1), act(2), act(1), act(2)], True),
    ([act(1), act(2), act(1), act(2), act(1)], True),
    ([act(1), act(2), act(1), act(2), act(1), act(2)], True)
-], 4, 2)
+], 5, 2)
 
 # Go to an accepting sink if the third value is different than the first two, else go to a rejecting sink
 sut_m5 = RaTestScenario("store_2_third_diff", [

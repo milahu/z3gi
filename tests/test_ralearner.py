@@ -63,9 +63,8 @@ class RaLearnerTest(unittest.TestCase):
 
         min_locations = test_scenario.nr_locations - 1
         max_locations = test_scenario.nr_locations + 1
-        num_regs = 0
 
-        result = ralearner._learn_model(min_locations, max_locations, num_regs)  #
+        result = ralearner._learn_model(min_locations, max_locations, test_scenario.nr_registers + 1)  #
         return result
 
 
