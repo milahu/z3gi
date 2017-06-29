@@ -62,5 +62,3 @@ class IOTransition(Transition):
         super().__init__(start_state, start_label, end_state)
         self.output = output
 
-
-

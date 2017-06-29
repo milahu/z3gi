@@ -51,6 +51,22 @@ class Automaton(metaclass=ABCMeta):
 
        return str_rep
 
+class MutableAutomaton(Automaton):
+    def __init__(self):
+        super().__init__([], dict())
+
+    def add_state(self, state):
+        if state not in super()._states:
+            super()._states.append(state)
+
+    def add_transition(self, state, transition):
+        if state not in super()._state_to_trans:
+            super()._state_to_trans[state] = []
+        super()._state_to_trans[state].append(transition)
+
+    @abstractmethod
+    def to_immutable(self) -> Automaton:
+        pass
 
 """An automaton model that generates output"""
 class Transducer(Automaton, metaclass=ABCMeta):
@@ -98,4 +114,3 @@ class NoTransitionFired(Exception):
 """Exception raised when several transitions can be fired in a deterministic machine"""
 class MultipleTransitionsFired(Exception):
     pass
-
