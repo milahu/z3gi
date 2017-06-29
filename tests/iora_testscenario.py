@@ -67,5 +67,54 @@ sut_m4 = RaTestScenario( "Store value and produce OK output if you get that same
     [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(1, 'in'), act(103, 'NOK'))],
     [(act(0, 'in'), act(100, 'OK')), (act(0, 'in'), act(101, 'OK')), (act(1, 'in'), act(102, 'NOK')), (act(0, 'in'), act(103, 'OK'))],
     [(act(0, 'in'), act(100, 'OK')), (act(1, 'in'), act(101, 'NOK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))],
-    [(act(1, 'in'), act(100, 'NOK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))]],
-                         20, 2)
+  #  [(act(1, 'in'), act(100, 'NOK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))]],
+                         ],
+                         6, 2)
+
+# login model (incomplete traces)
+sut_m5 = RaTestScenario("Login model", [
+    [io(0, 'reg', 100, 'OK') ],
+    [io(0, 'in', 100, 'NOK') ],
+    [io(0, 'out', 100, 'NOK') ],
+    [io(0, 'reg', 100, 'OK'), io(1, 'reg', 101, 'NOK')],
+    [io(0, 'reg', 100, 'OK'), io(1, 'in', 101, 'NOK') ],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK')  ],
+    [io(0, 'reg', 100, 'OK'), io(1, 'out', 101, 'NOK')],
+    [io(0, 'in', 100, 'NOK'), io(0, 'reg', 101, 'OK') ],
+    [io(0, 'in', 100, 'NOK'), io(0, 'in', 101, 'NOK') ],
+    [io(0, 'in', 100, 'NOK'), io(0, 'out', 101, 'NOK')],
+    [io(0, 'out', 100, 'NOK'), io(1, 'reg', 101, 'OK') ],
+    [io(0, 'out', 100, 'NOK'), io(1, 'in', 101, 'NOK') ],
+    [io(0, 'out', 100, 'NOK'), io(1, 'out', 101, 'NOK')],
+
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'reg', 102, 'NOK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'in', 102, 'NOK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(0, 'in', 102, 'NOK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'out', 102, 'NOK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(0, 'out', 102, 'OK')],
+
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'reg', 102, 'NOK'), io(2, 'reg', 103, 'NOK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'reg', 102, 'NOK'), io(2, 'in',  103, 'NOK') ],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'reg', 102, 'NOK'), io(0, 'out', 103, 'OK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'reg', 102, 'NOK'), io(2, 'out', 103, 'NOK')],
+
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'in', 102, 'NOK'), io(2, 'reg', 103, 'NOK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'in', 102, 'NOK'), io(2, 'in',  103, 'NOK') ],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'in', 102, 'NOK'), io(0, 'out', 103, 'OK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'in', 102, 'NOK'), io(2, 'out', 103, 'NOK')],
+
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'out', 102, 'NOK'), io(2, 'reg', 103, 'NOK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'out', 102, 'NOK'), io(2, 'in',  103, 'NOK') ],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'out', 102, 'NOK'), io(0, 'out', 103, 'OK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(1, 'out', 102, 'NOK'), io(2, 'out', 103, 'NOK')],
+
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(0, 'out', 102, 'OK'), io(1, 'reg', 103, 'NOK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(0, 'out', 102, 'OK'), io(1, 'in',  103, 'NOK') ],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(0, 'out', 102, 'OK'), io(0, 'in',  103, 'OK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(0, 'out', 102, 'OK'), io(1, 'out', 103, 'NOK')],
+
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(0, 'out', 102, 'OK'), io(1, 'reg', 103, 'NOK'), io(0, 'in',  104, 'OK')],
+    [io(0, 'reg', 100, 'OK'), io(0, 'in', 101, 'OK'), io(0, 'out', 102, 'OK'), io(1, 'out', 103, 'NOK'), io(0, 'in',  104, 'OK')],
+
+    ],
+                        9, 1)
