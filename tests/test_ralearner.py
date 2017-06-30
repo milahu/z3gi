@@ -6,7 +6,7 @@ from z3gi.define.ra import RegisterAutomaton
 import model.ra
 import z3
 
-num_exp = 4
+num_exp = 1
 
 class RaLearnerTest(unittest.TestCase):
 

@@ -106,7 +106,7 @@ class RegisterAutomatonBuilder(object):
 
         for (z3end_state, z3guards) in z3end_state_to_guards.items():
             # a transition which makes an assignment is never merged
-            if self.ra.fresh in z3guards and update is not self.ra.fresh:
+            if self.ra.fresh in z3guards and not translator.z3_to_bool(model.eval(update == self.ra.fresh)):
                 self._add_transition(translator, mut_ra, z3state, z3label,
                                      [self.ra.fresh], update, z3end_state, used_z3regs)
                 z3guards.remove(self.ra.fresh)
@@ -179,7 +179,7 @@ class IORegisterAutomatonBuilder(object):
         print("For {0} we have the transitions \n {1}".format(z3state, z3end_state_to_guards))
         for (z3out_state, z3guards) in z3end_state_to_guards.items():
             # a transition which makes an assignment is never merged
-            if self.ra.fresh in z3guards and update is not self.ra.fresh:
+            if self.ra.fresh in z3guards and not translator.z3_to_bool(model.eval(update == self.ra.fresh)):
                 self._add_transition(model, translator, mut_ra, z3state, z3label,
                                      [self.ra.fresh], update, z3out_state,
                                      z3output_labels, used_z3regs)

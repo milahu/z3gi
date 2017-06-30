@@ -70,7 +70,7 @@ class IORATransition(RATransition):
 
     def output(self, valuation, values):
         if type(self.output_mapping) == Fresh:
-            return Action(self.output_label, max(values) + 1)
+            return Action(self.output_label, max(values) + 1 if len(values) > 0 else 0)
         else:
             return Action(self.output_label, valuation[self.output_mapping])
 
@@ -100,6 +100,7 @@ class RegisterMachine():
         if len(fired_transitions) > 1:
             raise MultipleTransitionsFired
         return fired_transitions[0]
+
 
 class RegisterAutomaton(Acceptor, RegisterMachine):
     def __init__(self, locations, loc_to_acc, loc_to_trans, registers):
@@ -165,6 +166,7 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
             output_action = fired_transition.output(reg_val, values)
             # based on this output, the transition should update the set of registers
             reg_val = fired_transition.output_update(reg_val, output_action)
+            values.add(output_action.value)
 
             crt_state = fired_transition.end_state
         return (crt_state, reg_val, values)
@@ -177,8 +179,18 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
             action = trace[-1]
             transitions = super().transitions(reached_state, action.label)
             fired_transition = super()._fired_transition(transitions, valuation, action)
+            values.add(action.value)
             output = fired_transition.output(valuation, values)
             return output
+
+    def compress(self):
+        mutable_ra = MutableIORegisterAutomaton()
+        [mutable_ra.add_state(state) for state in self.states()]
+        for state in self.states():
+            transitions = self.transitions()
+
+
+
 
 class MutableRegisterAutomaton(RegisterAutomaton, MutableAcceptorMixin):
     def __init__(self):

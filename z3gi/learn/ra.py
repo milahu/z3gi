@@ -32,9 +32,6 @@ class RALearner(Learner):
             return ra_def.export(m)
         return None
 
-    def print_tree(self):
-        self.encoder.print_tree()
-
     def _learn_model(self, min_locations=1, max_locations=20, max_registers=10):
         """generates the definition and model for an ra whose traces include the traces added so far"""
         num_values = len(self.encoder.values)
