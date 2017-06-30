@@ -120,15 +120,12 @@ class RegisterAutomaton(Acceptor, RegisterMachine):
             reg_val[reg] = init
 
         crt_state = self.start_state()
-        tr_str = "({0}:{1})".format(crt_state, reg_val)
         for action in trace:
             transitions = self.transitions(crt_state, action.label)
             fired_transition = super()._fired_transition(transitions, reg_val, action)
             reg_val = fired_transition.update(reg_val, action)
             crt_state = fired_transition.end_state
-            tr_str += " {0} ({1}:{2})".format(action, crt_state, reg_val)
 
-        # print(tr_str)
         return crt_state
 
 
@@ -183,15 +180,6 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
             output = fired_transition.output(valuation, values)
             return output
 
-    def compress(self):
-        mutable_ra = MutableIORegisterAutomaton()
-        [mutable_ra.add_state(state) for state in self.states()]
-        for state in self.states():
-            transitions = self.transitions()
-
-
-
-
 class MutableRegisterAutomaton(RegisterAutomaton, MutableAcceptorMixin):
     def __init__(self):
         super().__init__([], dict(), dict(), [])
@@ -217,7 +205,6 @@ class MutableIORegisterAutomaton(IORegisterAutomaton, MutableAutomatonMixin):
 
     def to_immutable(self):
         return IORegisterAutomaton(self._states, self._state_to_trans, self._registers)
-
 
 class Guard(metaclass=ABCMeta):
     """A guard with is_satisfied implements a predicate over the current register valuation and the parameter value. """

@@ -15,7 +15,7 @@ def check_ra_against_obs(learner, learned_ra, m,  test_scenario):
 for i in range(1,10):
     print("Experiment ",i)
     learner = RALearner(labels, encoder=RAEncoder())
-    exp = sut_m5
+    exp = sut_m3
     for trace in exp.traces:
         learner.add(trace)
     (_, ra, m) = learner._learn_model(exp.nr_locations,exp.nr_locations+1,exp.nr_registers)

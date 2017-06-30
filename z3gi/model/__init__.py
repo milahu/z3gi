@@ -22,7 +22,6 @@ class Automaton(metaclass=ABCMeta):
    def state(self, trace):
        """state function which also provides a basic implementation"""
        crt_state = self.start_state()
-       tr_str = crt_state
        for symbol in trace:
            transitions = self.transitions(crt_state, symbol)
            fired_transitions = [trans for trans in transitions if trans.start_label == symbol]
@@ -36,9 +35,7 @@ class Automaton(metaclass=ABCMeta):
 
            fired_transition = fired_transitions[0]
            crt_state = fired_transition.end_state
-           tr_str += " {0} {1}".format(symbol, crt_state)
 
-       # print(tr_str)
        return crt_state
 
 # Basic __str__ function which works for most FSMs.
