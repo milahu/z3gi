@@ -35,25 +35,10 @@ class RAEncoder(Encoder):
         axioms = [
             # In the start state of the mapper,
             # all registers contain an uninitialized value.
+            # axiom not needed
             z3.ForAll(
                 [r],
                 mapper.valuation(mapper.start, r) == mapper.init
-            ),
-
-            # If two locations are connected with both register and fresh transitions,
-            # then you have to do an update on a different register (otherwise you should merge the two transitions)
-            z3.ForAll(
-                [q, l, r],
-                z3.Implies(
-                    z3.And(
-                        r != ra.fresh,
-                        ra.transition(q, l, ra.fresh) == ra.transition(q, l, r),
-                    ),
-                    z3.And(
-                        ra.update(q, l) != ra.fresh,
-                        ra.update(q, l) != r
-                    )
-                )
             ),
 
             # The fresh register is never used
@@ -77,7 +62,7 @@ class RAEncoder(Encoder):
                 )
             ),
 
-            # If a variable is updated, then it should have been used.
+            # If a registers is updated, then it is used afterwards.
             z3.ForAll(
                 [q, l, r],
                 z3.Implies(
@@ -122,16 +107,16 @@ class RAEncoder(Encoder):
 
             constraints.extend([
                 # If the transition is over a register, then the register is in use.
-                z3.ForAll(
-                    [r],
-                    z3.Implies(
-                        z3.And(
-                            r!= ra.fresh,
-                            ra.transition(mapper.map(n), l, r) == mapper.map(c)
-                        ),
-                        ra.used(mapper.map(n), r) == True
-                    )
-                ),
+                # z3.ForAll(
+                #     [r],
+                #     z3.Implies(
+                #         z3.And(
+                #             r!= ra.fresh,
+                #             ra.transition(mapper.map(n), l, r) == mapper.map(c)
+                #         ),
+                #         ra.used(mapper.map(n), r) == True
+                #     )
+                # ),
 
                 # If a non-fresh register has changed, it must have been updated
                 z3.ForAll(
@@ -159,7 +144,7 @@ class RAEncoder(Encoder):
                 ),
 
                 # If a non-fresh register is updated, and c and n are connected by fresh,
-                # then in c there is a register whose value is v,
+                # then the register contains the value
                 # else the valuation is maintained.
                 z3.ForAll(
                     [r],
@@ -169,13 +154,7 @@ class RAEncoder(Encoder):
                             ra.update(mapper.map(n), l) == r,
                             ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
                         ),
-                        z3.Exists(
-                            [rp],
-                            z3.And(
-                                rp != ra.fresh,
-                                mapper.valuation(c, rp) == v
-                            )
-                        ),
+                        mapper.valuation(c, r) == v,
                         mapper.valuation(c, r) == mapper.valuation(n, r)
                     )
                 ),
@@ -187,29 +166,27 @@ class RAEncoder(Encoder):
             if value in path:
                 constraints.append(
                     z3.If(
-                    z3.Exists(
-                        [r],
-                        z3.And(
-                            r != ra.fresh,
-                            mapper.valuation(n, r) == v
-                        )
-                    ),
-                    z3.ForAll(
-                        [r],
-                        z3.Implies(
+                        z3.Exists(
+                            [r],
                             z3.And(
                                 r != ra.fresh,
-                                mapper.valuation(n, r) == v
-                            ),
-                            z3.If(
-                                ra.used(mapper.map(n), r) == True,
-                                # it might not keep the valuation
-                                ra.transition(mapper.map(n), l, r) == mapper.map(c),
-                                ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c),
+                                mapper.valuation(n, r) == v,
+                                ra.used(mapper.map(n), r) == True
                             )
-                        )
-                    ),
-                    ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c))
+                        ),
+                        z3.ForAll(
+                            [r],
+                            z3.Implies(
+                                z3.And(
+                                    r != ra.fresh,
+                                    mapper.valuation(n, r) == v,
+                                    ra.used(mapper.map(n), r) == True
+                                ),
+                                ra.transition(mapper.map(n), l, r) == mapper.map(c)
+                            )
+                        ),
+                        ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
+                    )
                 )
             else:
                 constraints.append(
