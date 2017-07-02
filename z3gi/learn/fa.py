@@ -33,7 +33,7 @@ class MealyLearner(Learner):
         """generates the definition and model for an ra whose traces include the traces added so far"""
         num_values = len(self.encoder.values)
         for num_locations in range(min_states, max_states + 1):
-            ra, constraints = self.encoder.build(num_locations, num_registers)
+            ra, constraints = self.encoder.build(num_locations)
             self.solver.add(constraints)
             result = self.solver.check()
             if self.verbose:

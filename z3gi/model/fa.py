@@ -64,3 +64,5 @@ class MutableMealyMachine(MealyMachine, MutableAutomatonMixin):
     def __init__(self):
         super().__init__([], {})
 
+    def to_immutable(self) -> MealyMachine:
+        return MealyMachine(self._states, self._state_to_trans)
