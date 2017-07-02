@@ -1,13 +1,17 @@
-from z3gi.model import Transition, Acceptor, Transducer, NoTransitionFired, MultipleTransitionsFired, Automaton
-from abc import ABCMeta, abstractmethod
-import itertools
-import collections
+from z3gi.model import Transition, Acceptor, Transducer
+from model import MutableAutomatonMixin, MutableAcceptorMixin
 from typing import List
 
 Symbol = str
 State = str
 Label = str
 Output = str
+
+
+class IOTransition(Transition):
+    def __init__(self, start_state, start_label, output, end_state):
+        super().__init__(start_state, start_label, end_state)
+        self.output = output
 
 class DFA(Acceptor):
     def __init__(self, states, state_to_trans, state_to_acc):
@@ -38,9 +42,8 @@ class MooreMachine(Transducer):
         return self.state_to_out[crt_state]
 
 class MealyMachine(Transducer):
-    def __init__(self, states, state_to_trans, state_to_out):
+    def __init__(self, states, state_to_trans):
         super().__init__(states, state_to_trans)
-        self.state_to_out = state_to_out
 
     def transitions(self, state: State, label: Label = None) -> List[IOTransition]:
         return super().transitions(state, label)
@@ -57,8 +60,7 @@ class MealyMachine(Transducer):
             trans = self.transitions(state_before, trace[-1])
             return trans.output
 
-class IOTransition(Transition):
-    def __init__(self, start_state, start_label, output, end_state):
-        super().__init__(start_state, start_label, end_state)
-        self.output = output
+class MutableMealyMachine(MealyMachine, MutableAutomatonMixin):
+    def __init__(self):
+        super().__init__([], {})
 

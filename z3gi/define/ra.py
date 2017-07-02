@@ -2,6 +2,7 @@ from collections import namedtuple
 
 import z3
 from model.ra import *
+from define import enum
 
 
 from define import Automaton
@@ -46,7 +47,7 @@ class IORegisterAutomaton(Automaton):
         self.loctype = z3.Function('loctype', self.Location, z3.BoolSort())
 
 
-    def export(self, model : z3.ModelRef) -> RegisterAutomaton:
+    def export(self, model : z3.ModelRef) -> IORegisterAutomaton:
         builder = IORegisterAutomatonBuilder(self)
         ra = builder.build_ra(model)
         return ra
@@ -77,7 +78,7 @@ class RegisterAutomatonBuilder(object):
 
     def build_ra(self, model):
         mut_ra = MutableRegisterAutomaton()
-        translator = Translator(self.ra)
+        translator = RATranslator(self.ra)
         for z3state in self.ra.locations:
             self._add_state(model, translator, mut_ra, z3state)
             for z3label in self.ra.labels.values():
@@ -135,7 +136,7 @@ class IORegisterAutomatonBuilder(object):
 
     def build_ra(self, model):
         mut_ra = MutableIORegisterAutomaton()
-        translator = Translator(self.ra)
+        translator = RATranslator(self.ra)
 
         z3input_states = [z3state for z3state in self.ra.locations if
             translator.z3_to_bool(model.eval(
@@ -219,7 +220,7 @@ class IORegisterAutomatonBuilder(object):
                                     )
         mut_ra.add_transition(translator.z3_to_state(z3start_state), transition)
 
-class Translator(object):
+class RATranslator(object):
     """Provides translation from z3 constants to RA elements. """
     def __init__(self, ra):
         self.reg_context = dict()
@@ -267,11 +268,3 @@ class Translator(object):
         if str(z3register) not in self.reg_context:
             self.reg_context[str(z3register)] = Register(self.ra.registers.index(z3register))
         return self.reg_context[str(z3register)]
-
-
-def enum(name, elements):
-    d = z3.Datatype(name)
-    for element in elements:
-        d.declare(element)
-    d = d.create()
-    return d, [d.__getattribute__(element) for element in elements]

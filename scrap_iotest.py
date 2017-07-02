@@ -5,6 +5,7 @@ from utils import determinize
 from z3gi.learn.ra import RALearner
 from tests.iora_testscenario import *
 from encode.iora import IORAEncoder
+from model.parsing import to_dot
 
 def determinize_act_io(tuple_seq):
     seq = list(itertools.chain.from_iterable(tuple_seq))
@@ -21,6 +22,7 @@ def check_ra_against_obs(learner: RALearner, learned_ra:IORegisterAutomaton, m, 
         for (inp_act, out_act) in trace:
             inp_trace.append(inp_act)
             output = learned_ra.output(inp_trace)
+
             if output != out_act:
                 print("Register automaton: \n {0} \n with model: \n {1} \n responds to {2} "
                       "with {3} instead of {4}".format(learned_ra, m, inp_trace, output, out_act))
@@ -37,5 +39,6 @@ for i in range(1,2):
         model = ra.export(m)
         print(model)
         check_ra_against_obs(learner, model, m, exp)
+        to_dot(model, None)
     else:
         print("unsat")
