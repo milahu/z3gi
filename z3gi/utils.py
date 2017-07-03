@@ -31,8 +31,8 @@ class Tree(object):
     def __str__(self, tabs=0):
         space = "".join(["\t" for _ in range(0, tabs)])
         tree = "(n{0}".format(self.id)
-        for label, value in self.children:
-            tree += "\n" + space + " {0} -> {1}".format(value, self.children[(label, value)].__str__(tabs=tabs + 1))
+        for action in self.children:
+            tree += "\n" + space + " {0} -> {1}".format(action, self.children[action].__str__(tabs=tabs + 1))
         tree += ")"
         return tree
 
