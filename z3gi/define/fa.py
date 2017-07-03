@@ -41,6 +41,15 @@ class MealyMachine(FSM):
         mealy = builder.build_mealy(model)
         return mealy
 
+class Mapper(object):
+    def __init__(self, fa):
+        self.Element = z3.DeclareSort('Element')
+        self.start = self.element(0)
+        self.map = z3.Function('map', self.Element, fa.Location)
+
+    def element(self, name):
+        return z3.Const("n"+str(name), self.Element)
+
 
 class MealyMachineBuilder(object):
     def __init__(self, mm : MealyMachine):
