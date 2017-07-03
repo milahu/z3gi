@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 import z3
 from define import enum, Automaton
 import model.fa
+from model import Transition
 
 
 class FSM(Automaton,metaclass=ABCMeta):
@@ -20,10 +21,9 @@ class DFA(FSM):
         self.output = z3.Function('output', self.State, z3.BoolSort())
 
     def export(self, model : z3.ModelRef) -> model.fa.DFA:
-        pass
-        #builder = DFABuilder(self)
-        #dfa = builder.build_dfa(self)
-        #return dfa
+        builder = DFABuilder(self)
+        dfa = builder.build_dfa(self)
+        return dfa
 
 
 class MealyMachine(FSM):
@@ -56,15 +56,15 @@ class MealyMachineBuilder(object):
         super().__init__()
         self.mm = mm
 
-    def build_mealy(self, model : z3.ModelRef) -> model.fa.MealyMachine:
+    def build_mealy(self, m : z3.ModelRef) -> model.fa.MealyMachine:
         tr = FATranslator()
         mut_mm =  model.fa.MutableMealyMachine()
         for state in self.mm.states:
             mut_mm.add_state(tr.z3_to_state(state))
         for state in self.mm.states:
             for inp in self.mm.inputs:
-                output = model.eval(self.mm.output(state, inp))
-                to_state = model.eval(self.mm.transition(state, inp))
+                output = m.eval(self.mm.output(state, inp))
+                to_state = m.eval(self.mm.transition(state, inp))
                 trans = model.fa.IOTransition(
                     tr.z3_to_state(state),
                     tr.z3_to_label(inp),
@@ -73,6 +73,26 @@ class MealyMachineBuilder(object):
 
         return mut_mm.to_immutable()
 
+class DFABuilder(object):
+    def __init__(self, dfa : DFA):
+        super().__init__()
+        self.dfa = dfa
+
+    def build_dfa(self, m : z3.ModelRef) -> model.fa.DFA:
+        tr = FATranslator()
+        mut_dfa =  model.fa.MutableDFA()
+        for state in self.dfa.states:
+            accepting = m.eval(self.dfa.output(state))
+            mut_dfa.add_state(tr.z3_to_state(state), tr.z3_to_bool(accepting))
+        for state in self.dfa.states:
+            for labels in self.dfa.labels:
+                to_state = m.eval(self.dfa.transition(state, labels))
+                trans = Transition(
+                    tr.z3_to_state(state),
+                    tr.z3_to_label(labels),
+                    tr.z3_to_state(to_state))
+
+        return mut_dfa.to_immutable()
 
 class FATranslator(object):
     """Provides translation from z3 constants to RA elements. """
