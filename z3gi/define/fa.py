@@ -93,7 +93,7 @@ class DFABuilder(object):
                     tr.z3_to_state(state),
                     tr.z3_to_label(labels),
                     tr.z3_to_state(to_state))
-                mut_dfa.add_transition(state, trans)
+                mut_dfa.add_transition(tr.z3_to_state(state), trans)
 
         return mut_dfa.to_immutable()
 

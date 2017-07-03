@@ -22,9 +22,15 @@ class RALearner(Learner):
     def add(self, trace):
         self.encoder.add(trace)
 
-    def model(self, min_locations=1, max_locations=20, num_registers=0) -> model.ra.RegisterAutomaton:
+    def model(self, min_locations=1, max_locations=20, min_registers=0, max_registers=10,
+              old_model:model.ra.RegisterAutomaton = None) -> model.ra.RegisterAutomaton:
+        if old_model is not None:
+            min_locations = len(old_model.states())
+            min_registers = len(old_model.registers())
+
         (succ, ra_def, m) = self._learn_model(min_locations=min_locations,
-                                        max_locations=max_locations, num_registers=num_registers)
+                                        max_locations=max_locations, min_registers=min_registers,
+                                              max_registers=max_registers)
         if succ:
             return ra_def.export(m)
         return None

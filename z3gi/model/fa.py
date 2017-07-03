@@ -13,6 +13,13 @@ class IOTransition(Transition):
         super().__init__(start_state, start_label, end_state)
         self.output = output
 
+    def __str__(self, shortened=False):
+        short = "{0}/{1} -> {2}".format(self.start_label, self.output, self.end_state)
+        if not shortened:
+            return "{0} {1}".format(self.start_state, short)
+        else:
+            return short
+
 class DFA(Acceptor):
     def __init__(self, states, state_to_trans, state_to_acc):
         super().__init__(states, state_to_trans, state_to_acc)

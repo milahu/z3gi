@@ -15,7 +15,7 @@ class ActiveLearner():
         self.tester = model_tester
 
     def learn(self, inputs:List[str]):
-        model = None
+        model = self._epsilon(inputs)
         while True:
             model = self._learn_new(self.learner, model)
             trace = self.tester.find_ce(model)

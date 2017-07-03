@@ -8,7 +8,7 @@ import z3
 
 from encode.fa import DFAEncoder, MealyEncoder
 from learn import Learner
-import model.fa
+from model import Automaton
 
 class FALearner(Learner):
     def __init__(self, labels, encoder, solver=None, verbose=False):
@@ -21,7 +21,9 @@ class FALearner(Learner):
     def add(self, trace):
         self.encoder.add(trace)
 
-    def model(self, min_states=1, max_states=20):
+    def model(self, min_states=1, max_states=20, old_model:Automaton=None) -> Automaton:
+        if old_model is not None:
+            min_states = len(old_model.states())
         (succ, fa, m) = self._learn_model(min_states=min_states,
                                         max_states=max_states)
         if succ:

@@ -1,9 +1,9 @@
 from abc import ABCMeta, abstractmethod
 from typing import List
 
-
-
 """The most basic transition class available"""
+
+
 class Transition():
     def __init__(self, start_state, start_label, end_state):
         self.start_state = start_state
@@ -11,71 +11,81 @@ class Transition():
         self.end_state = end_state
 
     def __str__(self, shortened=False):
+        short = "{0} -> {1}".format(self.start_label, self.end_state)
         if not shortened:
-            return "{0} {1} -> {2}".format(self.start_state, self.start_label, self.end_state)
+            return "{0} {1}".format(self.start_state, short)
         else:
-            "{1} -> {2}".format(self.start_label, self.end_state)
+            return short
+
 
 """Exception raised when no transition can be fired"""
+
+
 class NoTransitionFired(Exception):
-   pass
+    pass
+
 
 """Exception raised when several transitions can be fired in a deterministic machine"""
+
+
 class MultipleTransitionsFired(Exception):
     pass
 
+
 """A basic abstract automaton model"""
+
+
 class Automaton(metaclass=ABCMeta):
-   def __init__(self, states, state_to_trans):
-      super().__init__()
-      self._states = states
-      self._state_to_trans = state_to_trans
+    def __init__(self, states, state_to_trans):
+        super().__init__()
+        self._states = states
+        self._state_to_trans = state_to_trans
 
-   def start_state(self):
-      return self._states[0]
+    def start_state(self):
+        return self._states[0]
 
-   def states(self):
-      return list(self._states)
+    def states(self):
+        return list(self._states)
 
-   def transitions(self, state, label=None) -> List[Transition]:
-      if label is None:
-         return list(self._state_to_trans[state])
-      else:
-         return list([trans for trans in self._state_to_trans[state] if trans.start_label == label])
+    def transitions(self, state, label=None) -> List[Transition]:
+        if label is None:
+            return list(self._state_to_trans[state])
+        else:
+            return list([trans for trans in self._state_to_trans[state] if trans.start_label == label])
 
-   def state(self, trace):
-       """state function which also provides a basic implementation"""
-       crt_state = self.start_state()
-       for symbol in trace:
-           transitions = self.transitions(crt_state, symbol)
-           fired_transitions = [trans for trans in transitions if trans.start_label == symbol]
+    def state(self, trace):
+        """state function which also provides a basic implementation"""
+        crt_state = self.start_state()
+        for symbol in trace:
+            transitions = self.transitions(crt_state, symbol)
+            fired_transitions = [trans for trans in transitions if trans.start_label == symbol]
 
-           # the number of fired transitions can be more than one since we could have multiple equalities
-           if len(fired_transitions) == 0:
-               raise NoTransitionFired
+            # the number of fired transitions can be more than one since we could have multiple equalities
+            if len(fired_transitions) == 0:
+                raise NoTransitionFired
 
-           if len(fired_transitions) > 1:
-               raise MultipleTransitionsFired
+            if len(fired_transitions) > 1:
+                raise MultipleTransitionsFired
 
-           fired_transition = fired_transitions[0]
-           crt_state = fired_transition.end_state
+            fired_transition = fired_transitions[0]
+            crt_state = fired_transition.end_state
 
-       return crt_state
+        return crt_state
 
+    @abstractmethod
+    def output(self, trace):
+        pass
 
-   @abstractmethod
-   def output(self, trace):
-       pass
+    # Basic __str__ function which works for most FSMs.
+    def __str__(self):
+        str_rep = ""
+        for state in self.states():
+            str_rep += str(state) + "\n"
+            for tran in self.transitions(state):
+                str_rep += "\t" + tran.__str__(shortened=True) + "\n"
 
-# Basic __str__ function which works for most FSMs.
-   def __str__(self):
-       str_rep = ""
-       for state in self.states():
-           str_rep += str(state) + "\n"
-           for tran in self.transitions(state):
-               str_rep += "\t"+tran.__str__(shortened=True) + "\n"
+        return str_rep
 
-       return str_rep
 
 class MutableAutomatonMixin(metaclass=ABCMeta):
     def add_state(self, state):
@@ -91,7 +101,10 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
     def to_immutable(self) -> Automaton:
         pass
 
+
 """An automaton model that generates output"""
+
+
 class Transducer(Automaton, metaclass=ABCMeta):
     def __init__(self, states, state_to_trans):
         super().__init__(states, state_to_trans)
@@ -100,7 +113,10 @@ class Transducer(Automaton, metaclass=ABCMeta):
     def output(self, trace):
         pass
 
+
 """An automaton model whose states are accepting/rejecting"""
+
+
 class Acceptor(Automaton, metaclass=ABCMeta):
     def __init__(self, states, state_to_trans, state_to_acc):
         super().__init__(states, state_to_trans)
@@ -120,8 +136,8 @@ class Acceptor(Automaton, metaclass=ABCMeta):
     def __str__(self):
         return str(self._state_to_acc) + "\n" + super().__str__()
 
+
 class MutableAcceptorMixin(MutableAutomatonMixin, metaclass=ABCMeta):
     def add_state(self, state, accepts):
         super().add_state(state)
         self._state_to_acc[state] = accepts
-
