@@ -25,6 +25,13 @@ class DFA(Acceptor):
         # print(tr_str)
         return crt_state
 
+class MutableDFA(DFA, MutableAcceptorMixin):
+    def __init__(self):
+        super().__init__([], {}, {})
+
+    def to_immutable(self) -> DFA:
+        return DFA(self._states, self._state_to_trans, self._state_to_acc)
+
 class MooreMachine(Transducer):
     def __init__(self, states, state_to_trans, state_to_out):
         super().__init__(states, state_to_trans)
