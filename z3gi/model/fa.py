@@ -15,7 +15,7 @@ class IOTransition(Transition):
 
 class DFA(Acceptor):
     def __init__(self, states, state_to_trans, state_to_acc):
-      super().__init__(states, state_to_trans, state_to_acc)
+        super().__init__(states, state_to_trans, state_to_acc)
 
     def transitions(self, state: State, label:Label = None) -> List[Transition]:
         return super().transitions(state, label)

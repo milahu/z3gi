@@ -11,10 +11,12 @@ class FSM(Automaton,metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, num_states):
         self.State, self.states = enum('State', ['state{0}'.format(i) for i in range(num_states)])
+        self.start = self.states[0]
 
 class DFA(FSM):
     def __init__(self, labels, num_states):
-        super.__init__(num_states)
+        super().__init__(num_states)
+        labels = list(labels)
         self.Label, elements = enum('Label', labels)
         self.labels = {labels[i]: elements[i] for i in range(len(labels))}
         self.transition = z3.Function('transition', self.State, self.Label, self.State)
@@ -22,13 +24,13 @@ class DFA(FSM):
 
     def export(self, model : z3.ModelRef) -> model.fa.DFA:
         builder = DFABuilder(self)
-        dfa = builder.build_dfa(self)
+        dfa = builder.build_dfa(model)
         return dfa
 
 
 class MealyMachine(FSM):
     def __init__(self, input_labels, output_labels, num_states):
-        super.__init__(num_states)
+        super().__init__(num_states)
         self.Input, elements = enum('Input', input_labels)
         self.inputs = {input_labels[i]: elements[i] for i in range(len(input_labels))}
         self.Output, elements = enum('Output', output_labels)
@@ -45,7 +47,7 @@ class Mapper(object):
     def __init__(self, fa):
         self.Element = z3.DeclareSort('Element')
         self.start = self.element(0)
-        self.map = z3.Function('map', self.Element, fa.Location)
+        self.map = z3.Function('map', self.Element, fa.State)
 
     def element(self, name):
         return z3.Const("n"+str(name), self.Element)
@@ -79,18 +81,19 @@ class DFABuilder(object):
         self.dfa = dfa
 
     def build_dfa(self, m : z3.ModelRef) -> model.fa.DFA:
-        tr = FATranslator()
+        tr = FATranslator(self.dfa)
         mut_dfa =  model.fa.MutableDFA()
         for state in self.dfa.states:
             accepting = m.eval(self.dfa.output(state))
             mut_dfa.add_state(tr.z3_to_state(state), tr.z3_to_bool(accepting))
         for state in self.dfa.states:
-            for labels in self.dfa.labels:
+            for labels in self.dfa.labels.values():
                 to_state = m.eval(self.dfa.transition(state, labels))
                 trans = Transition(
                     tr.z3_to_state(state),
                     tr.z3_to_label(labels),
                     tr.z3_to_state(to_state))
+                mut_dfa.add_transition(state, trans)
 
         return mut_dfa.to_immutable()
 

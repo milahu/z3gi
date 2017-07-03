@@ -8,7 +8,7 @@ import z3
 
 
 class DFAEncoder(Encoder):
-    def __init__(self, labels):
+    def __init__(self):
         self.tree = Tree(itertools.count(0))
         self.cache = {}
         self.labels = set()
@@ -32,7 +32,8 @@ class DFAEncoder(Encoder):
 
     def node_constraints(self, dfa, mapper):
         constraints = []
-        for node, accept in self.cache:
+        for node in self.cache:
+            accept = self.cache[node]
             n = mapper.element(node.id)
             constraints.append(dfa.output(mapper.map(n)) == accept)
         return constraints
