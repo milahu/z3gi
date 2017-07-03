@@ -53,6 +53,21 @@ class IORegisterAutomaton(Automaton):
         return ra
 
 
+class IORegisterAutomaton2(Automaton):
+
+    def __init__(self, inputs, outputs, num_locations, num_registers):
+        self.Input, self.inputs = enum('Input', inputs)
+        self.Output, self.outputs = enum('Output', outputs)
+        self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations)])
+        self.Register, self.registers = enum('Register', ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
+        self.start = self.locations[0]
+        self.fresh = self.registers[-1]
+        self.transition = z3.Function('transition', self.Location, self.Input, self.Register, self.Location)
+        self.output = z3.Function('output', self.Location, self.Input, self.Register, self.Output)
+        self.register = z3.Function('register', self.Location, self.Input, self.Register, self.Register)
+        self.used = z3.Function('used', self.Location, self.Register, z3.BoolSort())
+        self.update = z3.Function('update', self.Location, self.Input, self.Register)
+
 class Mapper(object):
     def __init__(self, ra):
         self.Value = z3.DeclareSort('Value')
