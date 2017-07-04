@@ -72,6 +72,9 @@ class Automaton(metaclass=ABCMeta):
 
         return crt_state
 
+    def input_labels(self):
+        return set([trans.start_label for trans in self.transitions(self.start_state())])
+
     @abstractmethod
     def output(self, trace):
         pass
@@ -112,6 +115,10 @@ class Transducer(Automaton, metaclass=ABCMeta):
     @abstractmethod
     def output(self, trace):
         pass
+
+    def output_labels(self):
+        return set([trans.output for state in self.states() for trans in self.transitions(state)])
+
 
 
 """An automaton model whose states are accepting/rejecting"""

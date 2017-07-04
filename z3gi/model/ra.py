@@ -1,5 +1,5 @@
 from z3gi.model import Transition, Acceptor, NoTransitionFired, MultipleTransitionsFired, Transducer, \
-    MutableAcceptorMixin, MutableAutomatonMixin
+    MutableAcceptorMixin, MutableAutomatonMixin, Automaton
 from abc import ABCMeta, abstractmethod
 import itertools
 import collections
@@ -87,7 +87,7 @@ class IORATransition(RATransition):
         return trans_str
 
 # some methods shared between the different register automatas
-class RegisterMachine():
+class RegisterMachine(Automaton):
     def _fired_transition(self, transitions, reg_val, action):
         """Retrieves the transition fired based on the action and valuation"""
         fired_transitions = [trans for trans in transitions if trans.is_enabled(reg_val, action)]
@@ -100,6 +100,10 @@ class RegisterMachine():
         if len(fired_transitions) > 1:
             raise MultipleTransitionsFired
         return fired_transitions[0]
+
+    @abstractmethod
+    def registers(self) -> List[Register]:
+        pass
 
 
 class RegisterAutomaton(Acceptor, RegisterMachine):
@@ -203,7 +207,7 @@ class MutableIORegisterAutomaton(IORegisterAutomaton, MutableAutomatonMixin):
             if reg not in self._registers:
                 self._registers.append(reg)
 
-    def to_immutable(self):
+    def to_immutable(self) -> IORegisterAutomaton:
         return IORegisterAutomaton(self._states, self._state_to_trans, self._registers)
 
 class Guard(metaclass=ABCMeta):

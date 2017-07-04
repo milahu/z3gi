@@ -8,13 +8,18 @@ from define import enum
 from define import Automaton
 
 
-class RegisterAutomaton(Automaton):
+class RegisterMachine(Automaton):
+    def __init__(self, num_locations, num_registers):
+        self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations)])
+        self.Register, self.registers = enum('Register',
+                                             ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
+
+class RegisterAutomaton(RegisterMachine):
 
     def __init__(self, labels, num_locations, num_registers):
+        super().__init__(num_locations, num_registers)
         self.Label, elements = enum('Label', labels)
         self.labels = {labels[i]: elements[i] for i in range(len(labels))}
-        self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations)])
-        self.Register, self.registers = enum('Register', ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
         self.start = self.locations[0]
         self.fresh = self.registers[-1]
         self.transition = z3.Function('transition', self.Location, self.Label, self.Register, self.Location)
@@ -28,16 +33,14 @@ class RegisterAutomaton(Automaton):
         return ra
 
 
-class IORegisterAutomaton(Automaton):
-
+class IORegisterAutomaton(RegisterMachine):
     def __init__(self, input_labels, output_labels, num_locations, num_registers):
+        super().__init__(num_locations, num_registers)
         labels = input_labels + output_labels
         self.Label, elements = enum('Label', input_labels + output_labels)
         self.labels = {labels[i]: elements[i] for i in range(len(labels))}
         self._input_labels =  [self.labels[lbl] for lbl in input_labels]
-        self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations + 1)])
         self.sink = self.locations[-1]
-        self.Register, self.registers = enum('Register', ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
         self.start = self.locations[0]
         self.fresh = self.registers[-1]
         self.transition = z3.Function('transition', self.Location, self.Label, self.Register, self.Location)

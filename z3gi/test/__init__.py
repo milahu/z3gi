@@ -29,6 +29,13 @@ class TestTemplate(metaclass=ABCMeta):
 
     @abstractmethod
     def _check_trace(self, model, trace):
+
+        pass
+
+
+    @abstractmethod
+    def size(self) -> int:
+        """Returns the size (in terms of inputs) of the test"""
         pass
 
 
@@ -74,10 +81,16 @@ class IORATest(TestTemplate):
         trace = determinize_act_io(trace)
         for (inp_act, out_act) in trace:
             test_trace.append((inp_act, out_act))
+            if inp_act.label not in model.input_labels():
+                return test_trace
             output = model.output([inp for (inp, _) in test_trace])
             if output != out_act:
                 return  test_trace
         return None
+
+    def size(self):
+        return len(self.trace)
+
 
 
 def determinize_act_io(tuple_seq):
@@ -101,6 +114,9 @@ class MealyTest(TestTemplate):
                 return  test_trace
         return None
 
+    def size(self):
+        return len(self.trace)
+
 # Acceptor Test observations are tuples comprising sequences of Actions/Symbols joined by an accept/reject booleans
 class AcceptorTest(TestTemplate):
     def __init__(self, trace):
@@ -112,3 +128,7 @@ class AcceptorTest(TestTemplate):
         if model.accepts(seq) is not acc:
             return test_trace
         return None
+
+    def size(self):
+        (seq, acc) = self.trace
+        return len(seq)
