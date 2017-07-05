@@ -4,12 +4,14 @@ from typing import cast
 from model import Automaton
 from learn import Learner
 from test import TestTemplate
+import time
 
 class Statistics():
     def __init__(self):
         self.num_tests = 0
         self.num_inputs = 0
         self.suite_size = 0
+        self.learning_times = []
 
     def add_inputs(self, num):
         self.num_inputs += num
@@ -20,12 +22,18 @@ class Statistics():
     def set_suite_size(self, num):
         self.suite_size = num
 
-    def __str__(self):
-        return "Total number tests used in learning: {0} \n" \
+    def add_learning_time(self, time):
+        self.learning_times.append(time)
+
+    def __str__(self):        return "Total number tests used in learning: {0} \n" \
                "Total number inputs used in learning: {1} \n " \
-               "Test suite size: {2}".format(self.num_tests,
-                                             self.num_inputs,
-                                             self.suite_size)
+               "Test suite size: {2} \n " \
+               "Learning time for each model: {3} \n " \
+               "Total learning time: {4} ".format(self.num_tests,
+                                                  self.num_inputs,
+                                                  self.suite_size,
+                                                  self.learning_times,
+                                                  sum(self.learning_times))
 
 
 def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automaton, Statistics]:
@@ -43,7 +51,10 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
         model = None
         learn_traces = [test.trace]
         while not done:
+            start_time = int(time.time() * 1000)
             (model, definition) = learner.model(old_definition=definition)
+            end_time = int(time.time() * 1000)
+            statistics.add_learning_time(end_time-start_time)
             done = True
             for trace in traces:
                 test = cast(TestTemplate, test_type(trace))

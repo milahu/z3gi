@@ -2,7 +2,6 @@ from typing import Tuple
 
 import z3
 
-from encode.ra import RAEncoder
 from learn import Learner
 import model.ra
 import define.ra
