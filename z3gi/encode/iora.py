@@ -4,6 +4,7 @@ import z3
 
 from define.ra import IORegisterAutomaton, Mapper
 from encode import Encoder
+from sut import ActionSignature
 from utils import Tree, determinize
 
 
@@ -13,16 +14,26 @@ class IORAEncoder(Encoder):
         self.values = set()
         self.input_labels = set()
         self.output_labels = set()
+        self.param_size = dict()
 
     def add(self, trace):
         seq = list(itertools.chain(*map(iter, trace)))
         _ = self.tree[determinize(seq)]
         self.values.update([action.value for action in seq])
-        self.input_labels.update([action.label for action in [i for (i, o) in trace]])
-        self.output_labels.update([action.label for action in [o for (i, o) in trace]])
+        self.input_labels.update([action.label for action in [i for (i, _) in trace]])
+        self.output_labels.update([action.label for action in [o for (_, o) in trace]])
+        for action in seq:
+            if action.label not in self.param_size:
+                self.param_size[action.label] = action.param_size()
+            else:
+                if self.param_size[action.label] != action.param_size():
+                    raise Exception("It is not allowed to have actions with different param sizes."
+                                    "Problem action: "+str(action))
+
 
     def build(self, num_locations, num_registers):
-        ra = IORegisterAutomaton(list(self.input_labels), list(self.output_labels), num_locations, num_registers)
+        ra = IORegisterAutomaton(list(self.input_labels), list(self.output_labels), self.param_size,
+                                 num_locations, num_registers)
         mapper = Mapper(ra)
         constraints = []
         constraints.extend(self.axioms(ra, mapper))
@@ -123,21 +134,50 @@ class IORAEncoder(Encoder):
             ra.loctype(ra.start) == True,
 
             # In output locations, there's only one transition possible
+            # z3.ForAll(
+            #     [q, l, lp, r, rp],
+            #     z3.Implies(
+            #         z3.And(
+            #             q != ra.sink,
+            #             ra.loctype(q) == False,
+            #             ra.transition(q, l, r) != ra.sink,
+            #             z3.Or(
+            #                 r != rp,
+            #                 l != lp
+            #             )
+            #         ),
+            #         z3.Or(
+            #             ra.transition(q, lp, rp) == ra.sink,
+            #             rp != ra.fresh
+            #         )
+            #     )
+            # ),
+            # more readable version
             z3.ForAll(
-                [q, l, lp, r, rp],
+                [q],
                 z3.Implies(
                     z3.And(
                         q != ra.sink,
                         ra.loctype(q) == False,
-                        ra.transition(q, l, r) != ra.sink,
-                        z3.Or(
-                            r != rp,
-                            l != lp
-                        )
                     ),
-                    z3.Or(
-                        ra.transition(q, lp, rp) == ra.sink,
-                        rp != ra.fresh
+                    z3.And(
+                        z3.Exists(
+                            [r,l],
+                            ra.transition(q, l, r) != ra.sink,
+                        ),
+                        z3.ForAll(
+                            [r, l, rp,lp],
+                            z3.Implies(
+                                z3.And(
+                                    ra.transition(q, l, r) != ra.sink,
+                                    z3.Or(
+                                        rp != r,
+                                        lp != l,
+                                    )
+                                ),
+                                ra.transition(q, lp, rp) == ra.sink
+                            )
+                        )
                     )
                 )
             ),
@@ -207,7 +247,7 @@ class IORAEncoder(Encoder):
         for node, (label, value), child in self.tree.transitions():
             n = mapper.element(node.id)
             l = ra.labels[label]
-            v = mapper.value(value)
+            v = mapper.value(value) if value is not None else None
             c = mapper.element(child.id)
             r, rp = z3.Consts('r rp', ra.Register)
 
@@ -249,10 +289,12 @@ class IORAEncoder(Encoder):
                     )
                 ),
 
+            ])
+            if value is not None:
                 # If a non-fresh register is updated, and c and n are connected by fresh,
                 # then the register contains the value
                 # else the valuation is maintained.
-                z3.ForAll(
+                constraints.append(z3.ForAll(
                     [r],
                     z3.If(
                         z3.And(
@@ -263,11 +305,20 @@ class IORAEncoder(Encoder):
                         mapper.valuation(c, r) == v,
                         mapper.valuation(c, r) == mapper.valuation(n, r)
                     )
-                ),
-            ])
+                ))
+            else:
+                constraints.append(
+                    z3.ForAll(
+                        [r],
+                        z3.And(
+                            mapper.valuation(c, r) == mapper.valuation(n, r),
+                            ra.update(mapper.map(n), l) == ra.fresh,
+                        )
+                    )
+                )
 
             # Map to the right transition
-            path = [v for (l, v) in node.path()]
+            path = [v for (_, v) in node.path() if v is not None]
             if value in path:
                 if label in self.input_labels:
                     constraints.append(
@@ -296,12 +347,13 @@ class IORAEncoder(Encoder):
                     )
                 elif label in self.output_labels:
                     constraints.append(
-
                            z3.Exists(
                                 [r],
                                 z3.And(
                                     r != ra.fresh,
-                                    mapper.valuation(n, r) == v
+                                    mapper.valuation(n, r) == v,
+                                    ra.used(mapper.map(n), r) == True, # this proved necessary
+                                    ra.transition(mapper.map(n), l, r) == mapper.map(c)
                                 )
                             )
                     )
@@ -309,11 +361,18 @@ class IORAEncoder(Encoder):
                     raise Exception("We did something wrong")
 
             else:
-                 constraints.append(
-                     ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
-                 )
-
-            values.add(v)
+                constraints.append(
+                    ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
+                )
+                if value is None and label in self.input_labels:
+                    constraints.append(
+                        z3.ForAll(
+                            [r],
+                            ra.transition(mapper.map(n), l, r) == mapper.map(c)
+                        )
+                    )
+            if v is not None:
+                values.add(v)
 
         constraints.append(z3.Distinct(list(values)))
         return constraints

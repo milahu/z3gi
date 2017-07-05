@@ -34,12 +34,13 @@ class RegisterAutomaton(RegisterMachine):
 
 
 class IORegisterAutomaton(RegisterMachine):
-    def __init__(self, input_labels, output_labels, num_locations, num_registers):
+    def __init__(self, input_labels, output_labels, param_size, num_locations, num_registers):
         super().__init__(num_locations, num_registers)
         labels = input_labels + output_labels
         self.Label, elements = enum('Label', input_labels + output_labels)
         self.labels = {labels[i]: elements[i] for i in range(len(labels))}
         self._input_labels =  [self.labels[lbl] for lbl in input_labels]
+        self.param_size = param_size
         self.sink = self.locations[-1]
         self.start = self.locations[0]
         self.fresh = self.registers[-1]
@@ -195,7 +196,7 @@ class IORegisterAutomatonBuilder(object):
         update = model.eval(self.ra.update(z3state, z3label))
         used_z3regs = [reg for reg in enabled_z3guards if reg is not self.ra.fresh]
 
-        print("For {0} we have the transitions \n {1}".format(z3state, z3end_state_to_guards))
+        #print("For {0} we have the transitions \n {1}".format(z3state, z3end_state_to_guards))
         for (z3out_state, z3guards) in z3end_state_to_guards.items():
             # a transition which makes an assignment is never merged
             if self.ra.fresh in z3guards and not translator.z3_to_bool(model.eval(update == self.ra.fresh)):
@@ -214,25 +215,30 @@ class IORegisterAutomatonBuilder(object):
         enabled_z3guards = [guard for guard in self.ra.registers if
                             translator.z3_to_bool(model.eval(self.ra.used(z3out_state, guard))) or
                             guard is self.ra.fresh]
+        #print("From ", z3out_state, " enabled ", enabled_z3guards, " labels ", output_labels)
 
         active_z3action = [(output_label, guard) for output_label in output_labels for guard in enabled_z3guards
                          if translator.z3_to_bool(model.eval(self.ra.transition(z3out_state, output_label, guard)
                                                              != self.ra.sink))]
         if len(active_z3action) != 1:
             raise Exception("Exactly one transition should not lead to sink state. "
-                            "From location {0} there are {1} transitions which lead to sink {2}"
-                            .format(z3out_state, len(active_z3action), self.ra.sink))
+                            "From location {0} there are {1} transitions which don't lead to sink {2}. \n"
+                            "Namely: {3}"
+                            "\n\n Model: {4}"
+                            .format(z3out_state, len(active_z3action), self.ra.sink, enabled_z3guards, model))
 
         (z3output_label, z3output_guard) = active_z3action[0]
         z3end_state = model.eval(self.ra.transition(z3out_state, z3output_label, z3output_guard))
         z3output_update = model.eval(self.ra.update(z3out_state, z3output_label))
+        output_mapping = None if self.ra.param_size[translator.z3_to_label(z3output_label)] == 0 \
+                              else  translator.z3_to_mapping(z3output_guard)
 
         transition = IORATransition(translator.z3_to_state(z3start_state),
                                     translator.z3_to_label(z3label),
                                     translator.z3_to_guard(z3disjguards, used_z3regs),
                                     translator.z3_to_assignment(z3input_update),
                                     translator.z3_to_label(z3output_label),
-                                    translator.z3_to_mapping(z3output_guard),
+                                    output_mapping,
                                     translator.z3_to_assignment(z3output_update),
                                     translator.z3_to_state(z3end_state),
                                     )

@@ -5,7 +5,9 @@ import itertools
 import collections
 from typing import List
 
-Action = collections.namedtuple('Action', ('label', 'value'))
+class Action(collections.namedtuple('Action', ('label', 'value'))):
+    def param_size(self):
+        return 0 if self.value is None else 1
 
 class RATransition(Transition):
     def __init__(self, start_state, start_label, guard, assignment, end_state):
@@ -60,7 +62,8 @@ class Register(SymbolicValue):
 
 
 class IORATransition(RATransition):
-    def __init__(self, start_state, start_label, guard, assignment, output_label, output_mapping, output_assignment, end_state):
+    def __init__(self, start_state, start_label, guard, assignment, output_label,
+                 output_mapping, output_assignment, end_state):
         super().__init__(start_state, start_label, guard, assignment, end_state)
         self.guard = guard
         self.assignment = assignment
@@ -69,7 +72,10 @@ class IORATransition(RATransition):
         self.output_assignment =output_assignment
 
     def output(self, valuation, values):
-        if type(self.output_mapping) == Fresh:
+        """if the output mapping is None, it means that the output was parameter-less"""
+        if self.output_mapping is None:
+            return Action(self.output_label, None)
+        elif type(self.output_mapping) == Fresh:
             return Action(self.output_label, max(values) + 1 if len(values) > 0 else 0)
         else:
             return Action(self.output_label, valuation[self.output_mapping])
@@ -135,8 +141,9 @@ class RegisterAutomaton(Acceptor, RegisterMachine):
 
 class IORegisterAutomaton(Transducer, RegisterMachine):
     def __init__(self, locations, loc_to_trans, registers):
-      super().__init__(locations, loc_to_trans)
-      self._registers = registers
+        super().__init__(locations, loc_to_trans)
+        self._registers = registers
+
 
     def registers(self) -> List[Register]:
         return self._registers
@@ -158,7 +165,8 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
 
         crt_state = self.start_state()
         for action in trace:
-            values.add(action.value)
+            if action.value is not None:
+                values.add(action.value)
             transitions = self.transitions(crt_state, action.label)
             fired_transition = super()._fired_transition(transitions, reg_val, action)
             reg_val = fired_transition.update(reg_val, action)
@@ -167,7 +175,8 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
             output_action = fired_transition.output(reg_val, values)
             # based on this output, the transition should update the set of registers
             reg_val = fired_transition.output_update(reg_val, output_action)
-            values.add(output_action.value)
+            if output_action.value is not None:
+                values.add(output_action.value)
 
             crt_state = fired_transition.end_state
         return (crt_state, reg_val, values)
@@ -180,7 +189,9 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
             action = trace[-1]
             transitions = super().transitions(reached_state, action.label)
             fired_transition = super()._fired_transition(transitions, valuation, action)
-            values.add(action.value)
+            valuation = fired_transition.update(valuation, action)
+            if action.value is not None:
+                values.add(action.value)
             output = fired_transition.output(valuation, values)
             return output
 

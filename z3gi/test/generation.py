@@ -5,15 +5,7 @@ from encode.iora import IORAEncoder
 from learn.algorithm import learn
 from learn.ra import RALearner
 from model.ra import Action
-from sut import SUT, ActionSignature, RASUT
-
-
-# class RAObservation():
-#     def __init__(self, trace):
-#         self.trace = trace
-#
-#     def values(self):
-#         for
+from sut import RASUT
 from sut.stack import new_stack_sut
 from test import IORATest
 
@@ -61,11 +53,3 @@ class ExhaustiveRAGenerator(ObservationGeneration):
                 extended_obs = self._generate_observations(new_obs, crt_depth + 1, max_depth, max_values)
                 new_obs.extend(extended_obs)
             return  new_obs
-
-
-stack_sut = new_stack_sut(1)
-gen = ExhaustiveRAGenerator(stack_sut)
-obs = gen.generate_observations(2)
-print("\n".join( [str(obs) for obs in obs]))
-learner = RALearner(IORAEncoder())
-learn(learner, IORATest, obs)

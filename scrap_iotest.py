@@ -30,8 +30,8 @@ def check_ra_against_obs(learner: RALearner, learned_ra:IORegisterAutomaton, m, 
 
 for i in range(1,2):
     print("Experiment ",i)
-    learner = RALearner(labels, encoder=IORAEncoder(), verbose=True)
-    exp = sut_m5
+    learner = RALearner(IORAEncoder(), verbose=True)
+    exp = sut_m6
     for trace in exp.traces:
         learner.add(trace)
     (_, ra, m) = learner._learn_model(exp.nr_locations-1,exp.nr_locations+1,exp.nr_registers)
@@ -39,6 +39,5 @@ for i in range(1,2):
         model = ra.export(m)
         print(model)
         check_ra_against_obs(learner, model, m, exp)
-        to_dot(model, None)
     else:
         print("unsat")

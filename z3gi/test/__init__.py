@@ -82,6 +82,7 @@ class IORATest(TestTemplate):
                 return test_trace
             output = model.output([inp for (inp, _) in test_trace])
             if output != out_act:
+                # print("Expected: ", out_act, " Got: ", output, "\n Trace: ", trace)
                 return  test_trace
         return None
 

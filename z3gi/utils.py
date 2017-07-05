@@ -53,6 +53,7 @@ class Tree(object):
 
 def determinize(seq):
     neat = {}
+    neat[None] = None
     i = 0
     for (label, value) in seq:
         if value not in neat:

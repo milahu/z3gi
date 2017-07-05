@@ -33,6 +33,7 @@ sut_m1 = RaTestScenario("Accept everything", [
     2, 1
 )
 
+
 sut_m2 = RaTestScenario("OK first then always NOK", [
     [io(0, 'in', 100, 'OK')],
     [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK')],
@@ -118,3 +119,36 @@ sut_m5 = RaTestScenario("Login model", [
 
     ],
                         9, 1)
+
+# login model (incomplete traces)
+sut_m6 = RaTestScenario("Stack model", [
+    [io(0, 'put', None, 'OK') ],
+    [io(None, 'get', None, 'NOK') ],
+    [io(0, 'put', None, 'OK'), io(1, 'put', None, 'NOK') ],
+    [io(0, 'put', None, 'OK'), io(None, 'get', 0, 'oget') ],
+    [io(None, 'get', None, 'NOK'), io(0, 'put', None, 'OK')],
+    [io(None, 'get', None, 'NOK'), io(None, 'get', None, 'NOK')],
+    [io(0, 'put', None, 'OK'), io(None, 'get', 0, 'oget'), io(None, 'get', None, 'NOK') ],
+    [io(0, 'put', None, 'OK'), io(None, 'get', 0, 'oget'), io(1, 'put', None, 'OK') ],
+    [io(0, 'put', None, 'OK'), io(None, 'get', 0, 'oget'), io(None, 'get', None, 'NOK') ],
+    [io(0, 'put', None, 'OK') ],
+    ], 6, 1)
+
+
+sut_m7 = RaTestScenario("Accept everything. Return same output", [
+    [io(0, 'in', 0, 'OK')],
+    [io(0, 'in', 0, 'OK'), io(0, 'in', 0, 'OK')],
+    [io(0, 'in', 0, 'OK'), io(1, 'in', 1, 'OK')]
+    ], 3, 1)
+
+
+sut_m8 = RaTestScenario("Accept everything. None output", [
+    [io(0, 'in', None, 'OK')],
+    [io(0, 'in', None, 'OK'), io(0, 'in', None, 'OK')],
+    [io(0, 'in', None, 'OK'), io(1, 'in', None, 'OK')]
+    ], 3, 1)
+
+sut_m9 = RaTestScenario("Accept everything. None input", [
+    [io(None, 'in', 0, 'OK')],
+    [io(None, 'in', 0, 'OK'), io(None, 'in', 1, 'OK')],
+], 3, 1)

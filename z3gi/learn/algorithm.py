@@ -41,6 +41,7 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
         statistics.add_inputs(test.size())
         done = False
         model = None
+        learn_traces = [test.trace]
         while not done:
             (model, definition) = learner.model(old_definition=definition)
             done = True
@@ -48,6 +49,11 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
                 test = cast(TestTemplate, test_type(trace))
                 ce = test.check(model)
                 if ce is not None:
+                    if ce not in learn_traces:
+                        learn_traces.append(ce)
+                    else:
+                        raise Exception("The CE {0} has already been processed yet it "
+                                        "is still a CE. \n CEs: {1} \n Model: {2}".format(ce, learn_traces, model))
                     learner.add(ce)
                     statistics.add_tests(1)
                     statistics.add_inputs(test.size())
