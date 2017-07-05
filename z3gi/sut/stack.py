@@ -10,7 +10,7 @@ class Stack():
 
     def get(self):
         if len(self.list) == 0:
-            return SUT.OK
+            return SUT.NOK
         else:
             return ("OGET", self.list.pop())
 
@@ -22,5 +22,5 @@ class Stack():
             return SUT.NOK
 
 
-def new_stack_sul(size):
-    return ObjectSUT(lambda : Stack(size), Stack.INTERFACE)
+def new_stack_sut(size):
+    return ObjectSUT(Stack.INTERFACE, lambda : Stack(size))

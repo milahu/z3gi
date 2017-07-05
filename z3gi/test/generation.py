@@ -1,6 +1,11 @@
 from abc import ABCMeta, abstractmethod
-from typing import List
-from sut import SUT, ActionSignature
+from typing import List, Tuple
+
+from encode.iora import IORAEncoder
+from learn.algorithm import learn
+from learn.ra import RALearner
+from model.ra import Action
+from sut import SUT, ActionSignature, RASUT
 
 
 # class RAObservation():
@@ -9,6 +14,9 @@ from sut import SUT, ActionSignature
 #
 #     def values(self):
 #         for
+from sut.stack import new_stack_sut
+from test import IORATest
+
 
 class ObservationGeneration(metaclass=ABCMeta):
 
@@ -17,15 +25,19 @@ class ObservationGeneration(metaclass=ABCMeta):
         pass
 
 class ExhaustiveRAGenerator(ObservationGeneration):
-    def __init__(self, sut:SUT, act_sigs:List[ActionSignature]):
+    def __init__(self, sut:RASUT):
         self.sut = sut
-        self.act_sigs = act_sigs
-        for sig in act_sigs:
+        self.act_sigs = sut.input_interface()
+        for sig in self.act_sigs:
             if sig.num_params > 1:
                 raise Exception("This generator assumes at most one parameter per action")
 
-    def generate_observations(self, max_depth, max_registers=3) -> List[list]:
-        return self._generate_observations([0,[]], 0, max_depth, max_registers)
+    def generate_observations(self, max_depth, max_registers=3) -> List[Tuple[Action, Action]]:
+        val_obs = self._generate_observations([(0,[])], 0, max_depth, max_registers)
+        obs = [obs for (_, obs) in val_obs]
+        return obs
+
+
 
     def _generate_observations(self, prev_obs, crt_depth, max_depth, max_values):
         if crt_depth > max_depth:
@@ -36,16 +48,24 @@ class ExhaustiveRAGenerator(ObservationGeneration):
                 for act_sig in self.act_sigs:
                     label = act_sig.label
                     if act_sig.num_params == 1:
-                        for i in range(0, max(num_val, max_values)):
+                        for i in range(0, min(num_val+1, max_values)):
                             seq = [inp for (inp, _) in obs]
-                            seq.append((label, i))
-                            new_obs[:-1] = (max(num_val, i), self.sut.run(seq))
+                            seq.append(Action(label, i))
+                            new_obs.append((max(num_val+1, i), self.sut.run(seq)))
                     else:
                         seq = [inp for (inp, _) in obs]
-                        seq = seq.append((label, None))
-                        new_obs[:-1] = (num_val, self.sut.run(seq))
+                        seq.append(Action(label, None))
+                        new_obs.append((num_val, self.sut.run(seq)))
 
             if crt_depth < max_depth:
-                new_obs.extend(self._generate_observations(new_obs, crt_depth+1, max_depth, max_values))
+                extended_obs = self._generate_observations(new_obs, crt_depth + 1, max_depth, max_values)
+                new_obs.extend(extended_obs)
             return  new_obs
 
+
+stack_sut = new_stack_sut(1)
+gen = ExhaustiveRAGenerator(stack_sut)
+obs = gen.generate_observations(2)
+print("\n".join( [str(obs) for obs in obs]))
+learner = RALearner(IORAEncoder())
+learn(learner, IORATest, obs)
