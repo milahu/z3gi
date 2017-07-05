@@ -1,9 +1,6 @@
-from abc import ABCMeta, abstractmethod
-
-import collections
-from typing import List
-
 import itertools
+from abc import ABCMeta, abstractmethod
+from typing import List
 
 from model import Automaton, Acceptor
 from model.fa import MealyMachine
