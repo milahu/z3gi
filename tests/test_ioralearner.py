@@ -9,10 +9,19 @@ import z3
 
 class RaTest(unittest.TestCase):
     def setUp(self):
-        self.ralearner = RALearner(labels, io=True, outputs=outputs, encoder=IORAEncoder(), verbose=True)
+        self.ralearner = RALearner(IORAEncoder(), verbose=True)
 
     def test_sut1(self):
         self.check_scenario(sut_m1)
+
+    def test_sut2(self):
+        self.check_scenario(sut_m2)
+
+    def test_sut3(self):
+        self.check_scenario(sut_m3)
+
+    def test_sut4(self):
+        self.check_scenario(sut_m4)
 
     def check_scenario(self, test_scenario: RaTestScenario):
         print("Scenario " + test_scenario.description)

@@ -231,6 +231,25 @@ class IORAEncoder(Encoder):
             )
         for l in self.input_labels])
 
+        # parameter-less labels don't result in register updates
+        for l in itertools.chain(self.input_labels, self.output_labels):
+            if self.param_size[l] == 0:
+                axioms.append(
+                    z3.ForAll(
+                        [q],
+                        ra.update(q, ra.labels[l]) == ra.fresh
+                    )
+                )
+        # parameter-less input labels lead to the same transition for all registers
+        for l in self.input_labels:
+            if self.param_size[l] == 0:
+                axioms.append(
+                    z3.ForAll(
+                        [q,r],
+                        ra.transition(q, ra.labels[l], r) == ra.transition(q, ra.labels[l], ra.fresh)
+                    )
+                )
+
         return axioms
 
     def node_constraints(self, ra, mapper):
@@ -251,45 +270,45 @@ class IORAEncoder(Encoder):
             c = mapper.element(child.id)
             r, rp = z3.Consts('r rp', ra.Register)
 
-            constraints.extend([
-                # If the transition is over a register, then the register is in use.
-                # z3.ForAll(
-                #     [r],
-                #     z3.Implies(
-                #         z3.And(
-                #             r != ra.fresh,
-                #             ra.transition(mapper.map(n), l, r) == mapper.map(c)
-                #         ),
-                #         ra.used(mapper.map(n), r) == True
-                #     )
-                # ),
+            if value is not None:
+                constraints.extend([
+                    # If the transition is over a register, then the register is in use.
+                    # z3.ForAll(
+                    #     [r],
+                    #     z3.Implies(
+                    #         z3.And(
+                    #             r != ra.fresh,
+                    #             ra.transition(mapper.map(n), l, r) == mapper.map(c)
+                    #         ),
+                    #         ra.used(mapper.map(n), r) == True
+                    #     )
+                    # ),
 
-                # If a non-fresh register has changed, it must have been updated
-                z3.ForAll(
-                    [r],
-                    z3.Implies(
-                        z3.And(
-                            r != ra.fresh,
-                            mapper.valuation(c, r) != mapper.valuation(n, r)
-                        ),
-                        ra.update(mapper.map(n), l) == r
-                    )
-                ),
+                    # If a non-fresh register has changed, it must have been updated
+                    z3.ForAll(
+                        [r],
+                        z3.Implies(
+                            z3.And(
+                                r != ra.fresh,
+                                mapper.valuation(c, r) != mapper.valuation(n, r)
+                            ),
+                            ra.update(mapper.map(n), l) == r
+                        )
+                    ),
 
-                # If a used, non-fresh register keeps its value, then it was not updated.
-                z3.ForAll(
-                    [r],
-                    z3.Implies(
-                        z3.And(
-                            r != ra.fresh,
-                            mapper.valuation(c, r) == mapper.valuation(n, r),
-                            ra.used(mapper.map(n), r) == True
-                        ),
-                        ra.update(mapper.map(n), l) != r
-                    )
-                ),
-
-            ])
+                    # If a used, non-fresh register keeps its value, then it was not updated.
+                    z3.ForAll(
+                        [r],
+                        z3.Implies(
+                            z3.And(
+                                r != ra.fresh,
+                                mapper.valuation(c, r) == mapper.valuation(n, r),
+                                ra.used(mapper.map(n), r) == True
+                            ),
+                            ra.update(mapper.map(n), l) != r
+                        )
+                    ),
+                ])
             if value is not None:
                 # If a non-fresh register is updated, and c and n are connected by fresh,
                 # then the register contains the value
@@ -310,10 +329,7 @@ class IORAEncoder(Encoder):
                 constraints.append(
                     z3.ForAll(
                         [r],
-                        z3.And(
-                            mapper.valuation(c, r) == mapper.valuation(n, r),
-                            ra.update(mapper.map(n), l) == ra.fresh,
-                        )
+                        mapper.valuation(c, r) == mapper.valuation(n, r),
                     )
                 )
 
@@ -361,16 +377,11 @@ class IORAEncoder(Encoder):
                     raise Exception("We did something wrong")
 
             else:
+                # the None case has been dealt in full at the axiom level
                 constraints.append(
                     ra.transition(mapper.map(n), l, ra.fresh) == mapper.map(c)
                 )
-                if value is None and label in self.input_labels:
-                    constraints.append(
-                        z3.ForAll(
-                            [r],
-                            ra.transition(mapper.map(n), l, r) == mapper.map(c)
-                        )
-                    )
+
             if v is not None:
                 values.add(v)
 

@@ -16,7 +16,7 @@ from test.generation import ExhaustiveRAGenerator
 
 set_sut = new_fifoset_sut(2)
 gen = ExhaustiveRAGenerator(set_sut)
-obs = gen.generate_observations(4, max_registers=2)
+obs = gen.generate_observations(6, max_registers=2)
 print("\n".join( [str(obs) for obs in obs]))
 learner = RALearner(IORAEncoder())
 (model, stats) = learn(learner, IORATest, obs)
