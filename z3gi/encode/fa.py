@@ -3,7 +3,7 @@ import itertools
 from define.fa import DFA, MealyMachine, Mapper
 from encode import Encoder
 from utils import Tree
-from model.fa import MealyMachine
+#from model.fa import MealyMachine
 import z3
 
 
@@ -20,7 +20,7 @@ class DFAEncoder(Encoder):
         self.labels.update(seq)
 
     def build(self, num_states):
-        dfa = DFA(self.labels, num_states)
+        dfa = DFA(list(self.labels), num_states)
         mapper = Mapper(dfa)
         constraints = self.axioms(dfa, mapper)
         constraints += self.node_constraints(dfa, mapper)
@@ -48,7 +48,7 @@ class DFAEncoder(Encoder):
         return constraints
 
 class MealyEncoder(Encoder):
-    def __init__(self, input_labels, output_labels):
+    def __init__(self):
         self.tree = Tree(itertools.count(0))
         self.cache = {}
         self.input_labels = set()
@@ -56,11 +56,48 @@ class MealyEncoder(Encoder):
 
 
     def add(self, trace):
-        _ = self.tree[trace]
-        self.input_labels.update([input_label for input_label in [i for (i, _) in trace]])
-        self.output_labels.update([output_label for output_label in [o for (_, o) in trace]])
+        input_sequence = [input for (input, _) in trace]
+        output_sequence = [output for (_, output) in trace]
+        for i in range(len(input_sequence)):
+            node = self.tree[input_sequence[:i+1]]
+            self.cache[node] = output_sequence[i]
+        self.input_labels.update(input_sequence)
+        self.output_labels.update(output_sequence)
 
 
     def build(self, num_states) -> (MealyMachine, z3.ExprRef):
-        return None
+        mm = MealyMachine(list(self.input_labels), list(self.output_labels), num_states)
+        mapper = Mapper(mm)
+        constraints = self.axioms(mm, mapper)
+        constraints += self.node_constraints(mm, mapper)
+        constraints += self.transition_constraints(mm, mapper)
+        return mm, constraints
+
+    def axioms(self, mm: MealyMachine, mapper: Mapper):
+        return []
+
+    def node_constraints(self, mm, mapper):
+        constraints = []
+        for node in self.cache:
+            parent = node.parent
+            input = None
+            for label in parent.children:
+                if parent.children[label] is node:
+                    input = label
+                    break
+            output = self.cache[node]
+            n = mapper.element(parent.id)
+            i = mm.inputs[input]
+            o = mm.outputs[output]
+            constraints.append(mm.output(mapper.map(n), i) == o)
+        return constraints
+
+    def transition_constraints(self, mm, mapper):
+        constraints = [mm.start == mapper.map(mapper.start)]
+        for node, input, child in self.tree.transitions():
+            n = mapper.element(node.id)
+            i = mm.inputs[input]
+            c = mapper.element(child.id)
+            constraints.append(mm.transition(mapper.map(n), i) == mapper.map(c))
+        return constraints
 
