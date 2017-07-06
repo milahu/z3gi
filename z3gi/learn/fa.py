@@ -14,7 +14,7 @@ from model import Automaton
 import define.fa
 
 class FALearner(Learner):
-    def __init__(self, labels, encoder, solver=None, verbose=False):
+    def __init__(self, encoder, solver=None, verbose=False):
         if not solver:
             solver = z3.Solver()
         self.solver = solver
