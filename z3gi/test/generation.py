@@ -25,10 +25,9 @@ class ExhaustiveRAGenerator(ObservationGeneration):
                 raise Exception("This generator assumes at most one parameter per action")
 
     def generate_observations(self, max_depth, max_registers=3) -> List[Tuple[Action, Action]]:
-        obss = self._generate_observations([IORAObservation([])], 0, max_depth, max_registers+1)
-        print("\n".join([str(obs) for obs in obss]))
-        obs_traces = [obs.trace() for obs in obss]
-        #print(obs_traces)
+        observations = self._generate_observations([IORAObservation([])], 0, max_depth, max_registers+1)
+        print("\n".join([str(obs) for obs in observations]))
+        obs_traces = [obs.trace() for obs in observations]
         return obs_traces
 
 
@@ -40,11 +39,11 @@ class ExhaustiveRAGenerator(ObservationGeneration):
         else:
             new_obs = []
             for obs in prev_obs:
-                num_val = max(obs.values()) + 1 if len(obs.values()) > 0 else 1
+                num_val = max(obs.values()) + 1 if len(obs.values()) > 0 else 0
                 for act_sig in self.act_sigs:
                     label = act_sig.label
                     if act_sig.num_params == 1:
-                        for i in range(0, min(num_val, max_values)):
+                        for i in range(0, min(num_val+1, max_values)):
                             seq = obs.inputs()
                             seq.append(Action(label, i))
                             new_obs.append(self.sut.run(seq))

@@ -249,6 +249,18 @@ class IORAEncoder(Encoder):
                         ra.transition(q, ra.labels[l], r) == ra.transition(q, ra.labels[l], ra.fresh)
                     )
                 )
+        for l in self.output_labels:
+            if self.param_size[l] == 0:
+                print("Added for ", l)
+                axioms.append(
+                    z3.ForAll(
+                        [q,r],
+                        z3.Implies(
+                            r != ra.fresh,
+                            ra.transition(q, ra.labels[l], r) == ra.sink
+                        )
+                    )
+                )
 
         return axioms
 

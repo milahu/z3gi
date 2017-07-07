@@ -32,9 +32,15 @@ class DFA(Acceptor):
         # print(tr_str)
         return crt_state
 
+    def _seq(self, transitions: List[Transition]):
+        return [trans.start_label for trans in transitions]
+
 class MutableDFA(DFA, MutableAcceptorMixin):
     def __init__(self):
         super().__init__([], {}, {})
+
+    def _runner(self):
+        return None
 
     def to_immutable(self) -> DFA:
         return DFA(self._states, self._state_to_trans, self._state_to_acc)
@@ -55,6 +61,10 @@ class MooreMachine(Transducer):
         crt_state = self.state(trace)
         return self.state_to_out[crt_state]
 
+    def _seq(self, transitions:List[Transition]):
+        #trace = [(trans.start_label, self.state_to_out[trans.end_state]) for trans in transitions]
+        return [trans.start_label for trans in transitions]#trace
+
 class MealyMachine(Transducer):
     def __init__(self, states, state_to_trans):
         super().__init__(states, state_to_trans)
@@ -65,6 +75,10 @@ class MealyMachine(Transducer):
     def state(self, trace: List[Symbol]) -> State:
         crt_state = super().state(trace)
         return crt_state
+
+    def _seq(self, transitions:List[IOTransition]):
+        #trace = [(trans.start_label, trans.output) for trans in transitions]
+        return [trans.start_label for trans in transitions]
 
     def output(self, trace: List[Symbol]) -> Output:
         if len(trace) == 0:

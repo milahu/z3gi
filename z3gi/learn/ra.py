@@ -20,8 +20,9 @@ class RALearner(Learner):
     def add(self, trace):
         self.encoder.add(trace)
 
-    def model(self, min_locations=1, max_locations=20, min_registers=0, max_registers=10,
-              old_definition:define.ra.RegisterMachine = None) -> Tuple[model.ra.RegisterMachine, define.ra.RegisterMachine]:
+    def model(self, min_locations=1, max_locations=20, min_registers=0, max_registers=3,
+              old_definition:define.ra.RegisterMachine = None, old_model:model.ra.RegisterMachine = None) -> \
+            Tuple[model.ra.RegisterMachine, define.ra.RegisterMachine]:
         if old_definition is not None:
             min_locations = len(old_definition.locations)
             min_registers = len(old_definition.registers) - 1

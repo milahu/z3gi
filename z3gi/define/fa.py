@@ -72,7 +72,7 @@ class MealyMachineBuilder(object):
                     tr.z3_to_label(inp),
                     tr.z3_to_label(output),
                     tr.z3_to_state(to_state))
-
+        mut_mm.generate_acc_seq()
         return mut_mm.to_immutable()
 
 class DFABuilder(object):
@@ -94,7 +94,7 @@ class DFABuilder(object):
                     tr.z3_to_label(labels),
                     tr.z3_to_state(to_state))
                 mut_dfa.add_transition(tr.z3_to_state(state), trans)
-
+        mut_dfa.generate_acc_seq()
         return mut_dfa.to_immutable()
 
 class FATranslator(object):

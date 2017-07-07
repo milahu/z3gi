@@ -3,6 +3,7 @@ from typing import List
 
 import collections
 
+from model.fa import Symbol
 from model.ra import Action
 from enum import Enum
 
@@ -11,7 +12,7 @@ class SUT(metaclass=ABCMeta):
     OK = "OK"
     NOK = "NOK"
     @abstractmethod
-    def run(self, seq:List[object]):
+    def run(self, seq:List[object]) -> Observation:
         """Runs a sequence of inputs on the SUT and returns an observation"""
         pass
 
@@ -59,12 +60,34 @@ class RASUT(metaclass=ABCMeta):
 class Observation():
     @abstractmethod
     def trace(self):
+        """returns the trace to be added to the solver"""
         pass
 
     @abstractmethod
     def inputs(self):
-        """returns all the values in the trace"""
+        """returns all the inputs from an observation"""
         pass
+
+class DFAObservation():
+    def __init__(self, seq, acc):
+        self.seq = seq
+        self.acc = acc
+
+    def trace(self):
+        return (self.seq, self.acc)
+
+    def inputs(self) -> List[Symbol]:
+        return self.seq
+
+class MealyObservation():
+    def __init__(self, trace):
+        self.tr = trace
+
+    def trace(self):
+        return self.tr
+
+    def inputs(self) -> List[Symbol]:
+        return [a for (a,_) in self.tr]
 
 class RegisterMachineObservation(Observation):
 
@@ -75,34 +98,37 @@ class RegisterMachineObservation(Observation):
 
 
 
-# class RAObservation(Observation):
-#     def __init__(self, trace):
-#
-#
-#
-#     def trace(self):
-#         return self.trace
-#
-#     def values(self):
-#         return
+class RAObservation(RegisterMachineObservation):
+    def __init__(self, seq, acc):
+        self.seq = seq
+        self.acc = acc
+
+    def trace(self):
+        return (self.trace, self.acc)
+
+    def inputs(self):
+        return self.seq
+
+    def values(self):
+        return set([a.value for a in self.seq if a.value is not None])
 
 class IORAObservation(RegisterMachineObservation):
     def __init__(self, trace):
-        self.trace = trace
+        self.tr = trace
 
     def trace(self):
-        return self.trace
+        return self.tr
 
     def inputs(self):
-        return [a for (a,_) in self.trace]
+        return [a for (a,_) in self.tr]
 
     def values(self):
-        iv = [a.value for (a,_) in self.trace if a.value is not None]
-        ov = [a.value for (_,a) in self.trace if a.value is not None]
+        iv = [a.value for (a,_) in self.tr if a.value is not None]
+        ov = [a.value for (_,a) in self.tr if a.value is not None]
         return set(iv+ov)
 
     def __str__(self):
-        return "Obs: " + str(self.trace)
+        return "Obs: " + str(self.tr)
 
 
 

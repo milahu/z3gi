@@ -102,6 +102,7 @@ class RegisterAutomatonBuilder(object):
             self._add_state(model, translator, mut_ra, z3state)
             for z3label in self.ra.labels.values():
                 self._add_transitions(model, translator, mut_ra, z3state, z3label)
+        mut_ra.generate_acc_seq()
         return mut_ra.to_immutable()
 
     def _add_state(self, model, translator, mut_ra, z3state):
@@ -176,6 +177,7 @@ class IORegisterAutomatonBuilder(object):
             self._add_state(translator, mut_ra, z3state)
             for z3label in z3input_labels:
                 self._add_transitions(model, translator, mut_ra, z3state, z3label, z3output_labels)
+        mut_ra.generate_acc_seq()
         return mut_ra.to_immutable()
 
     def _add_state(self, translator, mut_ra, z3state):

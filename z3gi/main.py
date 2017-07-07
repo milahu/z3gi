@@ -15,17 +15,18 @@ from test.generation import ExhaustiveRAGenerator
 # (model, stats) = learn(learner, IORATest, obs)
 # print(model, "\n \n", stats)
 
-# set_sut = new_fifoset_sut(2)
+# expensive peace of work
+# set_sut = new_fifoset_sut(3)
 # gen = ExhaustiveRAGenerator(set_sut)
-# obs = gen.generate_observations(6, max_registers=2)
+# obs = gen.generate_observations(8, max_registers=3)
 # print("\n".join( [str(obs) for obs in obs]))
 # learner = RALearner(IORAEncoder())
 # (model, stats) = learn(learner, IORATest, obs)
 # print(model, "\n \n", stats)
 
-login_sut = new_login_sut(2)
+login_sut = new_login_sut(1)
 gen = ExhaustiveRAGenerator(login_sut)
-obs = gen.generate_observations(8, max_registers=2)
+obs = gen.generate_observations(6, max_registers=1)
 print("\n".join( [str(obs) for obs in obs]))
 learner = RALearner(IORAEncoder())
 (model, stats) = learn(learner, IORATest, obs)

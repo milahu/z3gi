@@ -137,6 +137,20 @@ class RegisterAutomaton(Acceptor, RegisterMachine):
 
         return crt_state
 
+    def _seq(self, transitions:List[RATransition]):
+        run = []
+        values = set()
+        reg_val = dict()
+        for trans in transitions:
+            if isinstance(trans.guard, EqualityGuard) or isinstance(trans.guard, OrGuard):
+                inp_val = reg_val[trans.guard.registers()[0]]
+            else:
+                inp_val = 0 if len(values) == 0 else max(values) + 1
+                values.add(inp_val)
+            inp = Action(trans.start_label, inp_val)
+            run.append(inp)
+        return run
+
 
 class IORegisterAutomaton(Transducer, RegisterMachine):
     def __init__(self, locations, loc_to_trans, registers):
@@ -193,6 +207,28 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
                 values.add(action.value)
             output = fired_transition.output(valuation, values)
             return output
+
+    def _seq(self, transitions: List[IORATransition]):
+        seq = []
+        values = set()
+        reg_val = dict()
+        for trans in transitions:
+            if isinstance(trans.guard, EqualityGuard) or isinstance(trans.guard, OrGuard):
+                inp_val = reg_val[trans.guard.registers()[0]]
+            else:
+                inp_val = 0 if len(values) == 0 else max(values) + 1
+                values.add(inp_val)
+            inp = Action(trans.start_label, inp_val)
+            reg_val = trans.update(reg_val, inp)
+            if isinstance(trans.output_mapping, Register):
+                out_val = reg_val[trans.output_mapping]
+            else:
+                out_val = 0 if len(values) == 0 else max(values) + 1
+                values.add(out_val)
+            out = Action(trans.output_label, out_val)
+            reg_val = trans.output_update(reg_val, out)
+            seq.append(inp)
+        return seq
 
 class MutableRegisterAutomaton(RegisterAutomaton, MutableAcceptorMixin):
     def __init__(self):

@@ -11,7 +11,7 @@ class Learner(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def model(self, old_definition:define.Automaton=None) -> Tuple[model.Automaton, define.Automaton]:
+    def model(self, old_definition:define.Automaton=None, old_model:model.Automaton=None) -> Tuple[model.Automaton, define.Automaton]:
         """"Infers a minimal model whose behavior corresponds to the traces added so far.
         Returns None if no model could be obtained."""
         pass
