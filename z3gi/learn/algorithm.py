@@ -50,12 +50,12 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
         statistics.set_suite_size(len(traces))
         test = cast(TestTemplate, test_type(traces.pop(0)))
         definition = None
-        learner.add(test.trace)
+        learner.add(test.tr)
         statistics.add_tests(1)
         statistics.add_inputs(test.size())
         done = False
         model = None
-        learn_traces = [test.trace]
+        learn_traces = [test.tr]
         while not done:
             start_time = int(time.time() * 1000)
             (model, definition) = learner.model(old_definition=definition)

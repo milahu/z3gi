@@ -91,7 +91,7 @@ class ValueProb(collections.namedtuple("ValueProb", ("history", "register", "fre
         if pick < self.register and len(reg_vals) > 0:
             return reg_vals[rand.randint(0, len(reg_vals)-1)]
         elif pick >= self.register and pick < self.register + self.history and len(his_vals) > 0:
-            return reg_vals[rand.randint(0, len(his_vals) - 1)]
+            return his_vals[rand.randint(0, len(his_vals) - 1)]
         else:
             return fresh_value
 
@@ -113,8 +113,12 @@ class IORARWalkFromState(RWalkFromState):
                 # we have a fresh transition, which means we can either pick a fresh value or any past value
                 # as long as it is not stored in one of the guarded registers in this location
                 fresh_val = 0 if len(values) == 0 else max(values) + 1
-                active_regs = set(itertools.chain([tr.guard.registers() for tr in
-                                             model.transitions(trans.start_state) if not tr is not trans]))
+                r_list = list(itertools.chain((tr.guard.registers() for tr in
+                                            model.transitions(trans.start_state))))
+                print(r_list)
+
+                active_regs =  set() if len(model.registers()) == 0 else \
+                    set(itertools.chain([tr.guard.registers() for tr in model.transitions(trans.start_state)]))
                 active_reg_vals = [reg_val[reg] for reg in active_regs]
                 selectable_reg_vals = [val for val in reg_val.values() if val not in active_reg_vals]
                 selectable_his_vals = [val for val in values if val not in active_reg_vals

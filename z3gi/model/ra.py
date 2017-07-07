@@ -112,8 +112,8 @@ class RegisterMachine(Automaton):
         pass
 
 class RegisterAutomaton(Acceptor, RegisterMachine):
-    def __init__(self, locations, loc_to_acc, loc_to_trans, registers):
-      super().__init__(locations, loc_to_trans, loc_to_acc)
+    def __init__(self, locations, loc_to_acc, loc_to_trans, registers, acc_seq={}):
+      super().__init__(locations, loc_to_trans, loc_to_acc, acc_seq)
       self._registers = registers
 
     def registers(self) -> List[Register]:
@@ -153,8 +153,8 @@ class RegisterAutomaton(Acceptor, RegisterMachine):
 
 
 class IORegisterAutomaton(Transducer, RegisterMachine):
-    def __init__(self, locations, loc_to_trans, registers):
-        super().__init__(locations, loc_to_trans)
+    def __init__(self, locations, loc_to_trans, registers, acc_seq={}):
+        super().__init__(locations, loc_to_trans, acc_seq)
         self._registers = registers
 
 
@@ -241,7 +241,8 @@ class MutableRegisterAutomaton(RegisterAutomaton, MutableAcceptorMixin):
                 self._registers.append(reg)
 
     def to_immutable(self) -> RegisterAutomaton:
-        return RegisterAutomaton(self._states, self._state_to_acc, self._state_to_trans, self._registers)
+        return RegisterAutomaton(self._states, self._state_to_acc,
+                                 self._state_to_trans, self._registers, self.acc_seq())
 
 class MutableIORegisterAutomaton(IORegisterAutomaton, MutableAutomatonMixin):
     def __init__(self):
@@ -254,7 +255,8 @@ class MutableIORegisterAutomaton(IORegisterAutomaton, MutableAutomatonMixin):
                 self._registers.append(reg)
 
     def to_immutable(self) -> IORegisterAutomaton:
-        return IORegisterAutomaton(self._states, self._state_to_trans, self._registers)
+        return IORegisterAutomaton(self._states, self._state_to_trans, self._registers,
+                                   self.acc_seq()                                   )
 
 class Guard(metaclass=ABCMeta):
     """A guard with is_satisfied implements a predicate over the current register valuation and the parameter value. """

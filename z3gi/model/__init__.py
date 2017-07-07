@@ -36,11 +36,11 @@ class MultipleTransitionsFired(Exception):
 
 
 class Automaton(metaclass=ABCMeta):
-    def __init__(self, states, state_to_trans):
+    def __init__(self, states, state_to_trans, acc_seq={}):
         super().__init__()
         self._states = states
         self._state_to_trans = state_to_trans
-        self._acc_seq = {}
+        self._acc_seq = acc_seq
 
     def start_state(self):
         return self._states[0]
@@ -55,6 +55,8 @@ class Automaton(metaclass=ABCMeta):
     def acc_seq(self, state=None):
         """returns the access sequence to a state in the form of sequences of inputs"""
         if state is not None:
+            if len(self._acc_seq) == 0:
+                raise Exception("Access sequences haven't been defined for this machine")
             return self._seq(self._acc_seq[state])
         else:
             return {state:self._seq(self._acc_seq[state]) for state in self.states()}
@@ -130,6 +132,7 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
             if node is None:
                 raise Exception("Could not find state {0} in tree {1}".format(state, ptree))
             new_acc_seq[state] = node.path()
+        assert(len(new_acc_seq) == len(self.states()))
         self._acc_seq = new_acc_seq
 
     @abstractmethod
@@ -141,15 +144,12 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
 
 
 class Transducer(Automaton, metaclass=ABCMeta):
-    def __init__(self, states, state_to_trans):
-        super().__init__(states, state_to_trans)
+    def __init__(self, states, state_to_trans, acc_seq={}):
+        super().__init__(states, state_to_trans, acc_seq)
 
     @abstractmethod
     def output(self, trace):
         pass
-
-    def output_labels(self):
-        return set([trans.output for state in self.states() for trans in self.transitions(state)])
 
 
 
@@ -157,8 +157,8 @@ class Transducer(Automaton, metaclass=ABCMeta):
 
 
 class Acceptor(Automaton, metaclass=ABCMeta):
-    def __init__(self, states, state_to_trans, state_to_acc):
-        super().__init__(states, state_to_trans)
+    def __init__(self, states, state_to_trans, state_to_acc, acc_seq={}):
+        super().__init__(states, state_to_trans, acc_seq)
         self._state_to_acc = state_to_acc
 
     def is_accepting(self, state):
@@ -180,9 +180,6 @@ class MutableAcceptorMixin(MutableAutomatonMixin, metaclass=ABCMeta):
     def add_state(self, state, accepts):
         super().add_state(state)
         self._state_to_acc[state] = accepts
-
-
-
 
 
 def get_prefix_tree(aut : Automaton):

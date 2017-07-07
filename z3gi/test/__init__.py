@@ -30,13 +30,13 @@ class Test(metaclass=ABCMeta):
 
 class TestTemplate(metaclass=ABCMeta):
     def __init__(self, trace):
-        self.trace = trace
+        self.tr = trace
 
     def check(self, model: Automaton):
-        return self._check_trace(model, self.trace)
+        return self._check_trace(model, self.tr)
 
     def trace(self):
-        return self.trace
+        return self.tr
 
     @abstractmethod
     def _check_trace(self, model, trace):
@@ -99,7 +99,7 @@ class IORATest(TestTemplate):
         return None
 
     def size(self):
-        return len(self.trace)
+        return len(self.tr)
 
 
 
@@ -125,7 +125,7 @@ class MealyTest(TestTemplate):
         return None
 
     def size(self):
-        return len(self.trace)
+        return len(self.tr)
 
 # Acceptor Test observations are tuples comprising sequences of Actions/Symbols joined by an accept/reject booleans
 class AcceptorTest(TestTemplate):
@@ -140,5 +140,5 @@ class AcceptorTest(TestTemplate):
         return None
 
     def size(self):
-        (seq, acc) = self.trace
+        (seq, acc) = self.tr
         return len(seq)
