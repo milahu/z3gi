@@ -5,7 +5,7 @@ from encode.iora import IORAEncoder
 from learn.algorithm import learn
 from learn.ra import RALearner
 from model.ra import Action
-from sut import RASUT
+from sut import RASUT, RegisterMachineObservation, IORAObservation
 from sut.stack import new_stack_sut
 from test import IORATest
 
@@ -25,29 +25,33 @@ class ExhaustiveRAGenerator(ObservationGeneration):
                 raise Exception("This generator assumes at most one parameter per action")
 
     def generate_observations(self, max_depth, max_registers=3) -> List[Tuple[Action, Action]]:
-        val_obs = self._generate_observations([(0,[])], 0, max_depth, max_registers)
-        obs = [obs for (_, obs) in val_obs]
-        return obs
+        obss = self._generate_observations([IORAObservation([])], 0, max_depth, max_registers+1)
+        print("\n".join([str(obs) for obs in obss]))
+        obs_traces = [obs.trace() for obs in obss]
+        #print(obs_traces)
+        return obs_traces
 
 
 
-    def _generate_observations(self, prev_obs, crt_depth, max_depth, max_values):
+    def _generate_observations(self, prev_obs:List[RegisterMachineObservation], crt_depth, max_depth, max_values) \
+            -> List[RegisterMachineObservation]:
         if crt_depth > max_depth:
             return []
         else:
             new_obs = []
-            for (num_val, obs) in prev_obs:
+            for obs in prev_obs:
+                num_val = max(obs.values()) + 1 if len(obs.values()) > 0 else 1
                 for act_sig in self.act_sigs:
                     label = act_sig.label
                     if act_sig.num_params == 1:
-                        for i in range(0, min(num_val+1, max_values)):
-                            seq = [inp for (inp, _) in obs]
+                        for i in range(0, min(num_val, max_values)):
+                            seq = obs.inputs()
                             seq.append(Action(label, i))
-                            new_obs.append((max(num_val+1, i), self.sut.run(seq)))
+                            new_obs.append(self.sut.run(seq))
                     else:
-                        seq = [inp for (inp, _) in obs]
+                        seq = obs.inputs()
                         seq.append(Action(label, None))
-                        new_obs.append((num_val, self.sut.run(seq)))
+                        new_obs.append(self.sut.run(seq))
 
             if crt_depth < max_depth:
                 extended_obs = self._generate_observations(new_obs, crt_depth + 1, max_depth, max_values)

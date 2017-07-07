@@ -3,7 +3,7 @@ from typing import cast
 
 from model import Automaton
 from learn import Learner
-from test import TestTemplate
+from test import TestTemplate, TestGenerator
 import time
 
 class Statistics():
@@ -37,6 +37,7 @@ class Statistics():
 
 
 def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automaton, Statistics]:
+    """ takes learner and a list of traces and generates a model"""
     statistics = Statistics()
     if len(traces) == 0:
         return (None, statistics)
@@ -70,4 +71,48 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
                     statistics.add_inputs(test.size())
                     done = False
                     break
+        return (model, statistics)
+
+def learn_mbt(learner:Learner, test_generator:TestGenerator) -> Tuple[Automaton, Statistics]:
+    """ takes learner and a test generator, and generates a model"""
+    next_test = test_generator.gen_test(None)
+    statistics = Statistics()
+    if next_test is None:
+        return (None, statistics)
+    else:
+        definition = None
+        learner.add(next_test.trace())
+        statistics.add_tests(1)
+        statistics.add_inputs(next_test.size())
+        done = False
+        learner_tests = [next_test]
+        generated_tests = [next_test]
+        while not done:
+            start_time = int(time.time() * 1000)
+            (model, definition) = learner.model(old_definition=definition)
+            end_time = int(time.time() * 1000)
+            statistics.add_learning_time(end_time - start_time)
+            done = True
+            for next_test in generated_tests:
+                ce = next_test.check(model)
+                if ce is not None:
+                    learner_tests.append(ce)
+                    learner.add(ce)
+                    statistics.add_tests(1)
+                    statistics.add_inputs(next_test.size())
+                    done = False
+                    break
+            if not done:
+                continue
+            for next_test in test_generator.gen_test_iter(model):
+                generated_tests.append(next_test)
+                ce = next_test.check(model)
+                if ce is not None:
+                    learner_tests.append(ce)
+                    learner.add(ce)
+                    statistics.add_tests(1)
+                    statistics.add_inputs(next_test.size())
+                    done = False
+                    break
+        statistics.set_suite_size(len(generated_tests))
         return (model, statistics)

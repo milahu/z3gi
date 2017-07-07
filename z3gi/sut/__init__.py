@@ -4,6 +4,7 @@ from typing import List
 import collections
 
 from model.ra import Action
+from enum import Enum
 
 
 class SUT(metaclass=ABCMeta):
@@ -20,6 +21,30 @@ class SUT(metaclass=ABCMeta):
         pass
 
 
+class SUTType(Enum):
+    IORA = 1
+    RA = 2
+    Mealy = 3
+    Moore = 4
+    DFA = 5
+
+    def is_acceptor(self):
+        return  self == SUTType.RA or self.DFA
+
+    def is_transducer(self):
+        return  not self.is_acceptor()
+
+
+class SUTClass(metaclass=ABCMeta):
+    def __init__(self, sut_dict):
+        self.sut_dict = sut_dict
+
+    def get_sut(self, sut_type : SUTType) -> SUT:
+        return self.sut_dict[sut_type]
+
+    def has_sut(self, sut_type : SUTType) -> bool:
+        return  sut_type in self.sut_dict
+
 ActionSignature = collections.namedtuple("ActionSignature", ('label', 'num_params'))
 class RASUT(metaclass=ABCMeta):
     @abstractmethod
@@ -31,6 +56,57 @@ class RASUT(metaclass=ABCMeta):
         """Runs a sequence of inputs on the SUT and returns an observation"""
         pass
 
+class Observation():
+    @abstractmethod
+    def trace(self):
+        pass
+
+    @abstractmethod
+    def inputs(self):
+        """returns all the values in the trace"""
+        pass
+
+class RegisterMachineObservation(Observation):
+
+    @abstractmethod
+    def values(self):
+        """returns all the values in the trace"""
+        pass
+
+
+
+# class RAObservation(Observation):
+#     def __init__(self, trace):
+#
+#
+#
+#     def trace(self):
+#         return self.trace
+#
+#     def values(self):
+#         return
+
+class IORAObservation(RegisterMachineObservation):
+    def __init__(self, trace):
+        self.trace = trace
+
+    def trace(self):
+        return self.trace
+
+    def inputs(self):
+        return [a for (a,_) in self.trace]
+
+    def values(self):
+        iv = [a.value for (a,_) in self.trace if a.value is not None]
+        ov = [a.value for (_,a) in self.trace if a.value is not None]
+        return set(iv+ov)
+
+    def __str__(self):
+        return "Obs: " + str(self.trace)
+
+
+
+
 class ObjectSUT(RASUT):
     """Wraps around an object and calls methods on it corresponding to the Actions"""
     def __init__(self, act_sigs, obj_gen):
@@ -39,21 +115,38 @@ class ObjectSUT(RASUT):
 
     def run(self, seq:List[Action]):
         obj = self.obj_gen()
-        values = set()
+        values = dict()
         out_seq = []
         for (label, val) in seq:
             meth = obj.__getattribute__(label)
             if self.acts[label].num_params == 0:
                 outp = meth()
             else:
-                values.add(val)
+                (values, val) = self._res_ival(values, val)
                 outp = meth(val)
-            outp_action = self.parse_out(outp)
-            values.add(outp_action.value)
+            (out_label, out_val) = self.parse_out(outp)
+            if out_val is not None:
+                (values, out_val) = self._res_oval(values, out_val)
+            outp_action = Action(out_label, out_val)
             out_seq.append(outp_action)
         obs = list(zip(seq, out_seq))
-        return obs
+        return IORAObservation(obs)
 
+    def _res_ival(self, val_dict, val):
+        l = [a for a in val_dict.keys() if val_dict[a] == val]
+        if len(l) > 1:
+            raise Exception("Collision")
+        if len(l) == 1:
+            return (val_dict, l[0])
+        val_dict[val] = val
+        return (val_dict, val)
+
+    def _res_oval(self, val_dict, val):
+        if val in val_dict:
+            return (val_dict, val_dict[val])
+        else:
+            val_dict[val] = max(val_dict.values()) + 1 if len(val_dict) > 0 else 0
+            return (val_dict, val_dict[val])
 
     def parse_out(self, outp) -> Action:
         fresh = None

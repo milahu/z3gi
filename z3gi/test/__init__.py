@@ -1,6 +1,7 @@
 import itertools
 from abc import ABCMeta, abstractmethod
-from typing import List
+from types import GeneratorType
+from typing import List, Generator, Iterable
 
 from model import Automaton, Acceptor
 from model.fa import MealyMachine
@@ -16,6 +17,16 @@ class Test(metaclass=ABCMeta):
         On success it return None"""
         pass
 
+    @abstractmethod
+    def trace(self):
+        pass
+
+    @abstractmethod
+    def size(self) -> int:
+        """Returns the size (in terms of inputs) of the test"""
+        pass
+
+
 
 class TestTemplate(metaclass=ABCMeta):
     def __init__(self, trace):
@@ -24,15 +35,11 @@ class TestTemplate(metaclass=ABCMeta):
     def check(self, model: Automaton):
         return self._check_trace(model, self.trace)
 
+    def trace(self):
+        return self.trace
+
     @abstractmethod
     def _check_trace(self, model, trace):
-
-        pass
-
-
-    @abstractmethod
-    def size(self) -> int:
-        """Returns the size (in terms of inputs) of the test"""
         pass
 
 
@@ -42,6 +49,11 @@ class TestGenerator(metaclass=ABCMeta):
         """generates a Test. Returns None if the test suite is exhausted"""
         pass
 
+    def gen_test_iter(self, model: Automaton) -> Iterable[Test]:
+        test = self.gen_test(model)
+        while test is not None:
+            yield test
+            test = self.gen_test(model)
 
 class TracesGenerator(metaclass=ABCMeta):
     def __init__(self, traces = list()):

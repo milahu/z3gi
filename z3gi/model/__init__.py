@@ -40,9 +40,13 @@ class Automaton(metaclass=ABCMeta):
         super().__init__()
         self._states = states
         self._state_to_trans = state_to_trans
+        self._acc_seq = {}
 
     def start_state(self):
         return self._states[0]
+
+    def acc_seq(self, state):
+        return self._acc_seq[state]
 
     def states(self):
         return list(self._states)
@@ -89,7 +93,6 @@ class Automaton(metaclass=ABCMeta):
 
         return str_rep
 
-
 class MutableAutomatonMixin(metaclass=ABCMeta):
     def add_state(self, state):
         if state not in self._states:
@@ -99,6 +102,9 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
         if state not in self._state_to_trans:
             self._state_to_trans[state] = []
         self._state_to_trans[state].append(transition)
+
+    def add_acc_seq(self, state, trace):
+        self._acc_seq[state] = trace
 
     @abstractmethod
     def to_immutable(self) -> Automaton:
@@ -148,3 +154,52 @@ class MutableAcceptorMixin(MutableAutomatonMixin, metaclass=ABCMeta):
     def add_state(self, state, accepts):
         super().add_state(state)
         self._state_to_acc[state] = accepts
+
+
+def get_acc_seq(aut : Automaton, runner, old_acc_seq = dict()):
+    new_acc_seq = {aut.state(acc_seq):acc_seq for acc_seq in old_acc_seq.values()}
+    not_covered = [state for state in aut.states() if state not in new_acc_seq.keys()]
+    ptree = get_prefix_tree(aut)
+    for state in not_covered:
+        trace = runner(ptree.path(state))
+        new_acc_seq[state] = trace
+    return new_acc_seq
+
+
+def get_prefix_tree(aut : Automaton):
+    visited  = set()
+    to_visit = set()
+    root = PrefixTree(aut.start_state())
+    to_visit.add(root)
+    while len(to_visit) > 0:
+        crt_node = to_visit.pop()
+        visited.add(crt_node.state)
+        transitions = aut.transitions(crt_node.state)
+        for trans in transitions:
+            if trans.end_state not in visited:
+                child_node = PrefixTree(trans.end_state)
+                crt_node.add_child(trans, child_node)
+    return root
+
+
+
+
+class PrefixTree():
+    def __init__(self, state):
+        self.state = state
+        self.tr_tree:dict = {}
+        self.parent = None
+
+    def add_child(self, trans, tree):
+        self.tr_tree[trans] = tree
+        self.tr_tree[trans].parent = self
+
+    def path(self, state) -> List[Transition]:
+        if len(self.tr_tree):
+            return None
+        else:
+            for (tran, child) in self.tr_tree.items():
+                path = child.path(state)
+                if path is not None:
+                    return [tran] + path
+            return None
