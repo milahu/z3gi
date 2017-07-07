@@ -6,6 +6,11 @@ from learn import Learner
 from test import TestTemplate, TestGenerator
 import time
 
+__all__ = [
+    "learn",
+    "learn_mbt"
+    ]
+
 class Statistics():
     def __init__(self):
         self.num_tests = 0
@@ -73,8 +78,8 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
                     break
         return (model, statistics)
 
-def learn_mbt(learner:Learner, test_generator:TestGenerator) -> Tuple[Automaton, Statistics]:
-    """ takes learner and a test generator, and generates a model"""
+def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> Tuple[Automaton, Statistics]:
+    """ takes learner, a test generator, and bound on the number of tests and generates a model"""
     next_test = test_generator.gen_test(None)
     statistics = Statistics()
     if next_test is None:
@@ -93,6 +98,7 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator) -> Tuple[Automaton,
             end_time = int(time.time() * 1000)
             statistics.add_learning_time(end_time - start_time)
             done = True
+            # we first check the tests that already have been generated
             for next_test in generated_tests:
                 ce = next_test.check(model)
                 if ce is not None:
@@ -104,7 +110,12 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator) -> Tuple[Automaton,
                     break
             if not done:
                 continue
-            for next_test in test_generator.gen_test_iter(model):
+            # we then generate and check new tests, until either we find a CE,
+            # or the suite is exhausted or we have run the intended number of tests
+            for i in range(0, max_tests):
+                next_test = test_generator.gen_test(model)
+                if next_test is None:
+                    break
                 generated_tests.append(next_test)
                 ce = next_test.check(model)
                 if ce is not None:

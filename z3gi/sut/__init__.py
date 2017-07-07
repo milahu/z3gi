@@ -7,6 +7,16 @@ from model.fa import Symbol
 from model.ra import Action
 from enum import Enum
 
+class Observation():
+    @abstractmethod
+    def trace(self):
+        """returns the trace to be added to the solver"""
+        pass
+
+    @abstractmethod
+    def inputs(self):
+        """returns all the inputs from an observation"""
+        pass
 
 class SUT(metaclass=ABCMeta):
     OK = "OK"
@@ -55,17 +65,6 @@ class RASUT(metaclass=ABCMeta):
     @abstractmethod
     def run(self, seq:List[Action]):
         """Runs a sequence of inputs on the SUT and returns an observation"""
-        pass
-
-class Observation():
-    @abstractmethod
-    def trace(self):
-        """returns the trace to be added to the solver"""
-        pass
-
-    @abstractmethod
-    def inputs(self):
-        """returns all the inputs from an observation"""
         pass
 
 class DFAObservation():

@@ -5,7 +5,7 @@ from sut.login import new_login_sut
 from sut.stack import new_stack_sut
 from sut.fifoset import new_fifoset_sut
 from test import IORATest
-from test.generation import ExhaustiveRAGenerator
+from test.exhaustive import ExhaustiveRAGenerator
 
 # stack_sut = new_stack_sut(2)
 # gen = ExhaustiveRAGenerator(stack_sut)

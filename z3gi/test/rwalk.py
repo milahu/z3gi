@@ -7,11 +7,14 @@ import itertools
 
 from model import Automaton, Transition
 from model.ra import IORATransition, IORegisterAutomaton, EqualityGuard, OrGuard, Action, Register
-from sut import SUT
+from sut import SUT, ActionSignature
 from test import TestGenerator, Test, AcceptorTest, MealyTest, IORATest
 import random
 
 rand = random.Random(0)
+
+def rand_sel(l:List):
+    return l[rand.randint(0, len(l)-1)]
 
 class RWalkFromState(TestGenerator, metaclass=ABCMeta):
     def __init__(self, sut:SUT, test_gen, rand_length, rand_start_state=True):
@@ -22,21 +25,43 @@ class RWalkFromState(TestGenerator, metaclass=ABCMeta):
 
     def gen_test(self, model: Automaton) -> Test:
         """generates a test comprising an access sequence and a random sequence"""
-        if self.rand_start_state:
-            crt_state = model.states()[rand.randint(0, len(model.states()) - 1)]
+        if model is None:
+            seq = self._generate_init()
         else:
-            crt_state = model.start_state()
+            if self.rand_start_state:
+                crt_state = model.states()[rand.randint(0, len(model.states()) - 1)]
+            else:
+                crt_state = model.start_state()
 
-        trans_path = list(model.acc_trans_seq(crt_state))
-        for _ in range(0, self.rand_length):
-            transitions = model.transitions(crt_state)
-            r_trans = transitions[rand.randint(0, len(transitions)-1)]
-            crt_state = r_trans.end_state
-            trans_path.append(r_trans)
-        seq = self._generate_seq(model, trans_path)
+            trans_path = list(model.acc_trans_seq(crt_state))
+            for _ in range(0, self.rand_length):
+                transitions = model.transitions(crt_state)
+                r_trans = transitions[rand.randint(0, len(transitions)-1)]
+                crt_state = r_trans.end_state
+                trans_path.append(r_trans)
+            seq = self._generate_seq(model, trans_path)
         obs = self.sut.run(seq)
         test = self.test_gen(obs.trace())
         return test
+
+    def _generate_init(self):
+        """generates a sequence covering all input elements in the sut interface"""
+        seq = []
+        for abs_inp in self.sut.input_interface():
+            cnt = 0
+            # if it's RA stuff
+            if isinstance(abs_inp, ActionSignature):
+                if abs_inp.num_params == 0:
+                    val = None
+                else:
+                    val = cnt
+                    cnt += 1
+                seq.append(Action(abs_inp.label, val))
+            elif isinstance(abs_inp, str):
+                seq.append(abs_inp)
+            else:
+                raise Exception("Unrecognized type")
+        return seq
 
     @abstractmethod
     def _generate_seq(self, model: Automaton, trans_path:List[Transition]):
@@ -60,7 +85,7 @@ class MealyRWalkFromState(RWalkFromState):
     def __init__(self, sut:SUT, rand_length, rand_start_state=True):
         super().__init__(self, sut, MealyTest, rand_length, rand_start_state)
 
-class ValueProb(collections.nametuple("ValueProb", ("history", "register", "fresh"))):
+class ValueProb(collections.namedtuple("ValueProb", ("history", "register", "fresh"))):
     def select(self, reg_vals:List[int], his_vals:List[int], fresh_value):
         pick = rand.random()
         if pick < self.register and len(reg_vals) > 0:
