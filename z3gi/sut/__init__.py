@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import List, Tuple
 
 import collections
 
@@ -18,54 +18,7 @@ class Observation():
         """returns all the inputs from an observation"""
         pass
 
-class SUT(metaclass=ABCMeta):
-    OK = "OK"
-    NOK = "NOK"
-    @abstractmethod
-    def run(self, seq:List[object]) -> Observation:
-        """Runs a sequence of inputs on the SUT and returns an observation"""
-        pass
 
-    @abstractmethod
-    def input_interface(self) -> List[object]:
-        """Runs the list of inputs or input signatures comprising the input interface"""
-        pass
-
-
-class SUTType(Enum):
-    IORA = 1
-    RA = 2
-    Mealy = 3
-    Moore = 4
-    DFA = 5
-
-    def is_acceptor(self):
-        return  self == SUTType.RA or self.DFA
-
-    def is_transducer(self):
-        return  not self.is_acceptor()
-
-
-class SUTClass(metaclass=ABCMeta):
-    def __init__(self, sut_dict):
-        self.sut_dict = sut_dict
-
-    def get_sut(self, sut_type : SUTType) -> SUT:
-        return self.sut_dict[sut_type]
-
-    def has_sut(self, sut_type : SUTType) -> bool:
-        return  sut_type in self.sut_dict
-
-ActionSignature = collections.namedtuple("ActionSignature", ('label', 'num_params'))
-class RASUT(metaclass=ABCMeta):
-    @abstractmethod
-    def input_interface(self) -> List[ActionSignature]:
-        pass
-
-    @abstractmethod
-    def run(self, seq:List[Action]):
-        """Runs a sequence of inputs on the SUT and returns an observation"""
-        pass
 
 class DFAObservation():
     def __init__(self, seq, acc):
@@ -115,7 +68,7 @@ class IORAObservation(RegisterMachineObservation):
     def __init__(self, trace):
         self.tr = trace
 
-    def trace(self):
+    def trace(self) -> List[Tuple[Action, Action]]:
         return self.tr
 
     def inputs(self):
@@ -129,16 +82,65 @@ class IORAObservation(RegisterMachineObservation):
     def __str__(self):
         return "Obs: " + str(self.tr)
 
+class SUT(metaclass=ABCMeta):
+    OK = "OK"
+    NOK = "NOK"
+    @abstractmethod
+    def run(self, seq:List[object]) -> Observation:
+        """Runs a sequence of inputs on the SUT and returns an observation"""
+        pass
+
+    @abstractmethod
+    def input_interface(self) -> List[object]:
+        """Runs the list of inputs or input signatures comprising the input interface"""
+        pass
+
+
+class SUTType(Enum):
+    IORA = 1
+    RA = 2
+    Mealy = 3
+    Moore = 4
+    DFA = 5
+
+    def is_acceptor(self):
+        return  self == SUTType.RA or self.DFA
+
+    def is_transducer(self):
+        return  not self.is_acceptor()
+
+
+class SUTClass(metaclass=ABCMeta):
+    def __init__(self, sut_dict):
+        self.sut_dict = sut_dict
+
+    def get_sut(self, sut_type : SUTType) -> SUT:
+        return self.sut_dict[sut_type]
+
+    def has_sut(self, sut_type : SUTType) -> bool:
+        return  sut_type in self.sut_dict
+
+
+ActionSignature = collections.namedtuple("ActionSignature", ('label', 'num_params'))
+class RASUT(metaclass=ABCMeta):
+    @abstractmethod
+    def input_interface(self) -> List[ActionSignature]:
+        pass
+
+    @abstractmethod
+    def run(self, seq:List[Action]):
+        """Runs a sequence of inputs on the SUT and returns an observation"""
+        pass
 
 class ObjectSUT(RASUT):
     """Wraps around an object and calls methods on it corresponding to the Actions.
         IORA is the natural formalism for describing practical SUTs. Depending on the SUT characteristics,
-        we can describe them using less expressing formalisms."""
+        we can also describe them using less expressing formalisms."""
     def __init__(self, act_sigs, obj_gen):
         self.obj_gen = obj_gen
         self.acts = {act_sig.label:act_sig for act_sig in act_sigs}
 
-    def run(self, seq:List[Action]):
+    def run(self, seq:List[Action]) -> IORAObservation:
         obj = self.obj_gen()
         values = dict()
         out_seq = []
@@ -176,7 +178,7 @@ class ObjectSUT(RASUT):
     def parse_out(self, outp) -> Action:
         fresh = None
         if isinstance(outp, bool):
-            return Action(str(outp), fresh)
+            return Action(SUT.OK if outp else SUT.NOK, fresh)
         if isinstance(outp, str):
             return Action(outp, fresh)
         if isinstance(outp, int):
@@ -190,3 +192,54 @@ class ObjectSUT(RASUT):
     def input_interface(self) -> List[ActionSignature]:
         return list(self.acts.values())
 
+
+class RAWrapper(RASUT):
+    """Wraps around a Object SUT and creates an RA view of it. Generates accepting observations only for IORA
+    observations ending in SUT.OK outputs or for the empty sequence of inputs. """
+    def __init__(self, sut:ObjectSUT):
+        self.sut = sut
+
+    def run(self, seq: List[Action]):
+        iora_obs = self.sut.run(seq)
+        seq = iora_obs.inputs()
+        if len(seq) == 0:
+            return RAObservation(seq, True)
+        else:
+            trace = iora_obs.trace()
+            (_, out) = trace[-1]
+            acc = out.label is SUT.OK
+            return RAObservation(seq, acc)
+
+
+class MealyWrapper(SUT):
+    """Wraps around an Object SUT and creates an Mealy view of it. Values in output actions are ignored
+    and only the labels are returned. """
+
+    def __init__(self, sut: ObjectSUT):
+        self.sut = sut
+
+    def run(self, seq: List[Symbol]) -> MealyObservation:
+        iora_seq = [Action(inp, None) for inp in seq]
+        iora_obs = self.sut.run(iora_seq)
+        mealy_trace = [(inp_act.label, out_act.label) for (inp_act, out_act) in iora_obs.trace()]
+        return MealyObservation(mealy_trace)
+
+    def input_interface(self) -> List[Symbol]:
+        labels = [action.label for action in self.sut.input_interface()]
+        return labels
+
+class DFAWrapper(SUT):
+    """Wraps around a Mealy SUT and creates DFA view of it. Traces ending with the SUT.OK output generate accepting
+    observations, as does the empty trace. All others generate rejecting observations"""
+
+    def __init__(self, sut: MealyWrapper):
+        self.sut = sut
+
+    def run(self, seq: List[Symbol]) -> DFAObservation:
+        if len(seq) == 0:
+            return DFAObservation(seq, True)
+        else:
+            mealy_obs = self.sut.run(seq)
+            (_,out) = mealy_obs[-1]
+            acc = out is SUT.OK
+            return DFAObservation(seq, acc)
