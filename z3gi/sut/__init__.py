@@ -130,10 +130,10 @@ class IORAObservation(RegisterMachineObservation):
         return "Obs: " + str(self.tr)
 
 
-
-
 class ObjectSUT(RASUT):
-    """Wraps around an object and calls methods on it corresponding to the Actions"""
+    """Wraps around an object and calls methods on it corresponding to the Actions.
+        IORA is the natural formalism for describing practical SUTs. Depending on the SUT characteristics,
+        we can describe them using less expressing formalisms."""
     def __init__(self, act_sigs, obj_gen):
         self.obj_gen = obj_gen
         self.acts = {act_sig.label:act_sig for act_sig in act_sigs}
@@ -189,3 +189,4 @@ class ObjectSUT(RASUT):
 
     def input_interface(self) -> List[ActionSignature]:
         return list(self.acts.values())
+

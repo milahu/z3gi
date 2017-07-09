@@ -66,8 +66,8 @@ class MooreMachine(Transducer):
         return [trans.start_label for trans in transitions]#trace
 
 class MealyMachine(Transducer):
-    def __init__(self, states, state_to_trans, acc_seq={}):
-        super().__init__(states, state_to_trans, acc_seq)
+    def __init__(self, states, state_to_trans, acc_trans_seq={}):
+        super().__init__(states, state_to_trans, acc_trans_seq)
 
     def transitions(self, state: State, label: Label = None) -> List[IOTransition]:
         return super().transitions(state, label)

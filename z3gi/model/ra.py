@@ -109,12 +109,21 @@ class RegisterMachine(Automaton):
 
     @abstractmethod
     def registers(self) -> List[Register]:
+        """Retrieves the registers in the automaton"""
         pass
 
+    def act_arity(self, label=None):
+        """Retrieves the arity of the action associated with the label, or the arity of all labels"""
+        if label is None:
+            return dict(self._act_arity)
+        else:
+            return self._act_arirty[label]
+
 class RegisterAutomaton(Acceptor, RegisterMachine):
-    def __init__(self, locations, loc_to_acc, loc_to_trans, registers, acc_seq={}):
-      super().__init__(locations, loc_to_trans, loc_to_acc, acc_seq)
-      self._registers = registers
+    def __init__(self, locations, loc_to_acc, loc_to_trans, registers, act_arity:dict, acc_trans_seq={}):
+        super().__init__(locations, loc_to_trans, loc_to_acc, acc_trans_seq)
+        self._registers = registers
+        self._act_arity = act_arity
 
     def registers(self) -> List[Register]:
         return self._registers
@@ -153,9 +162,10 @@ class RegisterAutomaton(Acceptor, RegisterMachine):
 
 
 class IORegisterAutomaton(Transducer, RegisterMachine):
-    def __init__(self, locations, loc_to_trans, registers, acc_seq={}):
-        super().__init__(locations, loc_to_trans, acc_seq)
+    def __init__(self, locations, loc_to_trans, registers, act_arity, acc_trans_seq={}):
+        super().__init__(locations, loc_to_trans, acc_trans_seq)
         self._registers = registers
+        self._act_arity = act_arity
 
 
     def registers(self) -> List[Register]:
@@ -232,7 +242,7 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
 
 class MutableRegisterAutomaton(RegisterAutomaton, MutableAcceptorMixin):
     def __init__(self):
-        super().__init__([], dict(), dict(), [])
+        super().__init__([], dict(), [], [])
 
     def add_transition(self, state:str, transition:RATransition):
         super().add_transition(state, transition)
@@ -242,11 +252,14 @@ class MutableRegisterAutomaton(RegisterAutomaton, MutableAcceptorMixin):
 
     def to_immutable(self) -> RegisterAutomaton:
         return RegisterAutomaton(self._states, self._state_to_acc,
-                                 self._state_to_trans, self._registers, self.acc_seq())
+                                 self._state_to_trans, self._registers, self._act_arity, self.acc_trans_seq())
+
+    def set_act_arities(self, act_arity:dict):
+        self._act_arity = act_arity
 
 class MutableIORegisterAutomaton(IORegisterAutomaton, MutableAutomatonMixin):
     def __init__(self):
-        super().__init__([], dict(), [])
+        super().__init__([], dict(), [], [])
 
     def add_transition(self, state:str, transition:IORATransition):
         super().add_transition(state, transition)
@@ -255,8 +268,11 @@ class MutableIORegisterAutomaton(IORegisterAutomaton, MutableAutomatonMixin):
                 self._registers.append(reg)
 
     def to_immutable(self) -> IORegisterAutomaton:
-        return IORegisterAutomaton(self._states, self._state_to_trans, self._registers,
-                                   self.acc_seq()                                   )
+        return IORegisterAutomaton(self._states, self._state_to_trans, self._registers, self._act_arity,
+                                   self.acc_trans_seq())
+
+    def set_act_arities(self, act_arity:dict):
+        self._act_arity = act_arity
 
 class Guard(metaclass=ABCMeta):
     """A guard with is_satisfied implements a predicate over the current register valuation and the parameter value. """

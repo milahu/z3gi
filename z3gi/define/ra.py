@@ -103,6 +103,7 @@ class RegisterAutomatonBuilder(object):
             for z3label in self.ra.labels.values():
                 self._add_transitions(model, translator, mut_ra, z3state, z3label)
         mut_ra.generate_acc_seq()
+        mut_ra.set_act_arities(self.ra.param_size)
         return mut_ra.to_immutable()
 
     def _add_state(self, model, translator, mut_ra, z3state):
@@ -178,6 +179,7 @@ class IORegisterAutomatonBuilder(object):
             for z3label in z3input_labels:
                 self._add_transitions(model, translator, mut_ra, z3state, z3label, z3output_labels)
         mut_ra.generate_acc_seq()
+        mut_ra.set_act_arities(self.ra.param_size)
         return mut_ra.to_immutable()
 
     def _add_state(self, translator, mut_ra, z3state):
@@ -217,7 +219,6 @@ class IORegisterAutomatonBuilder(object):
         enabled_z3guards = [guard for guard in self.ra.registers if
                             translator.z3_to_bool(model.eval(self.ra.used(z3out_state, guard))) or
                             guard is self.ra.fresh]
-        #print("From ", z3out_state, " enabled ", enabled_z3guards, " labels ", output_labels)
 
         active_z3action = [(output_label, guard) for output_label in output_labels for guard in enabled_z3guards
                          if translator.z3_to_bool(model.eval(self.ra.transition(z3out_state, output_label, guard)
