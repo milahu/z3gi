@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import collections
 
@@ -111,15 +111,31 @@ class SUTType(Enum):
 
 
 class SUTClass(metaclass=ABCMeta):
-    def __init__(self, sut_dict):
-        self.sut_dict = sut_dict
+    """for a class of systems (say stacks, or logins) provides means of instantiating SUTs of different types"""
 
-    def get_sut(self, sut_type : SUTType) -> SUT:
-        return self.sut_dict[sut_type]
+    @abstractmethod
+    def new_sut(self, sut_type : SUTType) -> SUT:
+        """ builds a new SUT of the specified type. Returns None is no such SUT can be generated"""
+        pass
 
-    def has_sut(self, sut_type : SUTType) -> bool:
-        return  sut_type in self.sut_dict
+class ScalableSUTClass(SUTClass, metaclass=ABCMeta):
+    """provides instantiation for scalable SUTs. Scalable SUTs are classes whose constructor take a size >0 integer
+    as an argument. This class also adds wrappers corresponding to the type (all SUTs are assumed to be ObjectSULs)."""
 
+    def __init__(self, sut_type_dict:Dict[SUTType,type]):
+        self.sut_type_dict = sut_type_dict
+
+    def new_sut(self, sut_type : SUTType, size :int):
+        if sut_type in self.sut_type_dict:
+            sut_obj = self.sut_type_dict[sut_type](size)
+            sut = sut_obj if sut_type is SUTType.IORA else \
+                RAWrapper(sut_obj) if sut_type is SUTType.RA else \
+                MealyWrapper(sut_obj) if sut_type is SUTType.Mealy else \
+                DFAWrapper(MealyWrapper(sut_obj)) if sut_type is SUTType.DFA else \
+                    None # no support for Moore Machines (yet)
+            return sut
+        else:
+            return None
 
 ActionSignature = collections.namedtuple("ActionSignature", ('label', 'num_params'))
 class RASUT(metaclass=ABCMeta):
@@ -200,11 +216,11 @@ class RAWrapper(RASUT):
         self.sut = sut
 
     def run(self, seq: List[Action]):
-        iora_obs = self.sut.run(seq)
-        seq = iora_obs.inputs()
         if len(seq) == 0:
             return RAObservation(seq, True)
         else:
+            iora_obs = self.sut.run(seq)
+            seq = iora_obs.inputs()
             trace = iora_obs.trace()
             (_, out) = trace[-1]
             acc = out.label is SUT.OK
