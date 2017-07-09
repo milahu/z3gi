@@ -29,7 +29,6 @@ class DFA(Acceptor):
 
     def state(self, trace: List[Symbol]) -> State:
         crt_state = super().state(trace)
-        # print(tr_str)
         return crt_state
 
     def _seq(self, transitions: List[Transition]):
@@ -86,7 +85,8 @@ class MealyMachine(Transducer):
         else:
             state_before = self.state(trace[:-1])
             trans = self.transitions(state_before, trace[-1])
-            return trans.output
+            assert(len(trans) == 1)
+            return trans[0].output
 
 class MutableMealyMachine(MealyMachine, MutableAutomatonMixin):
     def __init__(self):

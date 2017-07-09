@@ -1,4 +1,3 @@
-import pprint
 from abc import ABCMeta, abstractmethod
 from typing import List
 
@@ -134,7 +133,6 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
                 raise Exception("Could not find state {0} in tree {1}".format(state, ptree))
             new_acc_seq[state] = node.path()
         assert(len(new_acc_seq) == len(self.states()))
-        pprint.pprint(new_acc_seq)
         self._acc_trans_seq = new_acc_seq
 
     @abstractmethod

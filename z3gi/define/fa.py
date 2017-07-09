@@ -59,12 +59,12 @@ class MealyMachineBuilder(object):
         self.mm = mm
 
     def build_mealy(self, m : z3.ModelRef) -> model.fa.MealyMachine:
-        tr = FATranslator()
+        tr = FATranslator(self.mm)
         mut_mm =  model.fa.MutableMealyMachine()
         for state in self.mm.states:
             mut_mm.add_state(tr.z3_to_state(state))
         for state in self.mm.states:
-            for inp in self.mm.inputs:
+            for inp in self.mm.inputs.values():
                 output = m.eval(self.mm.output(state, inp))
                 to_state = m.eval(self.mm.transition(state, inp))
                 trans = model.fa.IOTransition(
@@ -72,6 +72,7 @@ class MealyMachineBuilder(object):
                     tr.z3_to_label(inp),
                     tr.z3_to_label(output),
                     tr.z3_to_state(to_state))
+                mut_mm.add_transition(tr.z3_to_state(state), trans)
         mut_mm.generate_acc_seq()
         return mut_mm.to_immutable()
 

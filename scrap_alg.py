@@ -20,7 +20,7 @@ def scrap_learn_iora():
 def scrap_learn_mbt_iora():
     learner = RALearner(IORAEncoder())
     sut = new_login_sut(1)
-    mbt = IORARWalkFromState(sut, 10)
+    mbt = IORARWalkFromState(sut, 5, 0.2)
     (model, statistics) = learn_mbt(learner, mbt, 1000)
     print(model)
     print(statistics)

@@ -1,6 +1,7 @@
 import unittest
 
 from encode.fa import MealyEncoder
+from test import MealyTest
 from tests.mealy_testscenario import *
 from z3gi.learn.fa import FALearner
 
@@ -23,8 +24,6 @@ class MealyLearnerTest(unittest.TestCase):
             self.assertTrue(succ, msg="Automaton could not be inferred")
             self.assertEqual(len(fa.states), test_scenario.nr_states,
                              "Wrong number of states.")
-            self.assertEqual(len(fa.states), test_scenario.nr_states,
-                             "Wrong number of registers.")
             exported = fa.export(model)
             print("Learned model:  \n", exported)
             self.assertEqual(len(exported.states()), test_scenario.nr_states,
@@ -33,9 +32,11 @@ class MealyLearnerTest(unittest.TestCase):
 
     def check_against_obs(self, learned_fa, test_scenario):
         """Checks if the learned RA corresponds to the scenario observations"""
-        for trace, acc in test_scenario.traces:
-            self.assertEqual(learned_fa.accepts(trace), acc,
-                             "Register automaton output doesn't correspond to observation {0}".format(str(trace)))
+        for iotrace in test_scenario.traces:
+            test = MealyTest(iotrace)
+            res = test.check(learned_fa)
+            self.assertIsNone(res, "Register automaton output doesn't correspond to the observation {0}"
+                              .format(test.trace()))
 
     def learn_model(self, test_scenario):
         # inputs = set()
