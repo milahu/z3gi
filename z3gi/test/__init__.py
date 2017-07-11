@@ -33,6 +33,19 @@ class Test(metaclass=ABCMeta):
         """returns the size (in terms of inputs) of the test"""
         pass
 
+class EqualTestsMixin(metaclass=ABCMeta):
+    """doesn't work unfortunately"""
+    def __eq__(self, other):
+        return other and  type(other) is type(self) and other.tr == self.tr
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash((type(self), frozenset(self.tr)))
+
+
+
 class TestGenerator(metaclass=ABCMeta):
     @abstractmethod
     def gen_test(self, model: Automaton) -> Test:
@@ -89,12 +102,30 @@ class TransducerTest(Test):
                 return  test_trace
         return None
 
+    def __hash__(self):
+        return hash((type(self), frozenset(self.tr)))
+
+    def __eq__(self, other):
+        return other and type(other) is type(self) and other.tr == self.tr
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def size(self):
         return len(self.tr)
 
 class MealyTest(TransducerTest):
     def __init__(self, trace:List[Tuple[Symbol, Symbol]]):
         super().__init__(trace)
+
+    def __eq__(self, other):
+        return super().__eq__(other)
+
+    def __ne__(self, other):
+        return super().__ne__(other)
+
+    def __hash__(self):
+        return super().__hash__()
 
 class IORATest(TransducerTest):
     def __init__(self, trace: List[Tuple[Action, Action]]):
@@ -105,6 +136,14 @@ class IORATest(TransducerTest):
         trace = determinize_act_io(trace)
         return super()._check_trace(model, trace)
 
+    def __eq__(self, other):
+        return super().__eq__(other)
+
+    def __ne__(self, other):
+        return super().__ne__(other)
+
+    def __hash__(self):
+        return super().__hash__()
 
 # Acceptor Test observations are tuples comprising sequences of Actions/Symbols joined by an accept/reject booleans
 class AcceptorTest(Test):
@@ -112,12 +151,21 @@ class AcceptorTest(Test):
         super().__init__(trace)
 
     def _check_trace(self, model: Acceptor, trace):
-        test_trace = []
         (seq, acc) = trace
-        if model.accepts(seq) is not acc:
-            return test_trace
+        if model.accepts(seq) != acc:
+            return trace
         return None
 
     def size(self):
         (seq, acc) = self.tr
         return len(seq)
+
+    def __hash__(self):
+        (seq, acc) = self.tr
+        return hash((type(self), frozenset(seq), acc))
+
+    def __eq__(self, other):
+        return other and type(other) is type(self) and other.tr == self.tr
+
+    def __ne__(self, other):
+        return not self.__eq__(other)

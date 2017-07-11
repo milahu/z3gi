@@ -21,8 +21,8 @@ class IOTransition(Transition):
             return short
 
 class DFA(Acceptor):
-    def __init__(self, states, state_to_trans, state_to_acc):
-        super().__init__(states, state_to_trans, state_to_acc)
+    def __init__(self, states, state_to_trans, state_to_acc, acc_trans_seq={}):
+        super().__init__(states, state_to_trans, state_to_acc, acc_trans_seq)
 
     def transitions(self, state: State, label:Label = None) -> List[Transition]:
         return super().transitions(state, label)
@@ -42,7 +42,7 @@ class MutableDFA(DFA, MutableAcceptorMixin):
         return None
 
     def to_immutable(self) -> DFA:
-        return DFA(self._states, self._state_to_trans, self._state_to_acc, self.acc_seq())
+        return DFA(self._states, self._state_to_trans, self._state_to_acc, self.acc_trans_seq())
 
 class MooreMachine(Transducer):
     def __init__(self, states, state_to_trans, state_to_out):
@@ -93,4 +93,4 @@ class MutableMealyMachine(MealyMachine, MutableAutomatonMixin):
         super().__init__([], {})
 
     def to_immutable(self) -> MealyMachine:
-        return MealyMachine(self._states, self._state_to_trans, self.acc_seq())
+        return MealyMachine(self._states, self._state_to_trans, self.acc_trans_seq())

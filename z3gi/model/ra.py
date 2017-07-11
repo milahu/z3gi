@@ -242,7 +242,7 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
 
 class MutableRegisterAutomaton(RegisterAutomaton, MutableAcceptorMixin):
     def __init__(self):
-        super().__init__([], dict(), [], [])
+        super().__init__([], dict(), dict(), [], [])
 
     def add_transition(self, state:str, transition:RATransition):
         super().add_transition(state, transition)

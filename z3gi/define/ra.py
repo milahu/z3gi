@@ -9,15 +9,16 @@ from define import Automaton
 
 
 class RegisterMachine(Automaton):
-    def __init__(self, num_locations, num_registers):
+    def __init__(self, num_locations, num_registers, param_size):
         self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations)])
         self.Register, self.registers = enum('Register',
                                              ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
+        self.param_size = param_size
 
 class RegisterAutomaton(RegisterMachine):
 
-    def __init__(self, labels, num_locations, num_registers):
-        super().__init__(num_locations, num_registers)
+    def __init__(self, labels, param_size, num_locations, num_registers):
+        super().__init__(num_locations, num_registers, param_size)
         self.Label, elements = enum('Label', labels)
         self.labels = {labels[i]: elements[i] for i in range(len(labels))}
         self.start = self.locations[0]
@@ -35,12 +36,11 @@ class RegisterAutomaton(RegisterMachine):
 
 class IORegisterAutomaton(RegisterMachine):
     def __init__(self, input_labels, output_labels, param_size, num_locations, num_registers):
-        super().__init__(num_locations, num_registers)
+        super().__init__(num_locations, num_registers, param_size)
         labels = input_labels + output_labels
         self.Label, elements = enum('Label', input_labels + output_labels)
         self.labels = {labels[i]: elements[i] for i in range(len(labels))}
         self._input_labels =  [self.labels[lbl] for lbl in input_labels]
-        self.param_size = param_size
         self.sink = self.locations[-1]
         self.start = self.locations[0]
         self.fresh = self.registers[-1]

@@ -56,7 +56,7 @@ class RAObservation(RegisterMachineObservation):
         self.acc = acc
 
     def trace(self):
-        return (self.trace, self.acc)
+        return (self.seq, self.acc)
 
     def inputs(self):
         return self.seq
@@ -127,7 +127,7 @@ class ScalableSUTClass(SUTClass, metaclass=ABCMeta):
 
     def new_sut(self, sut_type : SUTType, size :int):
         if sut_type in self.sut_type_dict:
-            sut_obj = self.sut_type_dict[sut_type](size)
+            sut_obj = ObjectSUT(self.sut_type_dict[sut_type].INTERFACE, lambda : self.sut_type_dict[sut_type](size))
             sut = sut_obj if sut_type is SUTType.IORA else \
                 RAWrapper(sut_obj) if sut_type is SUTType.RA else \
                 MealyWrapper(sut_obj) if sut_type is SUTType.Mealy else \
@@ -220,12 +220,13 @@ class RAWrapper(RASUT):
             return RAObservation(seq, True)
         else:
             iora_obs = self.sut.run(seq)
-            seq = iora_obs.inputs()
-            trace = iora_obs.trace()
-            (_, out) = trace[-1]
-            acc = out.label is SUT.OK
+            responses = set([out.label for (_, out) in iora_obs.trace()])
+            acc = responses == set([SUT.OK])
+            #(_, out) = iora_obs.trace()[-1]
+            #acc = out.label is SUT.OK
             return RAObservation(seq, acc)
-
+    def input_interface(self):
+        return self.sut.input_interface()
 
 class MealyWrapper(SUT):
     """Wraps around an Object SUT and creates an Mealy view of it. Values in output actions are ignored
@@ -256,6 +257,11 @@ class DFAWrapper(SUT):
             return DFAObservation(seq, True)
         else:
             mealy_obs = self.sut.run(seq)
-            (_,out) = mealy_obs[-1]
-            acc = out is SUT.OK
+            responses = set([out for (_, out) in mealy_obs.trace()])
+            acc =  responses == set([SUT.OK])
+            #_,out) = mealy_obs.trace()[-1]
+            #acc = out is SUT.OK
             return DFAObservation(seq, acc)
+
+    def input_interface(self) -> List[Symbol]:
+        return self.sut.input_interface()

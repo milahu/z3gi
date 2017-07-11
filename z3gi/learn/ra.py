@@ -30,9 +30,13 @@ class RALearner(Learner):
         (succ, ra_def, m) = self._learn_model(min_locations=min_locations,
                                         max_locations=max_locations, min_registers=min_registers,
                                               max_registers=max_registers)
+
         if succ:
-            return (ra_def.export(m), ra_def)
-        return None
+            return ra_def.export(m), ra_def
+        else:
+            return None
+            #to = ra_def
+            #return (None, to)
 
     def _learn_model(self, min_locations=1, max_locations=20, min_registers=0, max_registers=10):
         """generates the definition and model for an ra whose traces include the traces added so far"""
@@ -41,7 +45,8 @@ class RALearner(Learner):
             for num_registers in range(min_registers, min(max_registers, num_locations) + 1):
                 ra, constraints = self.encoder.build(num_locations, num_registers)
                 self.solver.add(constraints)
-                print(num_locations, num_registers)
+                if self.timeout is not None:
+                    self.solver.set("timeout", self.timeout)
                 result = self.solver.check()
                 if self.verbose:
                     print("Learning with {0} locations and {1} registers. Result: {2}"
@@ -52,7 +57,10 @@ class RALearner(Learner):
                     return (True, ra, model)
                 else:
                     self.solver.reset()
+                    if result == z3.unknown:
+                        return (False, True, None)
+
                     # TODO: process the unsat core?
                     pass
 
-        return  (False, None, None)
+        return  (False, False, None)

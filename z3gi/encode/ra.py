@@ -12,6 +12,7 @@ class RAEncoder(Encoder):
         self.cache = {}
         self.values = set()
         self.labels = set()
+        self.param_size = dict()
 
     def add(self, trace):
         seq, accept = trace
@@ -19,9 +20,17 @@ class RAEncoder(Encoder):
         self.cache[node] = accept
         self.values.update([action.value for action in seq])
         self.labels.update([action.label for action in seq])
+        for action in seq:
+            if action.label not in self.param_size:
+                self.param_size[action.label] = action.param_size()
+            else:
+                if self.param_size[action.label] != action.param_size():
+                    raise Exception("It is not allowed to have actions with different param sizes."
+                                    "Problem action: "+str(action))
+
 
     def build(self, num_locations, num_registers) -> (RegisterAutomaton, z3.ExprRef):
-        ra = RegisterAutomaton(list(self.labels), num_locations, num_registers)
+        ra = RegisterAutomaton(list(self.labels), self.param_size, num_locations, num_registers)
         mapper = Mapper(ra)
         constraints = self.axioms(ra, mapper) + \
                       self.node_constraints(ra, mapper) + \

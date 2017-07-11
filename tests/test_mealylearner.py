@@ -13,7 +13,7 @@ class MealyLearnerTest(unittest.TestCase):
         pass
 
     def test_sut1(self):
-        self.check_scenario(sut_m1)
+        self.check_scenario(sut_m2)
 
     def check_scenario(self, test_scenario):
         print("Scenario " + test_scenario.description)
@@ -52,4 +52,5 @@ class MealyLearnerTest(unittest.TestCase):
         max_states = test_scenario.nr_states + 1
 
         result = learner._learn_model(min_states, max_states)  #
+
         return result

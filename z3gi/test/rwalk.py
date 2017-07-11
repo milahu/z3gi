@@ -96,13 +96,13 @@ class FSMRWalkFromState(RWalkFromState, metaclass=ABCMeta):
         return [trans.start_label for trans in trans_path]
 
 
-class DFARWalkFromState(RWalkFromState):
+class DFARWalkFromState(FSMRWalkFromState):
     def __init__(self, sut:SUT, rand_length, prob_reset, rand_start_state=True):
-        super().__init__(self, sut, AcceptorTest, rand_length, prob_reset, rand_start_state)
+        super().__init__(sut, AcceptorTest, rand_length, prob_reset, rand_start_state)
 
-class MealyRWalkFromState(RWalkFromState):
+class MealyRWalkFromState(FSMRWalkFromState):
     def __init__(self, sut:SUT, rand_length, prob_reset, rand_start_state=True):
-        super().__init__(self, sut, MealyTest, rand_length, prob_reset, rand_start_state)
+        super().__init__( sut, MealyTest, rand_length, prob_reset, rand_start_state)
 
 class ValueProb(collections.namedtuple("ValueProb", ("history", "register", "fresh"))):
     def select(self, reg_vals:List[int], his_vals:List[int], fresh_value):

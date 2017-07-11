@@ -24,3 +24,7 @@ sut_m1 = MealyTestCase("output '1' if the length of the trace so far is even, el
                          (('b', '0'), ('b', '1'), ('b', '0'), ('a', '1')),
                          (('b', '0'), ('b', '1'), ('b', '0'), ('b', '1')),
                          ], 2)
+
+sut_m2 = MealyTestCase("login traces",
+                       [[('register', 'OK'), ('login', 'OK'), ('logout', 'OK')],
+                        [('login', 'NOK'), ('register', 'OK')], [('logout', 'NOK'), ('login', 'NOK')]], 2)

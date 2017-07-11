@@ -3,7 +3,7 @@ from typing import cast
 
 from model import Automaton
 from learn import Learner
-from test import TraceTest, TestGenerator, Test
+from test import TestGenerator, Test
 import time
 
 __all__ = [
@@ -51,7 +51,7 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
         return (None, statistics)
     else:
         statistics.set_suite_size(len(traces))
-        test = cast(TraceTest, test_type(traces.pop(0)))
+        test = cast(Test, test_type(traces.pop(0)))
         definition = None
         learner.add(test.tr)
         statistics.add_learner_test(test)
@@ -65,7 +65,7 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
             statistics.add_learning_time(end_time-start_time)
             done = True
             for trace in traces:
-                test = cast(TraceTest, test_type(trace))
+                test = cast(Test, test_type(trace))
                 ce = test.check(model)
                 if ce is not None:
                     if ce not in learn_traces:
@@ -88,14 +88,24 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
         return (None, statistics)
     else:
         definition = None
+        print("next test, ", next_test.trace())
         learner.add(next_test.trace())
         statistics.add_learner_test(next_test)
         done = False
         learner_tests = [next_test]
         generated_tests = [next_test]
+        last_ce = None
+        ce = None
         while not done:
+            if last_ce and ce == last_ce:
+                raise Exception("Counterexample ", ce, " was not correctly processed")
+            last_ce = ce
             start_time = int(time.time() * 1000)
-            (model, definition) = learner.model(old_definition=definition)
+            ret = learner.model(old_definition=definition)
+            if ret is None:
+                return (None, statistics)
+            (model, definition) = ret
+            print(model)
             end_time = int(time.time() * 1000)
             statistics.add_learning_time(end_time - start_time)
             done = True
@@ -103,7 +113,8 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
             for next_test in generated_tests:
                 ce = next_test.check(model)
                 if ce is not None:
-                    learner_tests.append(ce)
+                    learner.add(ce)
+                    learner_tests.append(next_test)
                     done = False
                     break
             if not done:
@@ -117,7 +128,7 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
                 generated_tests.append(next_test)
                 ce = next_test.check(model)
                 if ce is not None:
-                    learner_tests.append(ce)
+                    learner_tests.append(next_test)
                     learner.add(ce)
                     statistics.add_learner_test(next_test)
                     done = False
