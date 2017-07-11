@@ -70,7 +70,8 @@ class Benchmark:
             learner.set_timeout(tout)
             # ugly but there you go
             rand_length = size + test_desc.rand_length
-            tester = test_gen(sut, rand_length, test_desc.prop_reset)
+            prop_reset = 1/rand_length
+            tester = test_gen(sut, rand_length, prop_reset)
             (model, statistics) = learn_mbt(learner, tester, test_desc.max_tests)
             if model is None:
                 break
@@ -118,13 +119,13 @@ b = Benchmark()
 
 # add the sut classes we want to benchmark
 #b.add_sut(LoginClass(), SUTType.DFA)
-b.add_sut(FIFOSetClass(), SUTType.Mealy)
+b.add_sut(FIFOSetClass())
 
 # create a test description
 t_desc = TestDesc(max_tests=10000, prop_reset=0.1, rand_length=5)
 
 # give an smt timeout value (in ms)
-timeout = 100000
+timeout = 100
 
 # run the benchmark and collect results
 results = b.run_benchmarks(t_desc, timeout)
