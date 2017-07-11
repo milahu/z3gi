@@ -1,6 +1,8 @@
 from typing import List, Tuple, Union
 from typing import cast
 
+import collections
+
 from model import Automaton
 from learn import Learner
 from test import TestGenerator, Test
@@ -11,6 +13,7 @@ __all__ = [
     "learn_mbt"
     ]
 
+
 class Statistics():
     """We only refe"""
     def __init__(self):
@@ -18,6 +21,7 @@ class Statistics():
         self.num_learner_inputs = 0
         self.suite_size = 0
         self.learning_times = []
+        self.model_stats = None
 
     def add_learner_test(self, test:Test):
         """  updates the stats with relevant information from the added test"""
