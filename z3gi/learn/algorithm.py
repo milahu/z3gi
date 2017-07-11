@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from typing import cast
 
 from model import Automaton
@@ -80,7 +80,7 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
         statistics.set_suite_size(len(traces))
         return (model, statistics)
 
-def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> Tuple[Automaton, Statistics]:
+def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> Tuple[Union[Automaton,None], Statistics]:
     """ takes learner, a test generator, and bound on the number of tests and generates a model"""
     next_test = test_generator.gen_test(None)
     statistics = Statistics()
