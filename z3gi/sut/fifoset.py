@@ -37,7 +37,7 @@ class MealyFIFOSet():
             self.stored -= 1
             return SUT.OK
 
-    def put(self, val):
+    def put(self):
         if self.stored == self.size:
             return SUT.NOK
         else:
@@ -46,7 +46,7 @@ class MealyFIFOSet():
 
 class FIFOSetClass(ScalableSUTClass):
     def __init__(self):
-        super({
+        super().__init__({
             SUTType.IORA: FIFOSet,
             SUTType.RA: FIFOSet,
             SUTType.Mealy: MealyFIFOSet,

@@ -92,7 +92,6 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
         return (None, statistics)
     else:
         definition = None
-        print("next test, ", next_test.trace())
         learner.add(next_test.trace())
         statistics.add_learner_test(next_test)
         done = False
@@ -109,11 +108,9 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
             if ret is None:
                 return (None, statistics)
             (model, definition) = ret
-            for learner_test in learner_tests:
-                print(learner_test.trace())
-                if learner_test.check(model) is not None:
-                    raise Exception("Learner test doesn't pass "+str(learner_test.trace()))
-            print(model)
+            # for learner_test in learner_tests:
+            #     if learner_test.check(model) is not None:
+            #         raise Exception("Learner test doesn't pass "+str(learner_test.trace()))
             end_time = int(time.time() * 1000)
             statistics.add_learning_time(end_time - start_time)
             done = True
@@ -121,6 +118,7 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
             for next_test in generated_tests:
                 ce = next_test.check(model)
                 if ce is not None:
+                    print("CE: ", ce)
                     learner.add(ce)
                     learner_tests.append(next_test)
                     done = False
@@ -132,6 +130,7 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
             for i in range(0, max_tests):
                 next_test = test_generator.gen_test(model)
                 if next_test is None:
+                    raise Exception("Should never be none")
                     break
                 generated_tests.append(next_test)
                 ce = next_test.check(model)

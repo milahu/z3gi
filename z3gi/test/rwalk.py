@@ -50,7 +50,7 @@ class RWalkFromState(TestGenerator, metaclass=ABCMeta):
                 r_trans = transitions[rand.randint(0, len(transitions)-1)]
                 crt_state = r_trans.end_state
                 trans_path.append(r_trans)
-                if rand.random()> self.prob_reset:
+                if rand.random()< self.prob_reset:
                     break
 
             # instantiate the access and random sequences by extracting the sequence of inputs to be executed on the sut

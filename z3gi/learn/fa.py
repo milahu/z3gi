@@ -31,6 +31,7 @@ class FALearner(Learner):
             print("initial def ", min_states)
         (succ, fa, m) = self._learn_model(min_states=min_states,
                                         max_states=max_states)
+        self.solver.reset()
         if succ:
             return fa.export(m), fa
         else:
@@ -46,6 +47,7 @@ class FALearner(Learner):
         for num_states in range(min_states, max_states + 1):
             print("Learning with ", num_states, " states")
             fa, constraints = self.encoder.build(num_states)
+            self.solver.reset()
             self.solver.add(constraints)
             if self.timeout is not None:
                 self.solver.set("timeout", self.timeout)
@@ -56,11 +58,8 @@ class FALearner(Learner):
             print("Result {0} ".format(result))
             if result == z3.sat:
                 model = self.solver.model()
-                print(model)
-                self.solver.reset()
                 return (True, fa, model)
             else:
-                self.solver.reset()
                 # timeout
                 if result == z3.unknown:
                     return (False, True, None)
