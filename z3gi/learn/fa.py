@@ -28,12 +28,15 @@ class FALearner(Learner):
     def model(self, min_states=1, max_states=20, old_definition:define.fa.FSM=None) -> Tuple[Automaton, define.fa.FSM]:
         if old_definition is not None:
             min_states = len(old_definition.states)
+            print("initial def ", min_states)
         (succ, fa, m) = self._learn_model(min_states=min_states,
                                         max_states=max_states)
         if succ:
             return fa.export(m), fa
         else:
-            return None
+            return  None
+        #    to = fa
+        #    return (None, to)
         #    to = fa
         #    return (None, to)
 
@@ -41,7 +44,7 @@ class FALearner(Learner):
         """generates the definition and model for an fa whose traces include the traces added so far
         In case of failure, the second argument of the tuple signals occurrence of a timeout"""
         for num_states in range(min_states, max_states + 1):
-            print("Learning with ", min_states)
+            print("Learning with ", num_states, " states")
             fa, constraints = self.encoder.build(num_states)
             self.solver.add(constraints)
             if self.timeout is not None:
@@ -53,6 +56,7 @@ class FALearner(Learner):
             print("Result {0} ".format(result))
             if result == z3.sat:
                 model = self.solver.model()
+                print(model)
                 self.solver.reset()
                 return (True, fa, model)
             else:

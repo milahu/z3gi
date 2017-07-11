@@ -20,7 +20,7 @@ from test.rwalk import DFARWalkFromState, MealyRWalkFromState, RARWalkFromState,
 
 class SutDesc(collections.namedtuple("SutDesc", 'sut_class type size')):
     def __str__(self):
-        return  str(self.type) + "_" + str(self.sut_class.__class__.__name__).replace("Class", "") + "(" + str(self.size) + ")"
+        return  str(self.type).replace("SUTType.","") + "_" + str(self.sut_class.__class__.__name__).replace("Class", "") + "(" + str(self.size) + ")"
 
 TestDesc = collections.namedtuple("TestDesc", 'max_tests rand_length prop_reset')
 class CollectedStats(collections.namedtuple("CollectedStats", "states registers learn_tests "
@@ -102,7 +102,7 @@ b.add_setup(SUTType.RA, RALearner(RAEncoder()), RARWalkFromState)
 b.add_setup(SUTType.IORA, RALearner(IORAEncoder()), IORARWalkFromState)
 
 # add the sut classes we want to benchmark
-b.add_sut(LoginClass(), SUTType.RA)
+b.add_sut(LoginClass(), SUTType.DFA)
 
 # create a test description
 t_desc = TestDesc(max_tests=10000, prop_reset=0.2, rand_length=5)

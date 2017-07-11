@@ -130,7 +130,7 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
             pred = lambda x: (x.state == state)
             node = ptree.find_node(pred)
             if node is None:
-                raise Exception("Could not find state {0} in tree {1}".format(state, ptree))
+                raise Exception("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, self))
             new_acc_seq[state] = node.path()
         assert(len(new_acc_seq) == len(self.states()))
         self._acc_trans_seq = new_acc_seq

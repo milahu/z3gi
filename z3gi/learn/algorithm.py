@@ -109,6 +109,10 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
             if ret is None:
                 return (None, statistics)
             (model, definition) = ret
+            for learner_test in learner_tests:
+                print(learner_test.trace())
+                if learner_test.check(model) is not None:
+                    raise Exception("Learner test doesn't pass "+str(learner_test.trace()))
             print(model)
             end_time = int(time.time() * 1000)
             statistics.add_learning_time(end_time - start_time)
