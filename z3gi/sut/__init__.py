@@ -106,6 +106,9 @@ class SUTType(Enum):
     def is_acceptor(self):
         return  self == SUTType.RA or self.DFA
 
+    def has_registers(self):
+        return self == SUTType.RA or self == SUTType.IORA
+
     def is_transducer(self):
         return  not self.is_acceptor()
 

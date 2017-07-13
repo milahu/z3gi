@@ -28,7 +28,7 @@ class Stack():
 
 class StackClass(ScalableSUTClass):
     def __init__(self):
-        super({
+        super().__init__({
             SUTType.IORA: Stack,
             SUTType.RA: Stack,
         })
