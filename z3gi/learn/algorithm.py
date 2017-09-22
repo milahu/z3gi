@@ -120,7 +120,6 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
                 if ce is not None:
                     print("CE: ", ce)
                     learner.add(ce)
-                    learner_tests.append(next_test)
                     done = False
                     break
             if not done:
@@ -140,5 +139,7 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
                     statistics.add_learner_test(next_test)
                     done = False
                     break
+
+        #print([str(test.trace() for test in learner_tests)])
         statistics.set_suite_size(len(generated_tests))
         return (model, statistics)

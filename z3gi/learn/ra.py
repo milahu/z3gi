@@ -13,6 +13,12 @@ class RALearner(Learner):
             raise Exception("RAEncoder has to be supplied")
         if not solver:
             solver = z3.Solver()
+            print(z3.describe_tactics())
+            #solver = z3.Z3_mk_simple_solver("smt")
+            # example of tactics
+            #solver = z3.Then('simplify',
+            #                 'solve-eqs',
+            #                 'qfbv', 'sat').solver()
         self.encoder = encoder
         self.solver = solver
         self.verbose = verbose
@@ -58,6 +64,7 @@ class RALearner(Learner):
                 else:
                     self.solver.reset()
                     if result == z3.unknown:
+                        print("Timeout at {0} locations and {1} registers".format(num_locations, num_registers))
                         return (False, True, None)
 
                     # TODO: process the unsat core?

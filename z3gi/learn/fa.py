@@ -51,7 +51,9 @@ class FALearner(Learner):
             self.solver.add(constraints)
             if self.timeout is not None:
                 self.solver.set("timeout", self.timeout)
+            print(self.solver.to_smt2())
             result = self.solver.check()
+            print(self.solver.statistics())
             if self.verbose:
                 print("Learning with {0} states. Result: {1}"
                   .format(num_states, result))

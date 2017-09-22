@@ -33,7 +33,6 @@ sut_m1 = RaTestScenario("Accept everything", [
     2, 1
 )
 
-
 sut_m2 = RaTestScenario("OK first then always NOK", [
     [io(0, 'in', 100, 'OK')],
     [io(0, 'in', 100, 'OK'), io(0, 'in', 101, 'NOK')],

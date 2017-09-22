@@ -7,6 +7,7 @@ from learn.algorithm import learn_mbt
 from learn.fa import FALearner
 from learn.ra import RALearner
 from sut import SUTType
+from sut.fifoset import FIFOSetClass
 from sut.login import new_login_sut, LoginClass
 from test import IORATest, MealyTest
 from test.rwalk import IORARWalkFromState, MealyRWalkFromState, DFARWalkFromState, RARWalkFromState
@@ -23,10 +24,10 @@ def scrap_learn_iora():
 
 def scrap_learn_mbt_iora():
     learner = RALearner(IORAEncoder())
-    learner.set_timeout(10)
+    learner.set_timeout(10000)
     sut = new_login_sut(1)
     mbt = IORARWalkFromState(sut, 5, 0.2)
-    (model, statistics) = learn_mbt(learner, mbt, 1000)
+    (model, statistics) = learn_mbt(learner, mbt, 10000)
     print(model)
     print(statistics)
 
@@ -52,8 +53,8 @@ def scrap_learn_mbt_mealy():
 
 def scrap_learn_mbt_ra():
     learner = RALearner(RAEncoder())
-    learner.set_timeout(100000)
-    login = LoginClass()
+    learner.set_timeout(600000)
+    login = FIFOSetClass()
     sut = login.new_sut(SUTType.RA, 1)
     mbt = RARWalkFromState(sut, 5, 0.2)
     (model, statistics) = learn_mbt(learner, mbt, 10000)
@@ -62,4 +63,4 @@ def scrap_learn_mbt_ra():
 
 #scrap_learn_mbt_mealy()
 #scrap_learn_mbt_mealy()
-scrap_learn_mbt_ra()
+scrap_learn_mbt_iora()

@@ -64,11 +64,13 @@ class Benchmark:
         self.learn_setup[sut_type] = (sut_learner, sut_tester)
         return self
 
-    def _run_benchmark(self, sut_class:ScalableSUTClass, sut_type:SUTType, test_desc:TestDesc, tout:int) \
+    def _run_benchmark(self, sut_class:ScalableSUTClass, sut_type:SUTType, test_desc:TestDesc, tout:int, max_size:int) \
             -> List[Tuple[SutDesc, ExperimentStats]]:
         results = []
         size = 1
         while True:
+            if max_size is not None and size > max_size:
+                break
             sut = sut_class.new_sut(sut_type, size)
             learner,test_gen = get_learner_setup(sut_type)
             learner.set_timeout(tout)
@@ -96,10 +98,10 @@ class Benchmark:
         return ExperimentStats(states=states, registers=registers, learn_tests=learn_tests, learn_inputs=learn_inputs,
                                total_tests=total_tests, learn_time=learn_time)
 
-    def run_benchmarks(self, test_desc:TestDesc, timeout:int) -> List[Tuple[SutDesc, ExperimentStats]]:
+    def run_benchmarks(self, test_desc:TestDesc, timeout:int, max_size:int=None) -> List[Tuple[SutDesc, ExperimentStats]]:
         results = []
         for sut_class, sut_type in self.suts:
-            res = self._run_benchmark(sut_class, sut_type, test_desc, timeout)
+            res = self._run_benchmark(sut_class, sut_type, test_desc, timeout, max_size)
             results.extend(res)
         return results
 
@@ -156,27 +158,47 @@ b = Benchmark()
 #b.add_setup(SUTType.IORA, RALearner(IORAEncoder()), IORARWalkFromState)
 
 # add the sut classes we want to benchmark
+#b.add_sut(FIFOSetClass())
 #b.add_sut(LoginClass())
-b.add_sut(FIFOSetClass())
-b.add_sut(LoginClass())
-b.add_sut(StackClass())
+#b.add_sut(StackClass())
+
+b.add_sut(FIFOSetClass(), SUTType.Mealy)
+
+#b.add_sut(FIFOSetClass(), SUTType.IORA)
+#b.add_sut(LoginClass(), SUTType.IORA)
+#b.add_sut(StackClass(), SUTType.IORA)
 
 # create a test description
-t_desc = TestDesc(max_tests=10000, prop_reset=0.2, rand_length=4)
+t_desc = TestDesc(max_tests=100000, prop_reset=0.2, rand_length=3)
 
 # give an smt timeout value (in ms)
-timeout = 10000
+timeout = 600
 
 # how many times each experiment should be run
-num_exp = 4
+num_exp = 1
+
+# up to what systems of what size do we want to run experiments (set to None if size is ignored as a stop condition)
+max_size = 6
 
 # run the benchmark and collect results
 results = []
 for i in range(0, num_exp):
-    results += b.run_benchmarks(t_desc, timeout)
+    results += b.run_benchmarks(t_desc, timeout, max_size)
+    print("============================")
+    print_results(results)
+    sut_dict = dict()
+    for sut_desc,exp in results:
+        if sut_desc not in sut_dict:
+            sut_dict[sut_desc] = list()
+        sut_dict[sut_desc].append(exp)
+
+    collated_stats = [(sut_desc, collate_stats(sut_desc, experiments)) for sut_desc, experiments in sut_dict.items()]
+    for (sut_desc, c_stat) in collated_stats:
+        print(sut_desc, " ", c_stat)
+
 
 # sort according to the sut_desc (the first element)
-results.sort()
+#results.sort()
 
 # print results
 print_results(results)
