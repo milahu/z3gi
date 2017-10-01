@@ -1,11 +1,6 @@
-from collections import namedtuple
-
 import z3
 from model.ra import *
-from define import enum
-
-
-from define import Automaton
+from define import enum, Automaton
 
 
 class RegisterMachine(Automaton):

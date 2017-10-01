@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
+
 import z3
+
 
 def enum(name, elements):
     d = z3.Datatype(name)

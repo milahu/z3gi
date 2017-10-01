@@ -1,11 +1,12 @@
 from abc import ABCMeta, abstractmethod
-from typing import List, Tuple, Dict
-
 import collections
+from enum import Enum
+from typing import List, Tuple, Dict
 
 from model.fa import Symbol
 from model.ra import Action
-from enum import Enum
+
+
 
 class Observation():
     @abstractmethod

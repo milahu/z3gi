@@ -1,14 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, Tuple
 
-from encode.iora import IORAEncoder
-from learn.algorithm import learn
-from learn.ra import RALearner
 from model.ra import Action
 from sut import RASUT, RegisterMachineObservation, IORAObservation
-from sut.stack import new_stack_sut
-from test import IORATest
-
 
 class ObservationGeneration(metaclass=ABCMeta):
 

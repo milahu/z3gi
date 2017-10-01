@@ -1,6 +1,7 @@
-from z3gi.model import Transition, Acceptor, Transducer
-from model import MutableAutomatonMixin, MutableAcceptorMixin
 from typing import List
+
+from model import MutableAutomatonMixin, MutableAcceptorMixin, Transition, Acceptor, Transducer
+
 
 Symbol = str
 State = str

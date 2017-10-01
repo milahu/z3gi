@@ -1,9 +1,8 @@
-import collections
 from abc import ABCMeta, abstractmethod
 
 import z3
-from define import enum, Automaton
 import model.fa
+from define import enum, Automaton
 from model import Transition
 
 

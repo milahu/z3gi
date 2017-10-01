@@ -1,10 +1,10 @@
 import itertools
 
+import z3
 from define.fa import DFA, MealyMachine, Mapper
 from encode import Encoder
 from utils import Tree
-#from model.fa import MealyMachine
-import z3
+
 
 
 class DFAEncoder(Encoder):

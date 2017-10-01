@@ -1,10 +1,9 @@
-import itertools
 from abc import ABCMeta, abstractmethod
-from types import GeneratorType
 from typing import List, Generator, Iterable, Tuple
+import itertools
 
 from model import Automaton, Acceptor, Transducer
-from model.fa import MealyMachine, Symbol
+from model.fa import Symbol
 from model.ra import IORegisterAutomaton, Action
 from utils import determinize
 

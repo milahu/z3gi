@@ -1,17 +1,17 @@
 from abc import ABCMeta, abstractmethod
 from typing import List
-
 import collections
-
 import itertools
+import random
+
 
 from model import Automaton, Transition
-from model.ra import IORATransition, IORegisterAutomaton, EqualityGuard, OrGuard, Action, Register, FreshGuard, Fresh, \
+from model.ra import IORATransition, IORegisterAutomaton, EqualityGuard, OrGuard, Action, FreshGuard, Fresh, \
     RegisterAutomaton, RATransition
 from sut import SUT, ActionSignature, RASUT
 from test import TestGenerator, Test, AcceptorTest, MealyTest, IORATest
-import random
-import pprint
+
+
 
 rand = random.Random(0)
 

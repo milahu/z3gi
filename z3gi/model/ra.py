@@ -1,9 +1,10 @@
-from z3gi.model import Transition, Acceptor, NoTransitionFired, MultipleTransitionsFired, Transducer, \
-    MutableAcceptorMixin, MutableAutomatonMixin, Automaton
 from abc import ABCMeta, abstractmethod
+from typing import List
+
+from model import Transition, Acceptor, NoTransitionFired, MultipleTransitionsFired, Transducer, \
+    MutableAcceptorMixin, MutableAutomatonMixin, Automaton
 import itertools
 import collections
-from typing import List
 
 class Action(collections.namedtuple('Action', ('label', 'value'))):
     def param_size(self):

@@ -1,6 +1,6 @@
 import itertools
-import z3
 
+import z3
 from encode import Encoder
 from define.ra import RegisterAutomaton, Mapper
 from utils import Tree, determinize

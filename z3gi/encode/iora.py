@@ -1,10 +1,8 @@
 import itertools
 
 import z3
-
 from define.ra import IORegisterAutomaton, Mapper
 from encode import Encoder
-from sut import ActionSignature
 from utils import Tree, determinize
 
 

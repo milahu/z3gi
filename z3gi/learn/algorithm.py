@@ -1,7 +1,4 @@
-from typing import List, Tuple, Union
-from typing import cast
-
-import collections
+from typing import List, Tuple, Union,cast
 
 from model import Automaton
 from learn import Learner

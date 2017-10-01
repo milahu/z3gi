@@ -1,8 +1,7 @@
 from typing import Tuple
 
-import z3
-
 from learn import Learner
+import z3
 import model.ra
 import define.ra
 

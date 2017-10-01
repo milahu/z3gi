@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+
 import z3
 from define import Automaton
 
