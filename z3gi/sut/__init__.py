@@ -19,28 +19,52 @@ class Observation():
         """returns all the inputs from an observation"""
         pass
 
+class TransducerObservation(metaclass=ABCMeta):
+    def __init__(self, iotrace:List[Tuple[object,object]]):
+        self.iotrace = iotrace
 
+    def trace(self) -> List[Tuple[object,object]]:
+        return self.iotrace
 
-class DFAObservation():
-    def __init__(self, seq, acc):
+    def inputs(self) -> List[object]:
+        return [a for (a,_) in self.iotrace]
+
+    def __str__(self):
+        return "Obs" + str(self.trace()) + ""
+
+class AcceptorObservation(metaclass=ABCMeta):
+    def __init__(self, seq:List[object], acc:bool):
         self.seq = seq
         self.acc = acc
 
-    def trace(self):
+    def trace(self) -> Tuple[List[object], bool]:
         return (self.seq, self.acc)
 
-    def inputs(self) -> List[Symbol]:
+    def inputs(self) -> List[object]:
         return self.seq
 
-class MealyObservation():
-    def __init__(self, trace):
-        self.tr = trace
+    def __str__(self):
+        return "Obs" + str(self.trace())
 
-    def trace(self):
-        return self.tr
+class DFAObservation(AcceptorObservation):
+    def __init__(self, seq, acc):
+        super().__init__(seq, acc)
+
+    def trace(self) -> Tuple[List[Symbol], bool]:
+        return super().trace()
 
     def inputs(self) -> List[Symbol]:
-        return [a for (a,_) in self.tr]
+        return super().inputs()
+
+class MealyObservation(TransducerObservation):
+    def __init__(self, iotrace):
+        super().__init__(iotrace)
+
+    def trace(self) -> List[Tuple[Symbol, Symbol]]:
+        return super().trace()
+
+    def inputs(self) -> List[Symbol]:
+        return super().inputs()
 
 class RegisterMachineObservation(Observation):
 
@@ -51,37 +75,33 @@ class RegisterMachineObservation(Observation):
 
 
 
-class RAObservation(RegisterMachineObservation):
+class RAObservation(AcceptorObservation, RegisterMachineObservation):
     def __init__(self, seq, acc):
-        self.seq = seq
-        self.acc = acc
+        super().__init__(seq, acc)
 
-    def trace(self):
-        return (self.seq, self.acc)
+    def trace(self) -> Tuple[List[Action], bool]:
+        return self.trace()
 
-    def inputs(self):
-        return self.seq
+    def inputs(self) -> List[Action]:
+        return super().inputs()
 
     def values(self):
-        return set([a.value for a in self.seq if a.value is not None])
+        return set([a.value for a in self.inputs() if a.value is not None])
 
-class IORAObservation(RegisterMachineObservation):
+class IORAObservation(TransducerObservation, RegisterMachineObservation):
     def __init__(self, trace):
-        self.tr = trace
+        super().__init__(trace)
 
     def trace(self) -> List[Tuple[Action, Action]]:
-        return self.tr
+        return super().trace()
 
-    def inputs(self):
-        return [a for (a,_) in self.tr]
+    def inputs(self) -> List[Action]:
+        return super().inputs()
 
     def values(self):
-        iv = [a.value for (a,_) in self.tr if a.value is not None]
-        ov = [a.value for (_,a) in self.tr if a.value is not None]
+        iv = [a.value for (a,_) in self.trace() if a.value is not None]
+        ov = [a.value for (_,a) in self.trace() if a.value is not None]
         return set(iv+ov)
-
-    def __str__(self):
-        return "Obs: " + str(self.tr)
 
 class SUT(metaclass=ABCMeta):
     OK = "OK"
