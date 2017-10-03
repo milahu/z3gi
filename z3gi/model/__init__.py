@@ -34,16 +34,17 @@ class MultipleTransitionsFired(Exception):
 
 
 def defined_formalisms():
+    """retrieves a dictionary containing the formalisms implemented and their respective classes"""
     import inspect
     sc = dict()
     crt = Automaton
     to_visit = set(crt.__subclasses__())
     while len(to_visit) > 0:
         subclass = to_visit.pop()
-        if not inspect.isabstract(subclass):
+        if not inspect.isabstract(subclass) and not subclass.__name__.startswith("Mutable"):
             sc[subclass.__name__] = subclass
         else:
-            to_visit.add(subclass)
+            to_visit = to_visit.union(to_visit, set(subclass.__subclasses__()))
     return sc
 
 

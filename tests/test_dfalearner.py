@@ -1,8 +1,8 @@
 import unittest
 
 from encode.fa import DFAEncoder
-from tests.dfa_testscenario import *
-from z3gi.learn.fa import FALearner
+from tests.dfa_testscenario import sut_m1
+from learn.fa import FALearner
 
 num_exp = 1
 

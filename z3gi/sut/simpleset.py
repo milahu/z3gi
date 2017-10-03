@@ -1,4 +1,5 @@
-from sut import SUT, ActionSignature
+from sut import SUT
+from sut.scalable import ActionSignature
 
 
 class FIFOSet():

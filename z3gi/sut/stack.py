@@ -1,4 +1,5 @@
-from sut import SUT, ObjectSUT, ActionSignature, ScalableSUTClass, SUTType
+from sut import SUT, ScalableSUTClass, SUTType
+from sut.scalable import ActionSignature, ObjectSUT
 
 
 class Stack():

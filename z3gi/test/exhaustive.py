@@ -2,7 +2,9 @@ from abc import ABCMeta, abstractmethod
 from typing import List, Tuple
 
 from model.ra import Action
-from sut import RASUT, RegisterMachineObservation, IORAObservation
+from sut import RegisterMachineObservation, IORAObservation
+from sut.scalable import RASUT
+
 
 class ObservationGeneration(metaclass=ABCMeta):
 

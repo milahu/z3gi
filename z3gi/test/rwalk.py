@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import List, Type
 import collections
 import itertools
 import random
@@ -8,7 +8,8 @@ import random
 from model import Automaton, Transition
 from model.ra import IORATransition, IORegisterAutomaton, EqualityGuard, OrGuard, Action, FreshGuard, Fresh, \
     RegisterAutomaton, RATransition
-from sut import SUT, ActionSignature, RASUT
+from sut import SUT
+from sut.scalable import ActionSignature, RASUT
 from test import TestGenerator, Test, AcceptorTest, MealyTest, IORATest
 
 

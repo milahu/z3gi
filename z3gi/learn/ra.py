@@ -8,11 +8,11 @@ import define.ra
 
 class RALearner(Learner):
     def __init__(self, encoder, solver=None, verbose=False):
+        super().__init__()
         if encoder is None:
             raise Exception("RAEncoder has to be supplied")
         if not solver:
             solver = z3.Solver()
-            print(z3.describe_tactics())
             #solver = z3.Z3_mk_simple_solver("smt")
             # example of tactics
             #solver = z3.Then('simplify',

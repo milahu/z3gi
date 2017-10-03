@@ -69,7 +69,7 @@ def sim_learn_mbt_ra():
     learner = FALearner(MealyEncoder())
     learner.set_timeout(10000)
     import os.path
-    maestro_aut = build_automaton_from_dot("MealyMachine", os.path.join("resources", "bankcards", "MAESTRO.dot"))
+    maestro_aut = build_automaton_from_dot("MealyMachine", os.path.join("resources", "models", "bankcards", "MAESTRO.dot"))
     print(maestro_aut)
     #exit(2)
     maestro_sut = MealyMachineSimulation(maestro_aut)
