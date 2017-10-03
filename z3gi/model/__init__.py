@@ -32,6 +32,21 @@ class MultipleTransitionsFired(Exception):
     pass
 
 
+
+def defined_formalisms():
+    import inspect
+    sc = dict()
+    crt = Automaton
+    to_visit = set(crt.__subclasses__())
+    while len(to_visit) > 0:
+        subclass = to_visit.pop()
+        if not inspect.isabstract(subclass):
+            sc[subclass.__name__] = subclass
+        else:
+            to_visit.add(subclass)
+    return sc
+
+
 """A basic abstract automaton model"""
 
 

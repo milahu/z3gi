@@ -116,7 +116,6 @@ class SUT(metaclass=ABCMeta):
         """Runs the list of inputs or input signatures comprising the input interface"""
         pass
 
-
 class SUTType(Enum):
     IORA = 1
     RA = 2
@@ -133,6 +132,10 @@ class SUTType(Enum):
     def is_transducer(self):
         return  not self.is_acceptor()
 
+def scalable_sut_classes():
+    sc = dict()
+    for subclass in ScalableSUTClass.__subclasses__():
+        sc[subclass.__name__[:-5]] = subclass
 
 class SUTClass(metaclass=ABCMeta):
     """for a class of systems (say stacks, or logins) provides means of instantiating SUTs of different types"""
