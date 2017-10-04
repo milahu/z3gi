@@ -5,6 +5,8 @@ import itertools
 from model import Automaton, Acceptor, Transducer
 from model.fa import Symbol
 from model.ra import IORegisterAutomaton, Action
+from sut import SUT
+from sut.scalable import ActionSignature
 from utils import determinize
 
 
@@ -52,10 +54,38 @@ class TestGenerator(metaclass=ABCMeta):
         pass
 
     def gen_test_iter(self, model: Automaton) -> Iterable[Test]:
+        self.initialize(model)
         test = self.gen_test(model)
         while test is not None:
             yield test
             test = self.gen_test(model)
+        self.terminate()
+
+    def gen_blind_test(self, sut:SUT):
+        """generates a sequence covering all input elements in the sut interface"""
+        seq = []
+        for abs_inp in self.sut.input_interface():
+            cnt = 0
+            # if it's RA stuff
+            if isinstance(abs_inp, ActionSignature):
+                if abs_inp.num_params == 0:
+                    val = None
+                else:
+                    val = cnt
+                    cnt += 1
+                seq.append(Action(abs_inp.label, val))
+            elif isinstance(abs_inp, str):
+                seq.append(abs_inp)
+            else:
+                raise Exception("Unrecognized type")
+        return seq
+
+    def initialize(self, model: Automaton):
+        """feeds the tests generator the supplied automaton in an initialization step"""
+        pass
+
+    def terminate(self):
+        pass
 
 class TracesGenerator(metaclass=ABCMeta):
     def __init__(self, traces = list()):
@@ -72,13 +102,17 @@ class Tester(metaclass=ABCMeta):
 
     def find_ce(self, model:Automaton):
         """generates an observation which exposes a counterexample"""
+        self.generator.initialize(model)
+        ce = None
         while True:
             test = self.generator.gen_test(model)
             if test is None:
-                return None
+                break
             trace = test.check(model)
             if trace is not None:
-                return trace
+                ce = trace
+                break
+        self.generator.terminate()
 
 
 def determinize_act_io(tuple_seq):

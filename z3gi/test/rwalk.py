@@ -34,7 +34,7 @@ class RWalkFromState(TestGenerator, metaclass=ABCMeta):
         if model is None:
             # if the model is None, generate a test which includes all inputs (so at least we know the next generated
             # model will be input enabled)
-            seq = self._generate_init()
+            seq = self.gen_blind_test(self.sut)
         else:
             # select a random state
             if self.rand_start_state:
@@ -63,25 +63,6 @@ class RWalkFromState(TestGenerator, metaclass=ABCMeta):
         obs = self.sut.run(seq)
         test = self.test_gen(obs.trace())
         return test
-
-    def _generate_init(self):
-        """generates a sequence covering all input elements in the sut interface"""
-        seq = []
-        for abs_inp in self.sut.input_interface():
-            cnt = 0
-            # if it's RA stuff
-            if isinstance(abs_inp, ActionSignature):
-                if abs_inp.num_params == 0:
-                    val = None
-                else:
-                    val = cnt
-                    cnt += 1
-                seq.append(Action(abs_inp.label, val))
-            elif isinstance(abs_inp, str):
-                seq.append(abs_inp)
-            else:
-                raise Exception("Unrecognized type")
-        return seq
 
     @abstractmethod
     def _generate_seq(self, model: Automaton, trans_path:List[Transition]):

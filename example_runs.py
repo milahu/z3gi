@@ -13,6 +13,7 @@ from sut.login import new_login_sut, LoginClass
 from sut.simulation import MealyMachineSimulation
 from test import IORATest
 from test.rwalk import IORARWalkFromState, MealyRWalkFromState, DFARWalkFromState, RARWalkFromState
+from test.yanna import YannakakisTestGenerator
 from tests.iora_testscenario import *
 from encode.iora import IORAEncoder
 
@@ -65,20 +66,29 @@ def scalable_learn_mbt_ra():
     print(model)
     print(statistics)
 
-def sim_learn_mbt_ra():
+def sim_learn_mbt_mealy():
     learner = FALearner(MealyEncoder())
     learner.set_timeout(10000)
     import os.path
     maestro_aut = build_automaton_from_dot("MealyMachine", os.path.join("resources", "models", "bankcards", "MAESTRO.dot"))
-    print(maestro_aut)
-    #exit(2)
     maestro_sut = MealyMachineSimulation(maestro_aut)
     mbt = MealyRWalkFromState(maestro_sut, 3, 0.2)
     (model, statistics) = learn_mbt(learner, mbt, 10000)
     print(model)
     print(statistics)
 
+def sim_learn_mbt_yan_mealy():
+    learner = FALearner(MealyEncoder())
+    learner.set_timeout(10000)
+    import os.path
+    maestro_aut = build_automaton_from_dot("MealyMachine", os.path.join("resources", "models", "bankcards", "MAESTRO.dot"))
+    maestro_sut = MealyMachineSimulation(maestro_aut)
+    yan_cmd = os.path.join("resources", "binaries", "yannakakis.exe")
+    mbt = YannakakisTestGenerator(maestro_sut, yan_cmd)
+    (model, statistics) = learn_mbt(learner, mbt, 10000)
+    print(model)
+    print(statistics)
 
-sim_learn_mbt_ra()
+sim_learn_mbt_yan_mealy()
 #scalable_learn_mbt_mealy()
 #scalable_learn_mbt_iora()
