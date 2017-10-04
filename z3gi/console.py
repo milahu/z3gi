@@ -62,7 +62,8 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--size', type=int, help='the size of the scalable SUT')
 
     # test parameters
-    parser.add_argument('-mt', '--max_tests', type=int, default=1000, help='the max number of test executed per hyp')
+    parser.add_argument('-mt', '--max_tests', type=int, default=1000, help='the max number of tests executed on a '
+                                                                           'hypothesis before it is judged to be correct')
     parser.add_argument('-rl', '--rand_length', type=int, default=5, help='the maximum length of the random sequence '
                                                                           ' used by rwalkfromstate')
     parser.add_argument('-rp', '--reset_prob', type=float, default=0.2, help='the probability of reseting the SUT after '

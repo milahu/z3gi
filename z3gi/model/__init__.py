@@ -120,7 +120,8 @@ class Automaton(metaclass=ABCMeta):
     # Basic __str__ function which works for most FSMs.
     def __str__(self):
         str_rep = ""
-        str_rep += str(self._acc_trans_seq) + "\n"
+        for (st, acc_seq) in self._acc_trans_seq.items():
+            str_rep += "acc_seq("+ str(st) +") = " + str(list(map(str,acc_seq))) + "\n"
         for state in self.states():
             str_rep += str(state) + "\n"
             for tran in self.transitions(state):

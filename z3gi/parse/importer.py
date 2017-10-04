@@ -10,7 +10,6 @@ from model.fa import IOTransition, MutableMealyMachine
 from model.ra import RATransition, IORATransition, Action
 
 __all__ = [
-
     "extract_traces_from_file",
     "build_automaton_from_dot"
           ]
