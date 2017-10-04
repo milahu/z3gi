@@ -11,7 +11,8 @@ from learn.fa import FALearner
 from learn.ra import RALearner
 from model import Automaton
 from model.ra import RegisterMachine
-from sut import SUTType, ScalableSUTClass
+from sut import SUTType
+from sut.scalable import ScalableSUTClass
 from sut.fifoset import FIFOSetClass
 from sut.login import LoginClass
 from sut.stack import StackClass

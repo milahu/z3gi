@@ -95,7 +95,6 @@ def build_automaton_from_dot (aut_type:str, file_name:str) -> Automaton:
         print("Available DotImporters: ",
               [a.replace("DotImporter","") for a in crt.__dict__.keys() if a.endswith("DotImporter") and isinstance(crt.__dict__[a], type)
                and not inspect.isabstract(crt.__dict__[a])])
-        exit(1)
 
     """From .dot representation produces an automata"""
     dot_stream = file_stream(file_name)
@@ -145,7 +144,6 @@ class DotImporter(metaclass=ABCMeta):
         matches = []
         for line in stream:
             line = line.strip()
-            print(line)
             # if the line only contained spaces continue
             if len(line) == 0:
                 continue

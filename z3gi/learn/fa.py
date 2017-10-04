@@ -20,7 +20,6 @@ class FALearner(Learner):
     def model(self, min_states=1, max_states=20, old_definition:define.fa.FSM=None) -> Tuple[Automaton, define.fa.FSM]:
         if old_definition is not None:
             min_states = len(old_definition.states)
-            print("initial def ", min_states)
         (succ, fa, m) = self._learn_model(min_states=min_states,
                                         max_states=max_states)
         self.solver.reset()

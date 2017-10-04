@@ -48,6 +48,7 @@ class EqualTestsMixin(metaclass=ABCMeta):
 
 
 class TestGenerator(metaclass=ABCMeta):
+    #TODO gen_test should take the sut as param (relieving the testgens of having to store it in a field)
     @abstractmethod
     def gen_test(self, model: Automaton) -> Test:
         """generates a Test. Returns None if the test suite is exhausted"""
@@ -61,7 +62,7 @@ class TestGenerator(metaclass=ABCMeta):
             test = self.gen_test(model)
         self.terminate()
 
-    def gen_blind_test(self, sut:SUT):
+    def gen_blind_inp_seq(self, sut:SUT):
         """generates a sequence covering all input elements in the sut interface"""
         seq = []
         for abs_inp in self.sut.input_interface():

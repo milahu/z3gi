@@ -1,4 +1,4 @@
-import itertools
+import os.path
 
 from encode.fa import MealyEncoder, DFAEncoder
 from encode.ra import RAEncoder
@@ -16,6 +16,7 @@ from test.rwalk import IORARWalkFromState, MealyRWalkFromState, DFARWalkFromStat
 from test.yanna import YannakakisTestGenerator
 from tests.iora_testscenario import *
 from encode.iora import IORAEncoder
+
 
 # some example runs
 
@@ -69,7 +70,6 @@ def scalable_learn_mbt_ra():
 def sim_learn_mbt_mealy():
     learner = FALearner(MealyEncoder())
     learner.set_timeout(10000)
-    import os.path
     maestro_aut = build_automaton_from_dot("MealyMachine", os.path.join("resources", "models", "bankcards", "MAESTRO.dot"))
     maestro_sut = MealyMachineSimulation(maestro_aut)
     mbt = MealyRWalkFromState(maestro_sut, 3, 0.2)
@@ -77,18 +77,30 @@ def sim_learn_mbt_mealy():
     print(model)
     print(statistics)
 
-def sim_learn_mbt_yan_mealy():
+def sim_learn_mbt_yan_mealy(dot_path):
     learner = FALearner(MealyEncoder())
     learner.set_timeout(10000)
-    import os.path
-    maestro_aut = build_automaton_from_dot("MealyMachine", os.path.join("resources", "models", "bankcards", "MAESTRO.dot"))
-    maestro_sut = MealyMachineSimulation(maestro_aut)
+    dot_aut = build_automaton_from_dot("MealyMachine", dot_path)
+    dot_sut = MealyMachineSimulation(dot_aut)
     yan_cmd = os.path.join("resources", "binaries", "yannakakis.exe")
-    mbt = YannakakisTestGenerator(maestro_sut, yan_cmd)
+    mbt = YannakakisTestGenerator(dot_sut, yan_cmd)
     (model, statistics) = learn_mbt(learner, mbt, 10000)
     print(model)
     print(statistics)
 
-sim_learn_mbt_yan_mealy()
+models_loc = os.path.join("resources", "models")
+
+def maestro_learn_mbt_yan_mealy():
+    sim_learn_mbt_yan_mealy(os.path.join(models_loc, "bankcards", "MAESTRO.dot"))
+
+def visa_learn_mbt_yan_mealy():
+    sim_learn_mbt_yan_mealy(os.path.join(models_loc, "bankcards", "VISA.dot"))
+
+def biometric_learn_mbt_yan_mealy():
+    sim_learn_mbt_yan_mealy(os.path.join("models_loc", "biometric.dot"))
+
+
+
+visa_learn_mbt_yan_mealy()
 #scalable_learn_mbt_mealy()
 #scalable_learn_mbt_iora()

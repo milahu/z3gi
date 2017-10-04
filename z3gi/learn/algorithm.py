@@ -32,13 +32,15 @@ class Statistics():
     def add_learning_time(self, time):
         self.learning_times.append(time)
 
-    def __str__(self):        return "Total number tests used in learning: {0} \n" \
-                "Total number inputs used in learning: {1} \n " \
-                "Test suite size: {2} \n " \
-                "Average learner test size: {3} \n " \
-                "Learning time for each model: {4} \n " \
-                "Total learning time: {5} ".format(self.num_learner_tests,
+    def __str__(self):        return "Total number of tests used in learning/testing: {0} \n" \
+                "Total number of inputs used in learning/testing: {1} \n " \
+                "Total number of hypotheses used in learning/testing: {2} \n " \
+                "Test suite size: {3} \n " \
+                "Average learner test size: {4} \n " \
+                "Learning time for each model: {5} \n " \
+                "Total learning time: {6} ".format(self.num_learner_tests,
                                                    self.num_learner_inputs,
+                                                   len(self.learning_times),
                                                    self.suite_size,
                                                    self.num_learner_inputs / self.num_learner_tests,
                                                    self.learning_times,
@@ -121,12 +123,12 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
                     break
             if not done:
                 continue
+            test_generator.initialize(model)
             # we then generate and check new tests, until either we find a CE,
             # or the suite is exhausted or we have run the intended number of tests
             for i in range(0, max_tests):
                 next_test = test_generator.gen_test(model)
                 if next_test is None:
-                    raise Exception("Should never be none")
                     break
                 generated_tests.append(next_test)
                 ce = next_test.check(model)
@@ -136,6 +138,7 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
                     statistics.add_learner_test(next_test)
                     done = False
                     break
+            test_generator.terminate()
 
         #print([str(test.trace() for test in learner_tests)])
         statistics.set_suite_size(len(generated_tests))

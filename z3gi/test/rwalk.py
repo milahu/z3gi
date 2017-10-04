@@ -34,7 +34,7 @@ class RWalkFromState(TestGenerator, metaclass=ABCMeta):
         if model is None:
             # if the model is None, generate a test which includes all inputs (so at least we know the next generated
             # model will be input enabled)
-            seq = self.gen_blind_test(self.sut)
+            seq = self.gen_blind_inp_seq(self.sut)
         else:
             # select a random state
             if self.rand_start_state:
