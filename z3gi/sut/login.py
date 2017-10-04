@@ -1,5 +1,5 @@
-from sut import SUT, SUTType, ScalableSUTClass
-from sut.scalable import ActionSignature, ObjectSUT
+from sut import SUT, SUTType
+from sut.scalable import ActionSignature, ObjectSUT, ScalableSUTClass
 
 
 class Login():

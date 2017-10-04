@@ -2,8 +2,7 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum
 from typing import List, Tuple
 
-from model import Automaton
-from model.fa import Symbol, MealyMachine
+from model.fa import Symbol
 from model.ra import Action
 
 __all__ = [
@@ -136,27 +135,8 @@ class SUTType(Enum):
     def is_transducer(self):
         return  not self.is_acceptor()
 
-from sut.scalable import ScalableSUTClass
-from sut.simulation import Simulation, MealyMachineSimulation
+# some useful functions
+from sut.scalable import scalable_sut_classes, get_scalable_sut
+from sut.simulation import get_simulation
 
-def get_scalable_sut(sut_class_name, sut_type, sut_size):
-    """builds a scalable sut of the given class, type and size"""
-    sut_class = scalable_sut_classes()[sut_class_name]
-    sut = sut_class().new_sut(sut_type, sut_size)
-    return sut
 
-def scalable_sut_classes():
-    """retrieves a dictionary containing available the names of sut classes and their respective class files"""
-    sc = dict()
-    for subclass in ScalableSUTClass.__subclasses__():
-        sc[subclass.__name__.replace("SUTClass","")] = subclass
-    return sc
-
-# TODO replace not suported -> print exit by throwing an adequate exception
-def get_simulation(aut: Automaton) -> Simulation:
-    """builds a simulation for the model. The simulation acts like a deterministic sut."""
-    if aut is MealyMachine:
-        return MealyMachineSimulation(aut)
-    else:
-        print("Simulation not yet supported for ", type(aut))
-        exit(0)

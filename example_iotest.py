@@ -5,8 +5,6 @@ from utils import determinize
 from z3gi.learn.ra import RALearner
 from tests.iora_testscenario import *
 from encode.iora import IORAEncoder
-from model.parsing import to_dot
-
 def determinize_act_io(tuple_seq):
     seq = list(itertools.chain.from_iterable(tuple_seq))
     det_seq = determinize(seq)

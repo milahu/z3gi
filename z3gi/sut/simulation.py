@@ -1,10 +1,9 @@
 from abc import ABCMeta
 from typing import List, Type, Union
-import sys
 
 from model import Acceptor, Transducer, Automaton
 from model.fa import MealyMachine, Symbol
-from . import SUT, DFAObservation, RAObservation, IORAObservation, MealyObservation, TransducerObservation, \
+from . import SUT, MealyObservation, TransducerObservation, \
     AcceptorObservation
 
 class Simulation(SUT,metaclass=ABCMeta):
@@ -43,3 +42,12 @@ class MealyMachineSimulation(TransducerSimulation):
 
     def input_interface(self):
         return self.model.input_labels()
+
+# TODO replace not suported -> print exit by throwing an adequate exception
+def get_simulation(aut: Automaton) -> Simulation:
+    """builds a simulation for the model. The simulation acts like a deterministic sut."""
+    if isinstance(aut, MealyMachine):
+        return MealyMachineSimulation(aut)
+    else:
+        print("Simulation not yet supported for ", type(aut))
+        exit(0)

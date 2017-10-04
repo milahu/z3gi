@@ -6,7 +6,6 @@ from model.fa import Symbol
 from model.ra import Action
 from sut import SUTType, SUT, IORAObservation, RAObservation, MealyObservation, DFAObservation
 
-
 class SUTClass(metaclass=ABCMeta):
     """for a class of systems (say stacks, or logins) provides means of instantiating SUTs of different types"""
 
@@ -37,6 +36,25 @@ class ScalableSUTClass(SUTClass, metaclass=ABCMeta):
 
 
 ActionSignature = collections.namedtuple("ActionSignature", ('label', 'num_params'))
+
+
+def scalable_sut_classes():
+    """retrieves a dictionary containing available the names of sut classes and their respective class files"""
+    sc = dict()
+    from sut.login import LoginClass
+    from sut.fifoset import FIFOSetClass
+    from sut.stack import StackClass
+    scalable_classes = [LoginClass, FIFOSetClass, StackClass]
+
+    for subclass in scalable_classes:
+        sc[subclass.__name__.replace("Class","")] = subclass
+    return sc
+
+def get_scalable_sut(sut_class_name, sut_type, sut_size):
+    """builds a scalable sut of the given class, type and size"""
+    sut_class = scalable_sut_classes()[sut_class_name]
+    sut = sut_class().new_sut(sut_type, sut_size)
+    return sut
 
 
 class RASUT(metaclass=ABCMeta):

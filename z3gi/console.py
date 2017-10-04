@@ -60,6 +60,8 @@ if __name__ == '__main__':
     parser.add_argument('-sc', '--sut_class', type=str, choices=list(sut.scalable_sut_classes().keys()),
                         help='the class of the scalable SUT')
     parser.add_argument('-s', '--size', type=int, help='the size of the scalable SUT')
+    parser.add_argument('-t', '--timeout', type=int, help='the timeout used in learning '
+                                                          '(i.e. the time limit given to the solver to solve the constraints)')
 
     # test parameters
     parser.add_argument('-mt', '--max_tests', type=int, default=1000, help='the max number of tests executed on a '
@@ -71,7 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('-y', '--yannakakis', action='store_true', help='use yannakakis instead of rwalkfromstate '
                                                                         '(only supports Mealy Machines)')
 
-
+    print(sut.scalable_sut_classes())
     args = parser.parse_args()
     formalism = args.aut
     formalisms = model.defined_formalisms()
@@ -90,7 +92,7 @@ if __name__ == '__main__':
             sut_to_learn = sut.get_simulation(aut_to_learn)
         elif args.mode == 'scalable':
             sut_class_name = args.sut_class
-            sut_size = args.sut_size
+            sut_size = args.size
             sut_to_learn = sut.get_scalable_sut(sut_class_name, aut2suttype[aut_type], sut_size)
         else:
             print("Invalid mode ", args.mode)
@@ -99,7 +101,7 @@ if __name__ == '__main__':
         num_tests = args.max_tests
         rand_test_length = args.rand_length
         reset_prob = args.reset_prob
-        test_generator = aut2rwalkcls[aut_type](rand_test_length, reset_prob)
+        test_generator = aut2rwalkcls[aut_type](sut_to_learn, rand_test_length, reset_prob)
         (automaton, statistics) = alg.learn_mbt(learner, test_generator, num_tests)
 
     print("Learned\n", automaton, "\nWith stats\n", statistics)

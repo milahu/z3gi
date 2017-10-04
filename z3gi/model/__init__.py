@@ -121,7 +121,7 @@ class Automaton(metaclass=ABCMeta):
     def __str__(self):
         str_rep = ""
         for (st, acc_seq) in self._acc_trans_seq.items():
-            str_rep += "acc_seq("+ str(st) +") = " + str(list(map(str,acc_seq))) + "\n"
+            str_rep += "acc_seq("+ str(st) +") = " + " , ".join(list(map(str,acc_seq))) + "\n"
         for state in self.states():
             str_rep += str(state) + "\n"
             for tran in self.transitions(state):
