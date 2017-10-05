@@ -1,0 +1,36 @@
+digraph g {
+__start0 [label="" shape="none"];
+
+	s0 [shape="circle" label="s0"];
+	s1 [shape="circle" label="s1"];
+	s2 [shape="circle" label="s2"];
+	s0 -> s2 [label="|Pds(StateSystemOn)| / |PCS(Running);SM1(Running);SM2(Running)|"];
+	s0 -> s1 [label="|Pds(StateSystemOff)| / |PCS(Running);SM1(Stopped);SM2(Stopped);Dev(Shutdown)|"];
+	s0 -> s0 [label="|Pds(ButtonSystemOff)| / UNDEFINED"];
+	s0 -> s0 [label="|Host(goToOpenProfile)| / UNDEFINED"];
+	s0 -> s0 [label="|Host(goToClosedProfile)| / UNDEFINED"];
+	s0 -> s0 [label="|Host(openProfileStartApplication)| / UNDEFINED"];
+	s0 -> s0 [label="|Host(openProfileStopApplication)| / UNDEFINED"];
+	s0 -> s0 [label="|OS(StartPcs)| / UNDEFINED"];
+	s0 -> s0 [label="|OS(StopPcs)| / UNDEFINED"];
+	s1 -> s1 [label="|Pds(StateSystemOn)| / UNDEFINED"];
+	s1 -> s1 [label="|Pds(StateSystemOff)| / UNDEFINED"];
+	s1 -> s1 [label="|Pds(ButtonSystemOff)| / UNDEFINED"];
+	s1 -> s1 [label="|Host(goToOpenProfile)| / UNDEFINED"];
+	s1 -> s1 [label="|Host(goToClosedProfile)| / UNDEFINED"];
+	s1 -> s1 [label="|Host(openProfileStartApplication)| / UNDEFINED"];
+	s1 -> s1 [label="|Host(openProfileStopApplication)| / UNDEFINED"];
+	s1 -> s1 [label="|OS(StartPcs)| / UNDEFINED"];
+	s1 -> s1 [label="|OS(StopPcs)| / UNDEFINED"];
+	s2 -> s2 [label="|Pds(StateSystemOn)| / UNDEFINED"];
+	s2 -> s2 [label="|Pds(StateSystemOff)| / UNDEFINED"];
+	s2 -> s1 [label="|Pds(ButtonSystemOff)| / |PCS(Running);SM1(Stopped);SM2(Stopped);Dev(Shutdown)|"];
+	s2 -> s1 [label="|Host(goToOpenProfile)| / |PCS(Stopped);SM1(Stopped);SM2(Stopped);Dev(OpenProfile);Dev(Shutdown)|"];
+	s2 -> s1 [label="|Host(goToClosedProfile)| / |PCS(Stopped);SM1(Stopped);SM2(Stopped);Dev(Shutdown)|"];
+	s2 -> s2 [label="|Host(openProfileStartApplication)| / |PCS(Running);SM1(Running);SM2(Running)|"];
+	s2 -> s2 [label="|Host(openProfileStopApplication)| / |PCS(Running);SM1(Running);SM2(Running)|"];
+	s2 -> s2 [label="|OS(StartPcs)| / |PCS(Running);SM1(Running);SM2(Running)|"];
+	s2 -> s1 [label="|OS(StopPcs)| / |PCS(Stopped);SM1(Stopped);SM2(Stopped);Dev(Shutdown)|"];
+
+__start0 -> s0;
+}

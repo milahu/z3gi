@@ -35,18 +35,21 @@ def w_trans(automaton:Automaton, trans : Transition):
                                                    input_label,
                                                    output_label)
 
-def to_dot (automaton:Automaton, file_name:str):
+def to_dot (automaton:Automaton, write_to_file:str=None) -> str:
     """For an automaton produces a .dot representation"""
-    f = open(file_name, 'w') if file_name is not None else sys.stdout
-    print('digraph g {\n', file=f)
+    dot = ""
+    dot += 'digraph g {\n'
     for state in automaton.states():
-        print('\t%s;' % w_state(automaton,state), file=f)
+        dot += '\t{};\n'.format(w_state(automaton,state))
 
     for state in automaton.states():
         for trans in automaton.transitions(state):
-            print("\t%s;" % w_trans(automaton, trans), file=f)
+            dot += "\t{};\n".format(w_trans(automaton, trans))
 
-    print('}', file=f)
+    dot+='}'
 
-    if file_name is not None:
+    if write_to_file is not None:
+        f = open(write_to_file, 'w')
+        f.write(dot)
         f.close()
+    return dot

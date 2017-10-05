@@ -21,11 +21,12 @@ class YannakakisTestGenerator(TestGenerator):
 
 
     def initialize(self, model: Automaton):
-        hyp_file = "hyp.dot"
-        parse.exporter.to_dot(model, hyp_file)
-        self.yan_proc = subprocess.Popen([self.yan_path, hyp_file, self.mode, str(self.max_k), str(self.r_length)],
-                                         stdout=subprocess.PIPE, bufsize=10, universal_newlines=True)
-
+        dot_content = parse.exporter.to_dot(model)
+        self.yan_proc = subprocess.Popen([self.yan_path, "=", self.mode, str(self.max_k), str(self.r_length)],
+                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=10, universal_newlines=True)
+        self.yan_proc.stdin.write(dot_content)
+        self.yan_proc.stdin.write("\n")
+        self.yan_proc.stdin.flush()
 
     def gen_test(self, model: Automaton):
         if model is None:
@@ -41,6 +42,8 @@ class YannakakisTestGenerator(TestGenerator):
         return test
 
     def terminate(self):
-        os.remove("hyp.dot")
+        #os.remove("hyp.dot")
         self.yan_proc.terminate()
+        self.yan_proc.wait()
+
 
