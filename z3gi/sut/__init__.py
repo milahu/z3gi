@@ -140,3 +140,22 @@ from sut.scalable import scalable_sut_classes, get_scalable_sut
 from sut.simulation import get_simulation
 
 
+class StatsSUT(SUT):
+    def __init__(self, sut:SUT):
+        self._sut = sut
+        self._inputs = 0
+        self._resets = 0
+
+    def input_interface(self):
+        return self._sut.input_interface()
+
+    def run(self, seq:List[object]):
+        self._inputs += len(seq)
+        self._resets += 1
+        return self._sut.run(seq)
+
+    def inputs(self):
+        return self._inputs
+
+    def resets(self):
+        return self._resets

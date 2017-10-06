@@ -34,6 +34,10 @@ class Test(metaclass=ABCMeta):
         """returns the size (in terms of inputs) of the test"""
         pass
 
+    @abstractmethod
+    def covers(self, test) -> bool:
+        pass
+
 class EqualTestsMixin(metaclass=ABCMeta):
     """doesn't work unfortunately"""
     def __eq__(self, other):
@@ -148,6 +152,15 @@ class TransducerTest(Test):
     def size(self):
         return len(self.tr)
 
+    def covers(self, test):
+        if type(test) is type(self) and len(test.trace()) <= len(self.trace()):
+            for ((inp, _),(inp2, _)) in zip(self.trace(), test.trace()):
+                if inp != inp2:
+                    return  False
+            return True
+        return False
+
+
 class MealyTest(TransducerTest):
     def __init__(self, trace:List[Tuple[Symbol, Symbol]]):
         super().__init__(trace)
@@ -203,3 +216,11 @@ class AcceptorTest(Test):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def covers(self, test):
+        if type(test) is type(self) and self.size() <= test.size():
+            (seq, _) =  self.trace()
+            (seq2, _) = test.trace()
+            return seq == seq2
+        return False
+

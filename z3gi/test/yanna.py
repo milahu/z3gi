@@ -22,6 +22,7 @@ class YannakakisTestGenerator(TestGenerator):
 
     def initialize(self, model: Automaton):
         dot_content = parse.exporter.to_dot(model)
+        #print(" ".join([self.yan_path, "=", self.mode, str(self.max_k), str(self.r_length)]))
         self.yan_proc = subprocess.Popen([self.yan_path, "=", self.mode, str(self.max_k), str(self.r_length)],
                                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=10, universal_newlines=True)
         self.yan_proc.stdin.write(dot_content)

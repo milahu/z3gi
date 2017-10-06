@@ -1,3 +1,4 @@
+import copy
 from typing import List, Tuple, Union,cast
 
 from model import Automaton
@@ -14,36 +15,29 @@ __all__ = [
 class Statistics():
     """We only refe"""
     def __init__(self):
-        self.num_learner_tests = 0
-        self.num_learner_inputs = 0
-        self.suite_size = 0
         self.learning_times = []
         self.model_stats = None
-
-    def add_learner_test(self, test:Test):
-        """  updates the stats with relevant information from the added test"""
-        self.num_learner_inputs += test.size()
-        self.num_learner_tests += 1
-        pass
-
-    def set_suite_size(self, num):
-        self.suite_size = num
+        self.resets = 0
+        self.inputs = 0
 
     def add_learning_time(self, time):
         self.learning_times.append(time)
 
-    def __str__(self):        return "Total number of tests used in learning/testing: {0} \n" \
-                "Total number of inputs used in learning/testing: {1} \n " \
-                "Total number of hypotheses used in learning/testing: {2} \n " \
-                "Test suite size: {3} \n " \
-                "Average learner test size: {4} \n " \
-                "Learning time for each model: {5} \n " \
-                "Total learning time: {6} ".format(self.num_learner_tests,
-                                                   self.num_learner_inputs,
+    def set_num_resets(self, test_num):
+        self.resets = test_num
+
+    def set_num_inputs(self, inp_num):
+        self.inputs = inp_num
+
+    def __str__(self):        return \
+        "Tests until last hyp: {} \n" \
+        "Inputs until last hyp: {} \n " \
+        "Hypotheses used in learning: {} \n " \
+        "Learning time for each model: {} \n " \
+        "Total learning time: {} ".format(        self.resets,
+                                                  self.inputs,
                                                    len(self.learning_times),
-                                                   self.suite_size,
-                                                   self.num_learner_inputs / self.num_learner_tests,
-                                                   self.learning_times,
+                                                  self.learning_times,
                                                    sum(self.learning_times))
 
 
@@ -92,7 +86,6 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
     else:
         definition = None
         learner.add(next_test.trace())
-        statistics.add_learner_test(next_test)
         done = False
         learner_tests = [next_test]
         generated_tests = [next_test]
@@ -107,9 +100,6 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
             if ret is None:
                 return (None, statistics)
             (model, definition) = ret
-            # for learner_test in learner_tests:
-            #     if learner_test.check(model) is not None:
-            #         raise Exception("Learner test doesn't pass "+str(learner_test.trace()))
             end_time = int(time.time() * 1000)
             statistics.add_learning_time(end_time - start_time)
             done = True
@@ -117,13 +107,16 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
             for next_test in generated_tests:
                 ce = next_test.check(model)
                 if ce is not None:
+                    #print("TEST: ", next_test.trace())
                     print("CE: ", ce)
+                    #print(model)
                     learner.add(ce)
                     done = False
                     break
             if not done:
                 continue
             test_generator.initialize(model)
+
             # we then generate and check new tests, until either we find a CE,
             # or the suite is exhausted or we have run the intended number of tests
             for i in range(0, max_tests):
@@ -135,11 +128,9 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
                 if ce is not None:
                     learner_tests.append(next_test)
                     learner.add(ce)
-                    statistics.add_learner_test(next_test)
                     done = False
                     break
             test_generator.terminate()
 
         #print([str(test.trace() for test in learner_tests)])
-        statistics.set_suite_size(len(generated_tests))
         return (model, statistics)
