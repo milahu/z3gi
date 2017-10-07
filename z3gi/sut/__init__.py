@@ -140,6 +140,16 @@ from sut.scalable import scalable_sut_classes, get_scalable_sut
 from sut.simulation import get_simulation
 
 
+class StatsTracker(object):
+    def __init__(self, sut):
+        self.__sut = sut
+
+    def inputs(self):
+        return self.__sut._inputs
+
+    def resets(self):
+        return self.__sut._resets
+
 class StatsSUT(SUT):
     def __init__(self, sut:SUT):
         self._sut = sut
@@ -154,8 +164,8 @@ class StatsSUT(SUT):
         self._resets += 1
         return self._sut.run(seq)
 
-    def inputs(self):
-        return self._inputs
+    def stats_tracker(self):
+        return StatsTracker(self)
 
-    def resets(self):
-        return self._resets
+
+

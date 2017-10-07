@@ -9,7 +9,7 @@ from learn.fa import FALearner
 from model import Automaton
 from model.ra import RegisterMachine
 from parse.importer import build_automaton_from_dot
-from sut import SUTType, get_simulation, MealyObservation, StatsSUT
+from sut import SUTType, get_simulation, MealyObservation, StatsSUT, StatsTracker
 from learn.algorithm import learn_mbt, Statistics
 from statistics import stdev, median
 import os.path
@@ -30,10 +30,11 @@ ModelDesc = collections.namedtuple("ModelDesc", 'name type path')
 def get_learner_setup(aut:Automaton, test_desc:TestDesc):
     sut = get_simulation(aut)
     stats_sut = StatsSUT(sut)
+    sut_stats = stats_sut.stats_tracker()
     sut = CacheSUT(stats_sut, IOCache( MealyObservation))
     learner = FALearner(MealyEncoder())
     tester = YannakakisTestGenerator(sut, max_k=test_desc.max_k, rand_length=test_desc.rand_length)
-    return (learner, tester, stats_sut)
+    return (learner, tester, sut, sut_stats)
 
 class Benchmark:
     def __init__(self):
@@ -48,15 +49,11 @@ class Benchmark:
             -> List[Tuple[ExpDesc, ExperimentStats]]:
         results = []
         aut = build_automaton_from_dot(mod_desc.type, mod_desc.path)
-        (learner, tester, stats_sut) = get_learner_setup(aut, test_desc)
+        (learner, tester, sut, sut_stats) = get_learner_setup(aut, test_desc)
         learner.set_timeout(tout)
-        (model, statistics) = learn_mbt(learner, tester, test_desc.max_tests)
+        (model, statistics) = learn_mbt(learner, tester, test_desc.max_tests, stats_tracker=sut_stats)
         exp_desc = ExpDesc(mod_desc.name, len(aut.states()))
-        if model is None:
-            results.append((exp_desc, None))
-        else:
-            statistics.inputs = stats_sut.inputs()
-            statistics.resets = stats_sut.resets()
+        if model is not None:
             imp_stats = self._collect_stats(model, statistics)
             results.append( (exp_desc, imp_stats))
         return  results
@@ -82,7 +79,6 @@ def collate_stats(sut_desc: ExpDesc, exp_stats:List[ExperimentStats]):
     if exp_stats is None:
         return None
     else:
-
         states = [e.states for e in exp_stats]
         avg_states = median(states)
         consistent = len(set(states)) == 1
@@ -135,12 +131,12 @@ pdus = [ModelDesc("pdu" + str(i), "MealyMachine",
 #for pdu in pdus:
 #    b.add_experiment(pdu)
 
-b.add_experiment(bankcards[0])
+b.add_experiment(pdus[5])
 # create a test description
 t_desc = TestDesc(max_tests=10000, max_k=3, rand_length=3)
 
 # give the smt timeout value (in ms)
-timeout = 60000
+timeout = 60
 
 # how many times each experiment should be run
 num_exp = 1

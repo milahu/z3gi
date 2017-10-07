@@ -5,6 +5,8 @@ import sys
 import inspect
 import re
 
+import itertools
+
 from model import Automaton, Acceptor, Transition
 from model.fa import IOTransition, MutableMealyMachine
 from model.ra import RATransition, IORATransition, Action
@@ -120,6 +122,8 @@ class DotImporter(metaclass=ABCMeta):
     PAT_NO_NEWLINE = "[^(\r\n|[\r\n])]"
     PAT_NEWLINE = "(\r\n|[\r\n])"
     PAT_STATE = "s[0-9]*"
+    PAT_STATE_IGNORE = "__start0.*"
+    #(?P < content > [ ^ >\[] *)"+"(\[. *\])?;?"
     PAT_STATE_STR = "(?P<state>"+PAT_STATE+")" + "(?P<content>[^>\[]*)"+"(\[.*\])?;?"
     PAT_TRANS_LABEL = "\[label=\"(?P<label>.*)\"\];?"
     PAT_TRANS_MOVE = "(?P<src>" + PAT_STATE + ")\s*->\s*" + "(?P<dst>"+  PAT_STATE + ")"
@@ -140,22 +144,29 @@ class DotImporter(metaclass=ABCMeta):
     def build_aut(self):
         pass
 
-    def _matching_lines(self, stream, pat, expected=True, stop_at_mismatch=True):
+    def _matching_lines(self, stream, match_pat, stop_pat=None, prev_line:str=None, expect_match=True):
+        """iterates as long as the lines of a stream match a pattern and returns the matches together with
+        the non-matching line"""
         matches = []
+        if prev_line is not None:
+            stream = itertools.chain(iter([prev_line]), stream)
+            # the original stream is still updated, iterators constructed from other iterators share state
+
         for line in stream:
+            print(line)
             line = line.strip()
             # if the line only contained spaces continue
-            if len(line) == 0:
+            if len(line) == 0 or line.startswith("__start0"):
                 continue
-            match = re.fullmatch(pat, line)
+            match = re.fullmatch(match_pat, line)
             if match is not None:
                 matches.append(match)
             else:
-                if stop_at_mismatch is True:
+                if stop_pat is not None and re.fullmatch(stop_pat, line) is not None:
                     break
 
-        if len(matches) == 0:
-            print("Wrong format, cannot find match for ",pat)
+        if expect_match and len(matches) == 0:
+            print("Wrong format, cannot find match for ", match_pat)
             print("Expected format (empty lines/whitespaces ignored): \n"+
                 self.PAT_START+"\n" +
                 self.PAT_STATE_STR+"\n" +
@@ -164,16 +175,18 @@ class DotImporter(metaclass=ABCMeta):
                 "...")
             exit(1)
 
-        return matches
+        return (matches, line)
 
     def parse_dot(self, line_stream:str):
-        patterns = dict()
-        _ = self._matching_lines(line_stream, self.PAT_START, patterns)
-        state_matches = self._matching_lines(line_stream, self.PAT_STATE_STR, patterns)
+        (_, last_line) = self._matching_lines(line_stream, self.PAT_START, stop_pat=self.PAT_STATE_STR)
+        (state_matches, last_line) = self._matching_lines(line_stream, self.PAT_STATE_STR,
+                                                          stop_pat=self.PAT_TRANSITION, prev_line=last_line)
         for state_match in state_matches:
+            print(state_match, "state")
             self._visit_state(state_match.group("state"), state_match.group("content"))
 
-        trans_matches = self._matching_lines(line_stream, self.PAT_TRANSITION, patterns, stop_at_mismatch=False)
+        (trans_matches, last_line) = self._matching_lines(line_stream, self.PAT_TRANSITION,
+                                                          prev_line=last_line)
         for trans_match in trans_matches:
             self._visit_transition(trans_match.group("src"), trans_match.group("dst"), trans_match.group("label"))
 
@@ -192,7 +205,7 @@ class TransducerDotImporter(DotImporter, metaclass=ABCMeta):
             exit(1)
         inp_label = match.group("input")
         out_label = match.group("output")
-        self._visit_iotransition(from_state, to_state, inp_label, out_label)
+        self._visit_iotransition(from_state, to_state, inp_label.strip(), out_label.strip())
 
 class MealyMachineDotImporter(TransducerDotImporter):
     def __init__(self):

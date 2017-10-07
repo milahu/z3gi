@@ -3,6 +3,7 @@ from typing import List, Tuple, Union,cast
 
 from model import Automaton
 from learn import Learner
+from sut import StatsTracker
 from test import TestGenerator, Test
 import time
 
@@ -77,7 +78,7 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
         statistics.set_suite_size(len(traces))
         return (model, statistics)
 
-def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> Tuple[Union[Automaton,None], Statistics]:
+def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int, stats_tracker:StatsTracker=None) -> Tuple[Union[Automaton, None], Statistics]:
     """ takes learner, a test generator, and bound on the number of tests and generates a model"""
     next_test = test_generator.gen_test(None)
     statistics = Statistics()
@@ -117,6 +118,10 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
                 continue
             test_generator.initialize(model)
 
+            if stats_tracker is not None:
+                old_rsts = stats_tracker.resets()
+                old_inputs = stats_tracker.inputs()
+
             # we then generate and check new tests, until either we find a CE,
             # or the suite is exhausted or we have run the intended number of tests
             for i in range(0, max_tests):
@@ -131,6 +136,10 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int) -> T
                     done = False
                     break
             test_generator.terminate()
+
+            if stats_tracker is not None:
+                statistics.resets = old_rsts
+                statistics.inputs = old_inputs
 
         #print([str(test.trace() for test in learner_tests)])
         return (model, statistics)
