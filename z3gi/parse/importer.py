@@ -153,7 +153,6 @@ class DotImporter(metaclass=ABCMeta):
             # the original stream is still updated, iterators constructed from other iterators share state
 
         for line in stream:
-            print(line)
             line = line.strip()
             # if the line only contained spaces continue
             if len(line) == 0 or line.startswith("__start0"):
@@ -182,7 +181,6 @@ class DotImporter(metaclass=ABCMeta):
         (state_matches, last_line) = self._matching_lines(line_stream, self.PAT_STATE_STR,
                                                           stop_pat=self.PAT_TRANSITION, prev_line=last_line)
         for state_match in state_matches:
-            print(state_match, "state")
             self._visit_state(state_match.group("state"), state_match.group("content"))
 
         (trans_matches, last_line) = self._matching_lines(line_stream, self.PAT_TRANSITION,

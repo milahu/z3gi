@@ -11,12 +11,12 @@ from learn.fa import FALearner
 from learn.ra import RALearner
 from model import Automaton
 from model.ra import RegisterMachine
-from sut import SUTType
+from sut import SUTType, StatsSUT, DFAObservation, RAObservation, MealyObservation, IORAObservation
+from sut.login import LoginClass
 from sut.scalable import ScalableSUTClass
 from sut.fifoset import FIFOSetClass
-from sut.login import LoginClass
 from sut.stack import StackClass
-from test import TestGenerator
+from sut.sut_cache import AcceptorCache, IOCache, CacheSUT
 from learn.algorithm import learn_mbt, Statistics
 from test.rwalk import DFARWalkFromState, MealyRWalkFromState, RARWalkFromState, IORARWalkFromState
 from statistics import stdev, median
@@ -27,22 +27,23 @@ class SutDesc(collections.namedtuple("SutDesc", 'sut_class type size')):
         return  str(self.type).replace("SUTType.","") + "_" + str(self.sut_class.__class__.__name__).replace("Class", "") + "(" + str(self.size) + ")"
 
 TestDesc = collections.namedtuple("TestDesc", 'max_tests rand_length prop_reset')
-class ExperimentStats(collections.namedtuple("CollectedStats", "states registers learn_tests "
-                                                              "learn_inputs total_tests learn_time")):
+class ExperimentStats(collections.namedtuple("CollectedStats", "states registers tests "
+                                                              "inputs max_ltime learn_time")):
     pass
 
-class CollatedStats(collections.namedtuple("CollatedStats", "exp_succ states registers consistent avg_ltests std_ltests avg_inputs std_inputs avg_ltime std_ltime")):
+class CollatedStats(collections.namedtuple("CollatedStats", "exp_succ states registers consistent avg_tests std_tests avg_inputs std_inputs max_ltime avg_ltime std_ltime")):
     pass
 
-def get_learner_setup(sut_type:SUTType):
+def get_learner_setup(sut, sut_type:SUTType, size, test_desc:TestDesc):
+    args = (sut, test_desc.rand_length+size, test_desc.prop_reset)
     if sut_type is SUTType.DFA:
-        return (FALearner(DFAEncoder()), DFARWalkFromState)
+        return (FALearner(DFAEncoder()), DFARWalkFromState(*args))
     elif sut_type is SUTType.Mealy:
-        return (FALearner(MealyEncoder()), MealyRWalkFromState)
+        return (FALearner(MealyEncoder()), MealyRWalkFromState(*args))
     elif sut_type is SUTType.RA:
-        return (RALearner(RAEncoder()), RARWalkFromState)
+        return (RALearner(RAEncoder()), RARWalkFromState(*args))
     elif sut_type is SUTType.IORA:
-        return (RALearner(IORAEncoder()), IORARWalkFromState)
+        return (RALearner(IORAEncoder()), IORARWalkFromState(*args))
     raise Exception("Invalid setup")
 
 class Benchmark:
@@ -72,14 +73,26 @@ class Benchmark:
         while True:
             if max_size is not None and size > max_size:
                 break
+            print("Learning ", size)
             sut = sut_class.new_sut(sut_type, size)
-            learner,test_gen = get_learner_setup(sut_type)
+            stats_sut = StatsSUT(sut)
+            sut_stats = stats_sut.stats_tracker()
+
+            if sut_type.is_acceptor():
+                if sut_type is SUTType.DFA:
+                    cache = AcceptorCache(DFAObservation)
+                else:
+                    cache = AcceptorCache(RAObservation)
+            else:
+                if sut_type is SUTType.Mealy:
+                    cache = IOCache(MealyObservation)
+                else:
+                    cache = IOCache(IORAObservation)
+            cache_sut = CacheSUT(stats_sut, cache)
+            learner,tester = get_learner_setup(cache_sut, sut_type, size, test_desc)
             learner.set_timeout(tout)
             # ugly but there you go
-            rand_length = size + test_desc.rand_length
-            prop_reset = 1/rand_length
-            tester = test_gen(sut, rand_length, prop_reset)
-            (model, statistics) = learn_mbt(learner, tester, test_desc.max_tests)
+            (model, statistics) = learn_mbt(learner, tester, test_desc.max_tests, stats_tracker=sut_stats)
             if model is None:
                 break
             else:
@@ -92,12 +105,11 @@ class Benchmark:
     def _collect_stats(self, model:Automaton, statistics:Statistics) -> ExperimentStats:
         states = len(model.states())
         registers = len(model.registers()) if isinstance(model, RegisterMachine) else None
-        learn_tests = statistics.num_learner_tests
-        learn_inputs = statistics.num_learner_inputs
-        total_tests = statistics.suite_size
+        learn_tests = statistics.resets
+        learn_inputs = statistics.inputs
         learn_time = sum(statistics.learning_times)
-        return ExperimentStats(states=states, registers=registers, learn_tests=learn_tests, learn_inputs=learn_inputs,
-                               total_tests=total_tests, learn_time=learn_time)
+        max_ltime = max(statistics.learning_times)
+        return ExperimentStats(states=states, registers=registers, tests=learn_tests, inputs=learn_inputs, max_ltime=max_ltime, learn_time=learn_time)
 
     def run_benchmarks(self, test_desc:TestDesc, timeout:int, max_size:int=None) -> List[Tuple[SutDesc, ExperimentStats]]:
         results = []
@@ -110,7 +122,6 @@ def collate_stats(sut_desc: SutDesc, exp_stats:List[ExperimentStats]):
     if exp_stats is None:
         return None
     else:
-
         states = [e.states for e in exp_stats]
         avg_states = median(states)
         regs = [e.registers for e in exp_stats]
@@ -121,18 +132,20 @@ def collate_stats(sut_desc: SutDesc, exp_stats:List[ExperimentStats]):
         consistent = len(set(states)) == 1 and \
         (not sut_desc.type.has_registers() or len(set(regs)) == 1)
         exp_succ = len(exp_stats)
-        ltests = [e.learn_tests for e in exp_stats]
-        linputs = [e.learn_inputs for e in exp_stats]
+        ltests = [e.tests for e in exp_stats]
+        linputs = [e.inputs for e in exp_stats]
         ltime = [e.learn_time for e in exp_stats]
+        maxltimes = [e.max_ltime for e in exp_stats]
         return CollatedStats(
             exp_succ=exp_succ,
             states=avg_states,
             registers=avg_reg,
             consistent=consistent,
-            avg_ltests=median(ltests),
-            std_ltests=0 if len(ltests) == 1 else stdev(ltests),
+            avg_tests=median(ltests),
+            std_tests=0 if len(ltests) == 1 else stdev(ltests),
             avg_inputs=median(linputs),
             std_inputs=0 if len(linputs) == 1 else stdev(linputs),
+            max_ltime=max(maxltimes),
             avg_ltime=median(ltime),
             std_ltime=0 if len(ltime) == 1 else stdev(ltime),
         )
@@ -159,27 +172,27 @@ b = Benchmark()
 #b.add_setup(SUTType.IORA, RALearner(IORAEncoder()), IORARWalkFromState)
 
 # add the sut classes we want to benchmark
-#b.add_sut(FIFOSetClass())
-#b.add_sut(LoginClass())
-#b.add_sut(StackClass())
+b.add_sut(FIFOSetClass())
+b.add_sut(LoginClass())
+b.add_sut(StackClass())
 
-b.add_sut(FIFOSetClass(), SUTType.Mealy)
+#b.add_sut(FIFOSetClass(), SUTType.DFA)
 
 #b.add_sut(FIFOSetClass(), SUTType.IORA)
 #b.add_sut(LoginClass(), SUTType.IORA)
 #b.add_sut(StackClass(), SUTType.IORA)
 
 # create a test description
-t_desc = TestDesc(max_tests=100000, prop_reset=0.2, rand_length=3)
+t_desc = TestDesc(max_tests=10000, prop_reset=0.2, rand_length=3)
 
 # give an smt timeout value (in ms)
-timeout = 600
+timeout = 150000
 
 # how many times each experiment should be run
-num_exp = 1
+num_exp = 5
 
 # up to what systems of what size do we want to run experiments (set to None if size is ignored as a stop condition)
-max_size = 6
+max_size = None
 
 # run the benchmark and collect results
 results = []

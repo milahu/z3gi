@@ -1,10 +1,8 @@
-from abc import ABCMeta
 from typing import Tuple, List, Dict
 
 import collections
 
-from encode.fa import DFAEncoder, MealyEncoder
-from learn import Learner
+from encode.fa import MealyEncoder
 from learn.fa import FALearner
 from model import Automaton
 from model.ra import RegisterMachine
@@ -119,7 +117,7 @@ bankcards_path = os.path.join(models_path, "bankcards")
 pdu_path = os.path.join(models_path, "pdu")
 
 biometric = ModelDesc("biometric", "MealyMachine", os.path.join(models_path, "biometric.dot"))
-bankard_names= ["MAESTRO", "MasterCard", "PIN", "SecureCode"]
+bankard_names= ["MAESTRO", "MasterCard", "PIN", "SecureCode", "VISA"]
 
 bankcards = [ModelDesc(name, "MealyMachine", os.path.join(bankcards_path, "{}.dot".format(name))) for name in bankard_names]
 pdus = [ModelDesc("pdu" + str(i), "MealyMachine",
@@ -128,18 +126,18 @@ pdus = [ModelDesc("pdu" + str(i), "MealyMachine",
 #b.add_experiment(biometric)
 #for bankard in bankcards:
 #    b.add_experiment(bankard)
-#for pdu in pdus:
+#for pdu in pdus[:-2]:
 #    b.add_experiment(pdu)
 
-b.add_experiment(pdus[5])
+b.add_experiment(bankcards[1])
 # create a test description
 t_desc = TestDesc(max_tests=10000, max_k=3, rand_length=3)
 
 # give the smt timeout value (in ms)
-timeout = 60
+timeout = 150000
 
 # how many times each experiment should be run
-num_exp = 1
+num_exp = 5
 
 # run the benchmark and collect results
 results = []

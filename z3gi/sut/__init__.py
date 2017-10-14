@@ -83,7 +83,7 @@ class RAObservation(AcceptorObservation, RegisterMachineObservation):
         super().__init__(seq, acc)
 
     def trace(self) -> Tuple[List[Action], bool]:
-        return self.trace()
+        return super().trace()
 
     def inputs(self) -> List[Action]:
         return super().inputs()
@@ -127,7 +127,7 @@ class SUTType(Enum):
     DFA = 5
 
     def is_acceptor(self):
-        return  self == SUTType.RA or self.DFA
+        return self == SUTType.RA or self == SUTType.DFA
 
     def has_registers(self):
         return self == SUTType.RA or self == SUTType.IORA

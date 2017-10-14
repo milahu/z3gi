@@ -1,6 +1,7 @@
 import itertools
 
 import z3
+
 from define.fa import DFA, MealyMachine, Mapper
 from encode import Encoder
 from utils import Tree
@@ -100,4 +101,3 @@ class MealyEncoder(Encoder):
             c = mapper.element(child.id)
             constraints.append(mm.transition(mapper.map(n), i) == mapper.map(c))
         return constraints
-

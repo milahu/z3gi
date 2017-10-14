@@ -2,21 +2,21 @@ from abc import ABCMeta, abstractmethod
 
 import z3
 import model.fa
-from define import enum, Automaton
+from define import Automaton, dt_enum
 from model import Transition
 
 
 class FSM(Automaton,metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, num_states):
-        self.State, self.states = enum('State', ['state{0}'.format(i) for i in range(num_states)])
+    def __init__(self, num_states, state_enum=dt_enum):
+        self.State, self.states = state_enum('State', ['state{0}'.format(i) for i in range(num_states)])
         self.start = self.states[0]
 
 class DFA(FSM):
     def __init__(self, labels, num_states):
         super().__init__(num_states)
         labels = list(labels)
-        self.Label, elements = enum('Label', labels)
+        self.Label, elements = dt_enum('Label', labels)
         self.labels = {labels[i]: elements[i] for i in range(len(labels))}
         self.transition = z3.Function('transition', self.State, self.Label, self.State)
         self.output = z3.Function('output', self.State, z3.BoolSort())
@@ -28,11 +28,11 @@ class DFA(FSM):
 
 
 class MealyMachine(FSM):
-    def __init__(self, input_labels, output_labels, num_states):
-        super().__init__(num_states)
-        self.Input, elements = enum('Input', input_labels)
+    def __init__(self, input_labels, output_labels, num_states, state_enum=dt_enum, label_enum=dt_enum):
+        super().__init__(num_states, state_enum=state_enum)
+        self.Input, elements = label_enum('Input', input_labels)
         self.inputs = {input_labels[i]: elements[i] for i in range(len(input_labels))}
-        self.Output, elements = enum('Output', output_labels)
+        self.Output, elements = label_enum('Output', output_labels)
         self.outputs = {output_labels[i]: elements[i] for i in range(len(output_labels))}
         self.transition = z3.Function('transition', self.State, self.Input, self.State)
         self.output = z3.Function('output', self.State, self.Input, self.Output)

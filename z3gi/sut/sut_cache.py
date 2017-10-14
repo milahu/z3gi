@@ -2,7 +2,7 @@ from abc import abstractmethod, ABCMeta
 from typing import List, Type
 import itertools
 
-from sut import SUT, TransducerObservation, Observation, MealyObservation
+from sut import SUT, TransducerObservation, Observation, MealyObservation, AcceptorObservation
 from utils import Tree
 
 
@@ -38,6 +38,23 @@ class IOCache(Cache):
     def update_cache(self, obs: TransducerObservation):
         to_add = list(itertools.chain(*map(iter, obs.trace())))
         self._tree[to_add]
+
+class AcceptorCache(Cache):
+    def __init__(self, obs_gen):
+        self._tree = Tree(itertools.count(0))
+        self._obs_gen = obs_gen
+        self._acc = {}
+
+    def from_cache(self, seq):
+        node = self._tree[seq]
+        if node in self._acc:
+            return self._obs_gen(seq, self._acc[node])
+        else:
+            return None
+
+    def update_cache(self, obs: AcceptorObservation):
+        node = self._tree[obs.inputs()]
+        self._acc[node] = obs.acc
 
 class CacheSUT(SUT):
     def __init__(self, sut:SUT, cache:Cache):

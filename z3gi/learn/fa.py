@@ -32,7 +32,7 @@ class FALearner(Learner):
         #    to = fa
         #    return (None, to)
 
-    def _learn_model(self, min_states=1, max_states=20):
+    def _learn_model(self, min_states=1, max_states=10):
         """generates the definition and model for an fa whose traces include the traces added so far
         In case of failure, the second argument of the tuple signals occurrence of a timeout"""
         for num_states in range(min_states, max_states + 1):

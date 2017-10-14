@@ -1,12 +1,12 @@
 import z3
 from model.ra import *
-from define import enum, Automaton
+from define import dt_enum, Automaton
 
 
 class RegisterMachine(Automaton):
     def __init__(self, num_locations, num_registers, param_size):
-        self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations)])
-        self.Register, self.registers = enum('Register',
+        self.Location, self.locations = dt_enum('Location', ['location{0}'.format(i) for i in range(num_locations)])
+        self.Register, self.registers = dt_enum('Register',
                                              ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
         self.param_size = param_size
 
@@ -14,7 +14,7 @@ class RegisterAutomaton(RegisterMachine):
 
     def __init__(self, labels, param_size, num_locations, num_registers):
         super().__init__(num_locations, num_registers, param_size)
-        self.Label, elements = enum('Label', labels)
+        self.Label, elements = dt_enum('Label', labels)
         self.labels = {labels[i]: elements[i] for i in range(len(labels))}
         self.start = self.locations[0]
         self.fresh = self.registers[-1]
@@ -33,7 +33,7 @@ class IORegisterAutomaton(RegisterMachine):
     def __init__(self, input_labels, output_labels, param_size, num_locations, num_registers):
         super().__init__(num_locations, num_registers, param_size)
         labels = input_labels + output_labels
-        self.Label, elements = enum('Label', input_labels + output_labels)
+        self.Label, elements = dt_enum('Label', input_labels + output_labels)
         self.labels = {labels[i]: elements[i] for i in range(len(labels))}
         self._input_labels =  [self.labels[lbl] for lbl in input_labels]
         self.sink = self.locations[-1]
@@ -55,10 +55,10 @@ class IORegisterAutomaton(RegisterMachine):
 class IORegisterAutomaton2(Automaton):
 
     def __init__(self, inputs, outputs, num_locations, num_registers):
-        self.Input, self.inputs = enum('Input', inputs)
-        self.Output, self.outputs = enum('Output', outputs)
-        self.Location, self.locations = enum('Location', ['location{0}'.format(i) for i in range(num_locations)])
-        self.Register, self.registers = enum('Register', ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
+        self.Input, self.inputs = dt_enum('Input', inputs)
+        self.Output, self.outputs = dt_enum('Output', outputs)
+        self.Location, self.locations = dt_enum('Location', ['location{0}'.format(i) for i in range(num_locations)])
+        self.Register, self.registers = dt_enum('Register', ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
         self.start = self.locations[0]
         self.fresh = self.registers[-1]
         self.transition = z3.Function('transition', self.Location, self.Input, self.Register, self.Location)

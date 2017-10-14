@@ -183,7 +183,7 @@ class RARWalkFromState(RWalkFromState):
                     inp = Action(trans.start_label, inp_val)
                     reg_val = trans.update(reg_val, inp)
                 else:
-                    raise Exception("Unkown guard")
+                    raise Exception("Unknown guard")
             else:
                 inp_val = None
             inp = Action(trans.start_label, inp_val)

@@ -11,7 +11,7 @@ class YannakakisTestGenerator(TestGenerator):
 
     def __init__(self, sut,
                  yan_path=os.path.join(os.path.dirname(__file__), "..", "..","resources", "binaries", "yannakakis.exe"),
-                 mode="random", max_k=3, rand_length=3):
+                 mode="random", max_k=1, rand_length=1):
         self.yan_path = yan_path
         self.mode = mode
         self.max_k = max_k
@@ -22,12 +22,16 @@ class YannakakisTestGenerator(TestGenerator):
 
     def initialize(self, model: Automaton):
         dot_content = parse.exporter.to_dot(model)
-        #print(" ".join([self.yan_path, "=", self.mode, str(self.max_k), str(self.r_length)]))
         self.yan_proc = subprocess.Popen([self.yan_path, "=", self.mode, str(self.max_k), str(self.r_length)],
                                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=10, universal_newlines=True)
         self.yan_proc.stdin.write(dot_content)
         self.yan_proc.stdin.write("\n")
         self.yan_proc.stdin.flush()
+
+        #to use exhaustive yanna (
+        #self.yan_proc = subprocess.Popen([self.yan_path, os.path.join("..", "resources", "models","bankcards", "VISA.dot"),
+        #                                 "fixed", "1", "1"],
+        #                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=10, universal_newlines=True)
 
     def gen_test(self, model: Automaton):
         if model is None:
