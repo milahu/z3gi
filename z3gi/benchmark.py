@@ -18,6 +18,8 @@ from sut.fifoset import FIFOSetClass
 from sut.stack import StackClass
 from sut.sut_cache import AcceptorCache, IOCache, CacheSUT
 from learn.algorithm import learn_mbt, Statistics
+from test.chain import TestGeneratorChain
+from test.coloring import ColoringTestGenerator
 from test.rwalk import DFARWalkFromState, MealyRWalkFromState, RARWalkFromState, IORARWalkFromState
 from statistics import stdev, median
 
@@ -66,7 +68,7 @@ class Benchmark:
         self.learn_setup[sut_type] = (sut_learner, sut_tester)
         return self
 
-    def _run_benchmark(self, sut_class:ScalableSUTClass, sut_type:SUTType, test_desc:TestDesc, tout:int, max_size:int) \
+    def _run_benchmark(self, sut_class:ScalableSUTClass, sut_type:SUTType, test_desc:TestDesc, tout:int, max_size:int, use_coloring:bool) \
             -> List[Tuple[SutDesc, ExperimentStats]]:
         results = []
         size = 1
@@ -90,9 +92,12 @@ class Benchmark:
                     cache = IOCache(IORAObservation)
             cache_sut = CacheSUT(stats_sut, cache)
             learner,tester = get_learner_setup(cache_sut, sut_type, size, test_desc)
+            if use_coloring:
+                tester = TestGeneratorChain([ColoringTestGenerator(cache_sut, cache), tester])
+
             learner.set_timeout(tout)
             # ugly but there you go
-            (model, statistics) = learn_mbt(learner, tester, test_desc.max_tests, stats_tracker=sut_stats)
+            (model, statistics) = learn_mbt(cache_sut, learner, tester, test_desc.max_tests, stats_tracker=sut_stats)
             if model is None:
                 break
             else:
@@ -111,10 +116,10 @@ class Benchmark:
         max_ltime = max(statistics.learning_times)
         return ExperimentStats(states=states, registers=registers, tests=learn_tests, inputs=learn_inputs, max_ltime=max_ltime, learn_time=learn_time)
 
-    def run_benchmarks(self, test_desc:TestDesc, timeout:int, max_size:int=None) -> List[Tuple[SutDesc, ExperimentStats]]:
+    def run_benchmarks(self, test_desc:TestDesc, timeout:int, max_size:int=None, use_coloring:bool=False) -> List[Tuple[SutDesc, ExperimentStats]]:
         results = []
         for sut_class, sut_type in self.suts:
-            res = self._run_benchmark(sut_class, sut_type, test_desc, timeout, max_size)
+            res = self._run_benchmark(sut_class, sut_type, test_desc, timeout, max_size, use_coloring)
             results.extend(res)
         return results
 
@@ -172,9 +177,9 @@ b = Benchmark()
 #b.add_setup(SUTType.IORA, RALearner(IORAEncoder()), IORARWalkFromState)
 
 # add the sut classes we want to benchmark
-b.add_sut(FIFOSetClass())
+#b.add_sut(FIFOSetClass())
 b.add_sut(LoginClass())
-b.add_sut(StackClass())
+#b.add_sut(StackClass())
 
 #b.add_sut(FIFOSetClass(), SUTType.DFA)
 
@@ -194,10 +199,13 @@ num_exp = 5
 # up to what systems of what size do we want to run experiments (set to None if size is ignored as a stop condition)
 max_size = None
 
+# do you want to augment test generation by coloring (before the rwalk, we explore all uncolored transitions in the hyp)
+use_coloring = True
+
 # run the benchmark and collect results
 results = []
 for i in range(0, num_exp):
-    results += b.run_benchmarks(t_desc, timeout, max_size)
+    results += b.run_benchmarks(t_desc, timeout, max_size, use_coloring)
     print("============================")
     print_results(results)
     sut_dict = dict()

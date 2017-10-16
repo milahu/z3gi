@@ -5,8 +5,6 @@ import itertools
 from model import Automaton, Acceptor, Transducer
 from model.fa import Symbol
 from model.ra import IORegisterAutomaton, Action
-from sut import SUT
-from sut.scalable import ActionSignature
 from utils import determinize
 
 
@@ -65,25 +63,6 @@ class TestGenerator(metaclass=ABCMeta):
             yield test
             test = self.gen_test(model)
         self.terminate()
-
-    def gen_blind_inp_seq(self, sut:SUT):
-        """generates a sequence covering all input elements in the sut interface"""
-        seq = []
-        for abs_inp in self.sut.input_interface():
-            cnt = 0
-            # if it's RA stuff
-            if isinstance(abs_inp, ActionSignature):
-                if abs_inp.num_params == 0:
-                    val = None
-                else:
-                    val = cnt
-                    cnt += 1
-                seq.append(Action(abs_inp.label, val))
-            elif isinstance(abs_inp, str):
-                seq.append(abs_inp)
-            else:
-                raise Exception("Unrecognized type")
-        return seq
 
     def initialize(self, model: Automaton):
         """feeds the tests generator the supplied automaton in an initialization step"""

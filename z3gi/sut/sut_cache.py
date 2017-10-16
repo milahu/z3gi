@@ -17,6 +17,10 @@ class Cache(metaclass=ABCMeta):
     def update_cache(self, obs):
         pass
 
+    @abstractmethod
+    def obs_iterator(self):
+        pass
+
 class IOCache(Cache):
     def __init__(self, obs_gen):
         self._tree = Tree(itertools.count(0))
@@ -39,13 +43,32 @@ class IOCache(Cache):
         to_add = list(itertools.chain(*map(iter, obs.trace())))
         self._tree[to_add]
 
+    def obs_iterator(self):
+        next_seqs = [[]]
+        while len(next_seqs) > 0:
+            seq = next_seqs.pop()
+            obs = self.from_cache(seq)
+            if obs is None:
+                print(self._tree)
+                print(seq)
+                exit(0)
+            seq_node = self._tree[ list(itertools.chain(*map(iter, obs.trace())))]
+            if len(seq_node.children) > 0:
+                for inp in seq_node.children.keys():
+                    next_seqs.append(seq + [inp])
+            else:
+                yield obs
+
+
+
+
 class AcceptorCache(Cache):
     def __init__(self, obs_gen):
         self._tree = Tree(itertools.count(0))
         self._obs_gen = obs_gen
         self._acc = {}
 
-    def from_cache(self, seq):
+    def from_cache(self, seq) -> Observation:
         node = self._tree[seq]
         if node in self._acc:
             return self._obs_gen(seq, self._acc[node])
@@ -55,6 +78,23 @@ class AcceptorCache(Cache):
     def update_cache(self, obs: AcceptorObservation):
         node = self._tree[obs.inputs()]
         self._acc[node] = obs.acc
+
+
+    def obs_iterator(self):
+        next_seqs = [[]]
+        while len(next_seqs) > 0:
+            seq = next_seqs.pop()
+            seq_node = self._tree[seq]
+            if len(seq_node.children) > 0:
+                for inp in seq_node.children.keys():
+                    next_seqs.append(seq + [inp])
+            else:
+                obs = self.from_cache(seq)
+                #if obs is None:
+                #    print(seq)
+                #    print(self._tree)
+                #    exit(0)
+                yield obs
 
 class CacheSUT(SUT):
     def __init__(self, sut:SUT, cache:Cache):

@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 from model.fa import Symbol
 from model.ra import Action
+from test import MealyTest, AcceptorTest, IORATest
 
 __all__ = [
     "get_simulation",
@@ -22,7 +23,12 @@ class Observation():
         """returns all the inputs from an observation"""
         pass
 
-class TransducerObservation(metaclass=ABCMeta):
+    @abstractmethod
+    def to_test(self):
+        """returns a corresponding test for the observation"""
+        pass
+
+class TransducerObservation(Observation, metaclass=ABCMeta):
     def __init__(self, iotrace:List[Tuple[object,object]]):
         self.iotrace = iotrace
 
@@ -35,7 +41,7 @@ class TransducerObservation(metaclass=ABCMeta):
     def __str__(self):
         return "Obs" + str(self.trace()) + ""
 
-class AcceptorObservation(metaclass=ABCMeta):
+class AcceptorObservation(Observation, metaclass=ABCMeta):
     def __init__(self, seq:List[object], acc:bool):
         self.seq = seq
         self.acc = acc
@@ -45,6 +51,9 @@ class AcceptorObservation(metaclass=ABCMeta):
 
     def inputs(self) -> List[object]:
         return self.seq
+
+    def to_test(self):
+        return AcceptorTest(self.trace())
 
     def __str__(self):
         return "Obs" + str(self.trace())
@@ -68,6 +77,9 @@ class MealyObservation(TransducerObservation):
 
     def inputs(self) -> List[Symbol]:
         return super().inputs()
+
+    def to_test(self):
+        return MealyTest(self.trace())
 
 class RegisterMachineObservation(Observation):
 
@@ -105,6 +117,9 @@ class IORAObservation(TransducerObservation, RegisterMachineObservation):
         iv = [a.value for (a,_) in self.trace() if a.value is not None]
         ov = [a.value for (_,a) in self.trace() if a.value is not None]
         return set(iv+ov)
+
+    def to_test(self):
+        return IORATest(self.trace())
 
 class SUT(metaclass=ABCMeta):
     OK = "OK"

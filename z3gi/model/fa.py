@@ -1,7 +1,7 @@
+from abc import ABCMeta
 from typing import List
 
-from model import MutableAutomatonMixin, MutableAcceptorMixin, Transition, Acceptor, Transducer
-
+from model import MutableAutomatonMixin, MutableAcceptorMixin, Transition, Acceptor, Transducer, Automaton
 
 Symbol = str
 State = str
@@ -21,7 +21,20 @@ class IOTransition(Transition):
         else:
             return short
 
-class DFA(Acceptor):
+class NavigatorMixin(Automaton, metaclass=ABCMeta):
+    def trans_to_inputs(self, transitions: List[Transition]) -> List[Symbol]:
+        return [trans.start_label for trans in transitions]
+
+    def inputs_to_trans(self, seq: List[Symbol]) -> List[Transition]:
+        trans = []
+        state = self.start_state()
+        for inp in seq:
+            next_trans = self.transitions(state, inp)
+            trans.append(next_trans[0])
+            state = next_trans[0].end_state
+        return trans
+
+class DFA(Acceptor, NavigatorMixin):
     def __init__(self, states, state_to_trans, state_to_acc, acc_trans_seq={}):
         super().__init__(states, state_to_trans, state_to_acc, acc_trans_seq)
 
@@ -32,10 +45,7 @@ class DFA(Acceptor):
         crt_state = super().state(trace)
         return crt_state
 
-    def _seq(self, transitions: List[Transition]):
-        return [trans.start_label for trans in transitions]
-
-class MutableDFA(DFA, MutableAcceptorMixin):
+class MutableDFA(DFA, MutableAcceptorMixin, NavigatorMixin):
     def __init__(self):
         super().__init__([], {}, {})
 
@@ -45,7 +55,7 @@ class MutableDFA(DFA, MutableAcceptorMixin):
     def to_immutable(self) -> DFA:
         return DFA(self._states, self._state_to_trans, self._state_to_acc, self.acc_trans_seq())
 
-class MooreMachine(Transducer):
+class MooreMachine(Transducer, NavigatorMixin):
     def __init__(self, states, state_to_trans, state_to_out):
         super().__init__(states, state_to_trans)
         self.state_to_out = state_to_out
@@ -61,11 +71,7 @@ class MooreMachine(Transducer):
         crt_state = self.state(trace)
         return self.state_to_out[crt_state]
 
-    def _seq(self, transitions:List[Transition]):
-        #trace = [(trans.start_label, self.state_to_out[trans.end_state]) for trans in transitions]
-        return [trans.start_label for trans in transitions]#trace
-
-class MealyMachine(Transducer):
+class MealyMachine(Transducer, NavigatorMixin):
     def __init__(self, states, state_to_trans, acc_trans_seq={}):
         super().__init__(states, state_to_trans, acc_trans_seq)
 
@@ -75,10 +81,6 @@ class MealyMachine(Transducer):
     def state(self, trace: List[Symbol]) -> State:
         crt_state = super().state(trace)
         return crt_state
-
-    def _seq(self, transitions:List[IOTransition]):
-        #trace = [(trans.start_label, trans.output) for trans in transitions]
-        return [trans.start_label for trans in transitions]
 
     def output(self, trace: List[Symbol]) -> Output:
         if len(trace) == 0:

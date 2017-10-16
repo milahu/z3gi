@@ -147,7 +147,23 @@ class RegisterAutomaton(Acceptor, RegisterMachine):
 
         return crt_state
 
-    def _seq(self, transitions:List[RATransition]):
+    def inputs_to_trans(self, seq: List[Action]) -> List[RATransition]:
+        init = -1
+        reg_val = dict()
+        for reg in self.registers():
+            reg_val[reg] = init
+        fired_trans = []
+
+        crt_state = self.start_state()
+        for action in seq:
+            transitions = self.transitions(crt_state, action.label)
+            fired_transition = super()._fired_transition(transitions, reg_val, action)
+            reg_val = fired_transition.update(reg_val, action)
+            crt_state = fired_transition.end_state
+            fired_trans.append(fired_transition)
+        return fired_trans
+
+    def trans_to_inputs(self, transitions:List[RATransition]):
         run = []
         values = set()
         reg_val = dict()
@@ -158,6 +174,7 @@ class RegisterAutomaton(Acceptor, RegisterMachine):
                 inp_val = 0 if len(values) == 0 else max(values) + 1
                 values.add(inp_val)
             inp = Action(trans.start_label, inp_val)
+            reg_val = trans.update(reg_val, inp)
             run.append(inp)
         return run
 
@@ -219,7 +236,27 @@ class IORegisterAutomaton(Transducer, RegisterMachine):
             output = fired_transition.output(valuation, values)
             return output
 
-    def _seq(self, transitions: List[IORATransition]):
+    def inputs_to_trans(self, seq: List[Action]) -> List[IORATransition]:
+        init = -1
+        # maintains the set of values encountered
+        values = set()
+        reg_val = dict()
+        for reg in self.registers():
+            reg_val[reg] = init
+
+        fired_trans = []
+        crt_state = self.start_state()
+        for action in seq:
+            if action.value is not None:
+                values.add(action.value)
+            transitions = self.transitions(crt_state, action.label)
+            fired_transition = super()._fired_transition(transitions, reg_val, action)
+            reg_val = fired_transition.update(reg_val, action)
+            crt_state = fired_transition.end_state
+            fired_trans.append(fired_transition)
+        return fired_trans
+
+    def trans_to_inputs(self, transitions: List[IORATransition]) -> List[Action]:
         seq = []
         values = set()
         reg_val = dict()

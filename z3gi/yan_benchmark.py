@@ -49,7 +49,7 @@ class Benchmark:
         aut = build_automaton_from_dot(mod_desc.type, mod_desc.path)
         (learner, tester, sut, sut_stats) = get_learner_setup(aut, test_desc)
         learner.set_timeout(tout)
-        (model, statistics) = learn_mbt(learner, tester, test_desc.max_tests, stats_tracker=sut_stats)
+        (model, statistics) = learn_mbt(sut, learner, tester, test_desc.max_tests, stats_tracker=sut_stats)
         exp_desc = ExpDesc(mod_desc.name, len(aut.states()))
         if model is not None:
             imp_stats = self._collect_stats(model, statistics)

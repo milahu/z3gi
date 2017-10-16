@@ -7,11 +7,14 @@ from learn.algorithm import learn_mbt
 from learn.fa import FALearner
 from learn.ra import RALearner
 from parse.importer import build_automaton_from_dot
-from sut import SUTType
+from sut import SUTType, MealyObservation, StatsSUT, RAObservation, IORAObservation
 from sut.fifoset import FIFOSetClass
 from sut.login import new_login_sut, LoginClass
 from sut.simulation import MealyMachineSimulation
-from test import IORATest
+from sut.sut_cache import IOCache, CacheSUT, AcceptorCache
+from test import IORATest, MealyTest
+from test.chain import TestGeneratorChain
+from test.coloring import ColoringTestGenerator
 from test.rwalk import IORARWalkFromState, MealyRWalkFromState, DFARWalkFromState, RARWalkFromState
 from test.yanna import YannakakisTestGenerator
 from tests.iora_testscenario import *
@@ -33,7 +36,7 @@ def scalable_learn_mbt_iora():
     learner.set_timeout(10000)
     sut = new_login_sut(1)
     mbt = IORARWalkFromState(sut, 5, 0.2)
-    (model, statistics) = learn_mbt(learner, mbt, 10000)
+    (model, statistics) = learn_mbt(sut,learner, mbt, 10000)
     print(model)
     print(statistics)
 
@@ -43,7 +46,7 @@ def scalable_learn_mbt_mealy():
     login = LoginClass()
     sut = login.new_sut(SUTType.Mealy, 2)
     mbt = MealyRWalkFromState(sut, 5, 0.2)
-    (model, statistics) = learn_mbt(learner, mbt, 10000)
+    (model, statistics) = learn_mbt(sut,learner, mbt, 10000)
     print(model)
     print(statistics)
 
@@ -53,7 +56,7 @@ def scalable_learn_mbt_dfa():
     login = LoginClass()
     sut = login.new_sut(SUTType.DFA, 2)
     mbt = DFARWalkFromState(sut, 5, 0.2)
-    (model, statistics) = learn_mbt(learner, mbt, 10000)
+    (model, statistics) = learn_mbt(sut,learner, mbt, 10000)
     print(model)
     print(statistics)
 
@@ -63,7 +66,7 @@ def scalable_learn_mbt_ra():
     login = FIFOSetClass()
     sut = login.new_sut(SUTType.RA, 1)
     mbt = RARWalkFromState(sut, 5, 0.2)
-    (model, statistics) = learn_mbt(learner, mbt, 10000)
+    (model, statistics) = learn_mbt(sut,learner, mbt, 10000)
     print(model)
     print(statistics)
 
@@ -73,7 +76,7 @@ def sim_learn_mbt_mealy():
     maestro_aut = build_automaton_from_dot("MealyMachine", os.path.join("resources", "models", "bankcards", "MAESTRO.dot"))
     maestro_sut = MealyMachineSimulation(maestro_aut)
     mbt = MealyRWalkFromState(maestro_sut, 3, 0.2)
-    (model, statistics) = learn_mbt(learner, mbt, 10000)
+    (model, statistics) = learn_mbt(maestro_sut,learner, mbt, 10000)
     print(model)
     print(statistics)
 
@@ -83,8 +86,36 @@ def sim_learn_mbt_yan_mealy(dot_path):
     dot_aut = build_automaton_from_dot("MealyMachine", dot_path)
     dot_sut = MealyMachineSimulation(dot_aut)
     yan_cmd = os.path.join("resources", "binaries", "yannakakis.exe")
-    mbt = YannakakisTestGenerator(dot_sut, yan_cmd)
-    (model, statistics) = learn_mbt(learner, mbt, 10000)
+    mbt = YannakakisTestGenerator(dot_sut, yan_cmd, seed=1)
+    (model, statistics) = learn_mbt(dot_sut,learner, mbt, 10000)
+    print(model)
+    print(statistics)
+
+def sim_learn_mbt_chainyan_mealy(dot_path):
+    learner = FALearner(MealyEncoder())
+    learner.set_timeout(10000)
+    dot_aut = build_automaton_from_dot("MealyMachine", dot_path)
+    dot_sut = MealyMachineSimulation(dot_aut)
+    stats_sut = StatsSUT(dot_sut)
+    cache = IOCache(MealyObservation)
+    cache_sut = CacheSUT(stats_sut, cache)
+    yan_cmd = os.path.join("resources", "binaries", "yannakakis.exe")
+    mbt1 = YannakakisTestGenerator(cache_sut, yan_cmd, seed=1)
+    mbt2 = ColoringTestGenerator(cache_sut, cache)
+    mbt = TestGeneratorChain([mbt1, mbt2])
+    (model, statistics) = learn_mbt(cache_sut,learner, mbt, 10000, stats_tracker=stats_sut.stats_tracker())
+    print(model)
+    print(statistics)
+
+def scalable_learn_mbt_chainrw_iora():
+    learner = RALearner(IORAEncoder())
+    learner.set_timeout(600000)
+    login = FIFOSetClass()
+    sut = login.new_sut(SUTType.IORA, 1)
+    cache = IOCache(IORAObservation)
+    cache_sut = CacheSUT(sut, cache)
+    mbt = TestGeneratorChain([ColoringTestGenerator(cache_sut, cache), RARWalkFromState(sut, 5, 0.2)])
+    (model, statistics) = learn_mbt(cache_sut, learner, mbt, 10000)
     print(model)
     print(statistics)
 
@@ -99,8 +130,8 @@ def visa_learn_mbt_yan_mealy():
 def biometric_learn_mbt_yan_mealy():
     sim_learn_mbt_yan_mealy(os.path.join("models_loc", "biometric.dot"))
 
-
-
-visa_learn_mbt_yan_mealy()
+scalable_learn_mbt_chainrw_iora()
+#sim_learn_mbt_chainyan_mealy(os.path.join(models_loc, "bankcards", "VISA.dot"))
+#visa_learn_mbt_yan_mealy()
 #scalable_learn_mbt_mealy()
 #scalable_learn_mbt_iora()

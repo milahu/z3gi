@@ -282,18 +282,6 @@ class IORAEncoder(Encoder):
 
             if value is not None:
                 constraints.extend([
-                    # If the transition is over a register, then the register is in use.
-                    # z3.ForAll(
-                    #     [r],
-                    #     z3.Implies(
-                    #         z3.And(
-                    #             r != ra.fresh,
-                    #             ra.transition(mapper.map(n), l, r) == mapper.map(c)
-                    #         ),
-                    #         ra.used(mapper.map(n), r) == True
-                    #     )
-                    # ),
-
                     # If a non-fresh register has changed, it must have been updated
                     z3.ForAll(
                         [r],

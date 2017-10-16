@@ -102,6 +102,6 @@ if __name__ == '__main__':
         rand_test_length = args.rand_length
         reset_prob = args.reset_prob
         test_generator = aut2rwalkcls[aut_type](sut_to_learn, rand_test_length, reset_prob)
-        (automaton, statistics) = alg.learn_mbt(learner, test_generator, num_tests)
+        (automaton, statistics) = alg.learn_mbt(sut_to_learn, learner, test_generator, num_tests)
 
     print("Learned\n", automaton, "\nWith stats\n", statistics)

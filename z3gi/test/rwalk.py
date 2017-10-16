@@ -20,48 +20,42 @@ def rand_sel(l:List):
     return l[rand.randint(0, len(l)-1)]
 
 class RWalkFromState(TestGenerator, metaclass=ABCMeta):
-    def __init__(self, sut:SUT, test_gen, rand_length, prob_reset, rand_start_state=True):
+    def __init__(self, sut:SUT, rand_length, prob_reset, rand_start_state=True):
         # the probability after each input added, that we stop adding further inputs to the random sequence
         # hence the rand_length is only the maximum length of the random sequence
         self.prob_reset = prob_reset
         self.rand_length = rand_length
         self.rand_start_state = rand_start_state
         self.sut = sut
-        self.test_gen = test_gen
 
     def gen_test(self, model: Automaton) -> Test:
         """generates a test comprising an access sequence and a random sequence"""
-        if model is None:
-            # if the model is None, generate a test which includes all inputs (so at least we know the next generated
-            # model will be input enabled)
-            seq = self.gen_blind_inp_seq(self.sut)
+        # select a random state
+        if self.rand_start_state:
+            crt_state = model.states()[rand.randint(0, len(model.states()) - 1)]
         else:
-            # select a random state
-            if self.rand_start_state:
-                crt_state = model.states()[rand.randint(0, len(model.states()) - 1)]
-            else:
-                crt_state = model.start_state()
+            crt_state = model.start_state()
 
-            # get its access sequence (in the form of a sequence of transitions)
-            trans_path = list(model.acc_trans_seq(crt_state))
+        # get its access sequence (in the form of a sequence of transitions)
+        trans_path = list(model.acc_trans_seq(crt_state))
 
-            # from this state, do a random walk and generate a random sequence of transitions
-            for _ in range(0, self.rand_length):
-                transitions = model.transitions(crt_state)
-                r_trans = transitions[rand.randint(0, len(transitions)-1)]
-                crt_state = r_trans.end_state
-                trans_path.append(r_trans)
-                if rand.random()< self.prob_reset:
-                    break
+        # from this state, do a random walk and generate a random sequence of transitions
+        for _ in range(0, self.rand_length):
+            transitions = model.transitions(crt_state)
+            r_trans = transitions[rand.randint(0, len(transitions)-1)]
+            crt_state = r_trans.end_state
+            trans_path.append(r_trans)
+            if rand.random()< self.prob_reset:
+                break
 
-            # instantiate the access and random sequences by extracting the sequence of inputs to be executed on the sut
-            # for FSMs every sequence has a unique instantiation
-            # for RAs, sequences may have different instantiations depending on the values chosen
-            seq = self._generate_seq(model, trans_path)
+        # instantiate the access and random sequences by extracting the sequence of inputs to be executed on the sut
+        # for FSMs every sequence has a unique instantiation
+        # for RAs, sequences may have different instantiations depending on the values chosen
+        seq = self._generate_seq(model, trans_path)
 
         # run the sequence on inputs, which results on an observation and generate a corresponding test
         obs = self.sut.run(seq)
-        test = self.test_gen(obs.trace())
+        test = obs.to_test()
         return test
 
     @abstractmethod
@@ -71,8 +65,8 @@ class RWalkFromState(TestGenerator, metaclass=ABCMeta):
 
 # FSM versions of the algorithm
 class FSMRWalkFromState(RWalkFromState, metaclass=ABCMeta):
-    def __init__(self, sut: SUT, test_gen, rand_length, prob_reset, rand_start_state=True):
-        super().__init__(sut, test_gen, rand_length, prob_reset, rand_start_state)
+    def __init__(self, sut: SUT, rand_length, prob_reset, rand_start_state=True):
+        super().__init__(sut, rand_length, prob_reset, rand_start_state)
 
     def _generate_seq(self, model: Automaton, trans_path:List[Transition]):
         return [trans.start_label for trans in trans_path]
@@ -80,11 +74,11 @@ class FSMRWalkFromState(RWalkFromState, metaclass=ABCMeta):
 
 class DFARWalkFromState(FSMRWalkFromState):
     def __init__(self, sut:SUT, rand_length, prob_reset, rand_start_state=True):
-        super().__init__(sut, AcceptorTest, rand_length, prob_reset, rand_start_state)
+        super().__init__(sut, rand_length, prob_reset, rand_start_state)
 
 class MealyRWalkFromState(FSMRWalkFromState):
     def __init__(self, sut:SUT, rand_length, prob_reset, rand_start_state=True):
-        super().__init__( sut, MealyTest, rand_length, prob_reset, rand_start_state)
+        super().__init__( sut,  rand_length, prob_reset, rand_start_state)
 
 class ValueProb(collections.namedtuple("ValueProb", ("history", "register", "fresh"))):
     def select(self, reg_vals:List[int], his_vals:List[int], fresh_value):
@@ -99,7 +93,7 @@ class ValueProb(collections.namedtuple("ValueProb", ("history", "register", "fre
 
 class IORARWalkFromState(RWalkFromState):
     def __init__(self, sut: RASUT, rand_length, prob_reset, prob = ValueProb(0.4, 0.4, 0.2), rand_start_state=True):
-        super().__init__(sut, IORATest, rand_length, prob_reset, rand_start_state)
+        super().__init__(sut, rand_length, prob_reset, rand_start_state)
         self.prob = prob
 
     def _generate_seq(self, model: IORegisterAutomaton, transitions:List[IORATransition]) -> List[Action]:
@@ -152,7 +146,7 @@ class IORARWalkFromState(RWalkFromState):
 # TODO needs refactoring, we shouldn't need duplication between RA and IORA random walks
 class RARWalkFromState(RWalkFromState):
     def __init__(self, sut: RASUT, rand_length, prob_reset, prob = ValueProb(0.4, 0.4, 0.2), rand_start_state=True):
-        super().__init__(sut, AcceptorTest, rand_length, prob_reset, rand_start_state)
+        super().__init__(sut, rand_length, prob_reset, rand_start_state)
         self.prob = prob
 
     def _generate_seq(self, model: RegisterAutomaton, transitions:List[RATransition]) -> List[Action]:

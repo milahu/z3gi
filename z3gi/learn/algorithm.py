@@ -3,7 +3,9 @@ from typing import List, Tuple, Union,cast
 
 from model import Automaton
 from learn import Learner
-from sut import StatsTracker
+from model.ra import Action
+from sut import StatsTracker, SUT
+from sut.scalable import ActionSignature
 from test import TestGenerator, Test
 import time
 
@@ -78,9 +80,9 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
         statistics.set_suite_size(len(traces))
         return (model, statistics)
 
-def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int, stats_tracker:StatsTracker=None) -> Tuple[Union[Automaton, None], Statistics]:
+def learn_mbt(sut:SUT, learner:Learner, test_generator:TestGenerator, max_tests:int, stats_tracker:StatsTracker=None) -> Tuple[Union[Automaton, None], Statistics]:
     """ takes learner, a test generator, and bound on the number of tests and generates a model"""
-    next_test = test_generator.gen_test(None)
+    next_test = gen_blind_test(sut)
     statistics = Statistics()
     if next_test is None:
         return (None, statistics)
@@ -108,9 +110,7 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int, stat
             for next_test in generated_tests:
                 ce = next_test.check(model)
                 if ce is not None:
-                    #print("TEST: ", next_test.trace())
                     print("CE: ", ce)
-                    #print(model)
                     learner.add(ce)
                     done = False
                     break
@@ -131,6 +131,7 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int, stat
                 generated_tests.append(next_test)
                 ce = next_test.check(model)
                 if ce is not None:
+                    print("CE: ", ce)
                     learner_tests.append(next_test)
                     learner.add(ce)
                     done = False
@@ -143,3 +144,23 @@ def learn_mbt(learner:Learner, test_generator:TestGenerator, max_tests:int, stat
 
         #print([str(test.trace() for test in learner_tests)])
         return (model, statistics)
+
+def gen_blind_test(sut:SUT):
+    """generates a sequence covering all input elements in the sut interface"""
+    seq = []
+    for abs_inp in sut.input_interface():
+        cnt = 0
+        # if it's RA stuff
+        if isinstance(abs_inp, ActionSignature):
+            if abs_inp.num_params == 0:
+                val = None
+            else:
+                val = cnt
+                cnt += 1
+            seq.append(Action(abs_inp.label, val))
+        elif isinstance(abs_inp, str):
+            seq.append(abs_inp)
+        else:
+            raise Exception("Unrecognized type")
+    obs = sut.run(seq)
+    return obs.to_test()
