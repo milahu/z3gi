@@ -1,10 +1,13 @@
 import os.path
+from enum import Enum
 
 from encode.fa import MealyEncoder, DFAEncoder
+from encode.incremental.fa import MealyIEncoder, MealyTreeIEncoder
 from encode.ra import RAEncoder
 from learn.algorithm import learn
 from learn.algorithm import learn_mbt
 from learn.fa import FALearner
+from learn.incremental.fa import FAILearner
 from learn.ra import RALearner
 from parse.importer import build_automaton_from_dot
 from sut import SUTType, MealyObservation, StatsSUT, RAObservation, IORAObservation
@@ -21,8 +24,14 @@ from tests.iora_testscenario import *
 from encode.iora import IORAEncoder
 
 
-# some example runs
+# some paths
+yan_cmd = os.path.join("resources", "binaries", "yannakakis.exe")
+models_loc = os.path.join("resources", "models")
+maestro = os.path.join(models_loc, "bankcards", "MAESTRO.dot")
+visa = os.path.join(models_loc, "bankcards", "VISA.dot")
+biometric = os.path.join(models_loc, "biometric.dot")
 
+# some example runs
 def scalable_learn_iora():
     learner = RALearner(IORAEncoder())
     test_type = IORATest
@@ -70,28 +79,20 @@ def scalable_learn_mbt_ra():
     print(model)
     print(statistics)
 
-def sim_learn_mbt_mealy():
-    learner = FALearner(MealyEncoder())
-    learner.set_timeout(10000)
-    maestro_aut = build_automaton_from_dot("MealyMachine", os.path.join("resources", "models", "bankcards", "MAESTRO.dot"))
-    maestro_sut = MealyMachineSimulation(maestro_aut)
-    mbt = MealyRWalkFromState(maestro_sut, 3, 0.2)
-    (model, statistics) = learn_mbt(maestro_sut,learner, mbt, 10000)
-    print(model)
-    print(statistics)
-
 def sim_learn_mbt_yan_mealy(dot_path):
-    learner = FALearner(MealyEncoder())
+    learner = FAILearner(MealyTreeIEncoder())# FALearner(MealyEncoder())
     learner.set_timeout(10000)
     dot_aut = build_automaton_from_dot("MealyMachine", dot_path)
     dot_sut = MealyMachineSimulation(dot_aut)
-    yan_cmd = os.path.join("resources", "binaries", "yannakakis.exe")
-    mbt = YannakakisTestGenerator(dot_sut, yan_cmd, seed=1)
-    (model, statistics) = learn_mbt(dot_sut,learner, mbt, 10000)
+    stats_sut = StatsSUT(dot_sut)
+    cache = IOCache(MealyObservation)
+    cache_sut = CacheSUT(stats_sut, cache)
+    mbt = YannakakisTestGenerator(cache_sut, yan_cmd, seed=1)
+    (model, statistics) = learn_mbt(cache_sut, learner, mbt, 10000, stats_tracker=stats_sut.stats_tracker())
     print(model)
     print(statistics)
 
-def sim_learn_mbt_chainyan_mealy(dot_path):
+def sim_learn_mbt_coloryan_mealy(dot_path):
     learner = FALearner(MealyEncoder())
     learner.set_timeout(10000)
     dot_aut = build_automaton_from_dot("MealyMachine", dot_path)
@@ -99,9 +100,23 @@ def sim_learn_mbt_chainyan_mealy(dot_path):
     stats_sut = StatsSUT(dot_sut)
     cache = IOCache(MealyObservation)
     cache_sut = CacheSUT(stats_sut, cache)
-    yan_cmd = os.path.join("resources", "binaries", "yannakakis.exe")
-    mbt1 = YannakakisTestGenerator(cache_sut, yan_cmd, seed=1)
-    mbt2 = ColoringTestGenerator(cache_sut, cache)
+    mbt1 = ColoringTestGenerator(cache_sut, cache)
+    mbt2 = YannakakisTestGenerator(cache_sut, yan_cmd, seed=1)
+    mbt = TestGeneratorChain([mbt1, mbt2])
+    (model, statistics) = learn_mbt(cache_sut,learner, mbt, 10000, stats_tracker=stats_sut.stats_tracker())
+    print(model)
+    print(statistics)
+
+def sim_inc_learn_mbt_coloryan_mealy(dot_path):
+    learner = FAILearner(MealyTreeIEncoder())
+    learner.set_timeout(200000)
+    dot_aut = build_automaton_from_dot("MealyMachine", dot_path)
+    dot_sut = MealyMachineSimulation(dot_aut)
+    stats_sut = StatsSUT(dot_sut)
+    cache = IOCache(MealyObservation)
+    cache_sut = CacheSUT(stats_sut, cache)
+    mbt1 = ColoringTestGenerator(cache_sut, cache)
+    mbt2 = YannakakisTestGenerator(cache_sut, yan_cmd, seed=1)
     mbt = TestGeneratorChain([mbt1, mbt2])
     (model, statistics) = learn_mbt(cache_sut,learner, mbt, 10000, stats_tracker=stats_sut.stats_tracker())
     print(model)
@@ -119,19 +134,7 @@ def scalable_learn_mbt_chainrw_iora():
     print(model)
     print(statistics)
 
-models_loc = os.path.join("resources", "models")
-
-def maestro_learn_mbt_yan_mealy():
-    sim_learn_mbt_yan_mealy(os.path.join(models_loc, "bankcards", "MAESTRO.dot"))
-
-def visa_learn_mbt_yan_mealy():
-    sim_learn_mbt_yan_mealy(os.path.join(models_loc, "bankcards", "VISA.dot"))
-
-def biometric_learn_mbt_yan_mealy():
-    sim_learn_mbt_yan_mealy(os.path.join("models_loc", "biometric.dot"))
-
-scalable_learn_mbt_chainrw_iora()
-#sim_learn_mbt_chainyan_mealy(os.path.join(models_loc, "bankcards", "VISA.dot"))
-#visa_learn_mbt_yan_mealy()
 #scalable_learn_mbt_mealy()
 #scalable_learn_mbt_iora()
+sim_learn_mbt_yan_mealy(maestro)
+#sim_learn_mbt_mealy()

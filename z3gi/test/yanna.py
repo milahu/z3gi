@@ -28,8 +28,6 @@ class YannakakisTestGenerator(TestGenerator):
         self.yan_proc.stdin.write(dot_content)
         self.yan_proc.stdin.write("\n")
         self.yan_proc.stdin.flush()
-
-        #to use exhaustive yanna (
         #self.yan_proc = subprocess.Popen([self.yan_path, os.path.join("..", "resources", "models","bankcards", "VISA.dot"),
         #                                 "fixed", "1", "1"],
         #                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=10, universal_newlines=True)

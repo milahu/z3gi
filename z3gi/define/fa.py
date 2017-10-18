@@ -52,13 +52,14 @@ class Mapper(object):
         return z3.Const("n"+str(name), self.Element)
 
 
+
 class MealyMachineBuilder(object):
     def __init__(self, mm : MealyMachine):
         super().__init__()
         self.mm = mm
 
     def build_mealy(self, m : z3.ModelRef) -> model.fa.MealyMachine:
-        tr = FATranslator(self.mm)
+        tr = MealyTranslator(m, self.mm)
         mut_mm =  model.fa.MutableMealyMachine()
         for state in self.mm.states:
             mut_mm.add_state(tr.z3_to_state(state))
@@ -68,8 +69,8 @@ class MealyMachineBuilder(object):
                 to_state = m.eval(self.mm.transition(state, inp))
                 trans = model.fa.IOTransition(
                     tr.z3_to_state(state),
-                    tr.z3_to_label(inp),
-                    tr.z3_to_label(output),
+                    tr.z3_to_input(inp),
+                    tr.z3_to_output(output),
                     tr.z3_to_state(to_state))
                 mut_mm.add_transition(tr.z3_to_state(state), trans)
         mut_mm.generate_acc_seq()
@@ -97,10 +98,42 @@ class DFABuilder(object):
         mut_dfa.generate_acc_seq()
         return mut_dfa.to_immutable()
 
+class MealyTranslator(object):
+    """Provides translation from z3 constants to RA elements. """
+    def __init__(self, model, mm: MealyMachine):
+        self._model = model
+        self._mm = mm
+        self._z3_to_inp = dict(map(reversed, mm.inputs.items()))
+        self._z3_to_out = dict(map(reversed, mm.outputs.items()))
+
+
+    def z3_to_state(self, z3state):
+        if z3state in self._mm.states:
+            return "q" + str(self._mm.states.index(z3state))
+        else:
+            return "q" + str(list(map(self._model.eval, self._mm.states)).index(z3state))
+
+    def z3_to_input(self, z3label):
+        if z3label in self._z3_to_inp:
+            return self._z3_to_inp[z3label]
+        else:
+            for inp in self._z3_to_inp:
+                if self._model.eval(inp) == self._model.eval(z3label):
+                    return self._z3_to_inp[inp]
+
+    def z3_to_output(self, z3label):
+        if z3label in self._z3_to_out:
+            return self._z3_to_out[z3label]
+        else:
+            for out in self._z3_to_out:
+                if self._model.eval(out) == self._model.eval(z3label):
+                    return self._z3_to_out[out]
+
 class FATranslator(object):
     """Provides translation from z3 constants to RA elements. """
-    def __init__(self, fa:FSM ):
+    def __init__(self, fa:FSM):
         self.fa = fa
+
 
     def z3_to_bool(self, z3bool):
         return str(z3bool) == "True"

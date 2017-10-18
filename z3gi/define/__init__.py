@@ -13,6 +13,10 @@ def int_enum(name, elements):
     d = z3.IntSort()
     return d, [z3.IntVal(i) for i in range(1, len(elements) + 1)]
 
+def declsort_enum(name, elements):
+    d = z3.DeclareSort(name)
+    return d, [z3.Const(element) for element in elements]
+
 class Automaton(metaclass=ABCMeta):
     @abstractmethod
     def export(self, model):
