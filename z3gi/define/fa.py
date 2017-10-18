@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 import z3
 import model.fa
-from define import Automaton, dt_enum
+from define import Automaton, dt_enum, declsort_enum
 from model import Transition
 
 
@@ -28,7 +28,7 @@ class DFA(FSM):
 
 
 class MealyMachine(FSM):
-    def __init__(self, input_labels, output_labels, num_states, state_enum=dt_enum, label_enum=dt_enum):
+    def __init__(self, input_labels, output_labels, num_states, state_enum=declsort_enum, label_enum=declsort_enum):
         super().__init__(num_states, state_enum=state_enum)
         self.Input, elements = label_enum('Input', input_labels)
         self.inputs = {input_labels[i]: elements[i] for i in range(len(input_labels))}
@@ -47,8 +47,12 @@ class Mapper(object):
         self.Element = z3.DeclareSort('Element')
         self.start = self.element(0)
         self.map = z3.Function('map', self.Element, fa.State)
+        self._elements = dict()
 
     def element(self, name):
+        #if name not in self._elements:
+        #    self._elements[name] = z3.Const("n"+str(name), self.Element)
+        #return self._elements[name]
         return z3.Const("n"+str(name), self.Element)
 
 

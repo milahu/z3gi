@@ -75,7 +75,16 @@ class MealyEncoder(Encoder):
         return mm, constraints
 
     def axioms(self, mm: MealyMachine, mapper: Mapper):
-        return []
+        return [
+            z3.And([z3.And([z3.Or([mm.transition(state, input) == to_state
+                                     for to_state in mm.states]) for state in mm.states])
+                  for input in mm.inputs.values()]),
+            z3.Distinct(list(mm.inputs.values())),
+            z3.Distinct(list(mm.outputs.values())),
+            z3.Distinct(list(mm.states)),
+            z3.Distinct([mapper.element(node.id) for node in self.cache])
+        ]
+        #return []
 
     def node_constraints(self, mm, mapper):
         constraints = []

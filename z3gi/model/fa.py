@@ -96,4 +96,6 @@ class MutableMealyMachine(MealyMachine, MutableAutomatonMixin):
         super().__init__([], {})
 
     def to_immutable(self) -> MealyMachine:
-        return MealyMachine(self._states, self._state_to_trans, self.acc_trans_seq())
+        return MealyMachine(sorted(self._states),
+                            {state:list(sorted(self._state_to_trans[state], key=str)) for state in sorted(self._states)},
+                            self.acc_trans_seq())

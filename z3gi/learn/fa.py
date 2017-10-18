@@ -6,13 +6,14 @@ from model import Automaton
 import define.fa
 
 class FALearner(Learner):
-    def __init__(self, encoder, solver=None, verbose=False):
+    def __init__(self, encoder, solver=None, verbose=False, stop_unknown=False):
         super().__init__()
         if not solver:
             solver = z3.Solver()
         self.solver = solver
         self.encoder = encoder
         self.verbose = verbose
+        self.stop_unknown = stop_unknown
 
     def add(self, trace):
         self.encoder.add(trace)
@@ -38,6 +39,7 @@ class FALearner(Learner):
         for num_states in range(min_states, max_states + 1):
             fa, constraints = self.encoder.build(num_states)
             self.solver.reset()
+            self.solver.set(":random-seed", 0)
             self.solver.add(constraints)
             if self.timeout is not None:
                 self.solver.set("timeout", self.timeout)
@@ -50,7 +52,7 @@ class FALearner(Learner):
                 return (True, fa, model)
             else:
                 # timeout
-                if result == z3.unknown:
+                if result == z3.unknown and self.stop_unknown:
                     return (False, True, None)
                 # TODO: process the unsat core?
                 pass

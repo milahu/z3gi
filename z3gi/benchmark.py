@@ -178,7 +178,7 @@ b = Benchmark()
 
 # add the sut classes we want to benchmark
 #b.add_sut(FIFOSetClass())
-b.add_sut(LoginClass())
+b.add_sut(LoginClass(), SUTType.Mealy)
 #b.add_sut(StackClass())
 
 #b.add_sut(FIFOSetClass(), SUTType.DFA)
@@ -191,16 +191,16 @@ b.add_sut(LoginClass())
 t_desc = TestDesc(max_tests=10000, prop_reset=0.2, rand_length=3)
 
 # give an smt timeout value (in ms)
-timeout = 150000
+timeout = 10000
 
 # how many times each experiment should be run
-num_exp = 5
+num_exp = 2
 
 # up to what systems of what size do we want to run experiments (set to None if size is ignored as a stop condition)
 max_size = None
 
 # do you want to augment test generation by coloring (before the rwalk, we explore all uncolored transitions in the hyp)
-use_coloring = True
+use_coloring = False
 
 # run the benchmark and collect results
 results = []

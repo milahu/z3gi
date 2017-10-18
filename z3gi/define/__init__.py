@@ -15,7 +15,7 @@ def int_enum(name, elements):
 
 def declsort_enum(name, elements):
     d = z3.DeclareSort(name)
-    return d, [z3.Const(element) for element in elements]
+    return d, [z3.Const(element, d) for element in elements]
 
 class Automaton(metaclass=ABCMeta):
     @abstractmethod

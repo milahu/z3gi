@@ -41,7 +41,8 @@ class MealyMachineSimulation(TransducerSimulation):
         return super().run(seq)
 
     def input_interface(self):
-        return self.model.input_labels()
+        #TODO remove non-deterministic behavior
+        return list(sorted(self.model.input_labels()))
 
 # TODO replace not suported -> print exit by throwing an adequate exception
 def get_simulation(aut: Automaton) -> Simulation:

@@ -33,6 +33,9 @@ class ScalableSUTClass(SUTClass, metaclass=ABCMeta):
             return sut
         else:
             return None
+    
+    def num_states(self, size:int):
+        pass
 
 
 ActionSignature = collections.namedtuple("ActionSignature", ('label', 'num_params'))
