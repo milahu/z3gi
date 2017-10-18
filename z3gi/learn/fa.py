@@ -6,23 +6,22 @@ from model import Automaton
 import define.fa
 
 class FALearner(Learner):
-    def __init__(self, encoder, solver=None, verbose=False, stop_unknown=False):
+    def __init__(self, encoder, solver=None, verbose=False):
         super().__init__()
         if not solver:
             solver = z3.Solver()
         self.solver = solver
         self.encoder = encoder
         self.verbose = verbose
-        self.stop_unknown = stop_unknown
 
     def add(self, trace):
         self.encoder.add(trace)
 
-    def model(self, min_states=1, max_states=20, old_definition:define.fa.FSM=None) -> Tuple[Automaton, define.fa.FSM]:
+    def model(self, min_states=1, max_states=20, old_definition:define.fa.FSM=None, ensure_min=False) -> Tuple[Automaton, define.fa.FSM]:
         if old_definition is not None:
             min_states = len(old_definition.states)
         (succ, fa, m) = self._learn_model(min_states=min_states,
-                                        max_states=max_states)
+                                        max_states=max_states, ensure_min=ensure_min)
         self.solver.reset()
         if succ:
             return fa.export(m), fa
@@ -33,7 +32,7 @@ class FALearner(Learner):
         #    to = fa
         #    return (None, to)
 
-    def _learn_model(self, min_states=1, max_states=10):
+    def _learn_model(self, min_states=1, max_states=10, ensure_min=False):
         """generates the definition and model for an fa whose traces include the traces added so far
         In case of failure, the second argument of the tuple signals occurrence of a timeout"""
         for num_states in range(min_states, max_states + 1):
@@ -51,8 +50,8 @@ class FALearner(Learner):
                 model = self.solver.model()
                 return (True, fa, model)
             else:
-                # timeout
-                if result == z3.unknown and self.stop_unknown:
+                # timeout, if minimality guarantee is required, we have to stop here
+                if result == z3.unknown and ensure_min:
                     return (False, True, None)
                 # TODO: process the unsat core?
                 pass

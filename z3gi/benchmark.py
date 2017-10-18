@@ -178,7 +178,7 @@ b = Benchmark()
 
 # add the sut classes we want to benchmark
 #b.add_sut(FIFOSetClass())
-b.add_sut(LoginClass(), SUTType.Mealy)
+b.add_sut(LoginClass(), SUTType.DFA)
 #b.add_sut(StackClass())
 
 #b.add_sut(FIFOSetClass(), SUTType.DFA)

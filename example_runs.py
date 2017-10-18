@@ -80,7 +80,7 @@ def scalable_learn_mbt_ra():
     print(statistics)
 
 def sim_learn_mbt_yan_mealy(dot_path):
-    learner = FAILearner(MealyTreeIEncoder())# FALearner(MealyEncoder())
+    learner = FALearner(MealyEncoder())
     learner.set_timeout(10000)
     dot_aut = build_automaton_from_dot("MealyMachine", dot_path)
     dot_sut = MealyMachineSimulation(dot_aut)

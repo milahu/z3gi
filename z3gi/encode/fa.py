@@ -29,7 +29,14 @@ class DFAEncoder(Encoder):
         return dfa, constraints
 
     def axioms(self, dfa: DFA, mapper: Mapper):
-        return []
+        return [
+            z3.And([z3.And([z3.Or([dfa.transition(state, label) == to_state
+                                   for to_state in dfa.states]) for state in dfa.states])
+                    for label in dfa.labels.values()]),
+            z3.Distinct(list(dfa.labels.values())),
+            z3.Distinct(list(dfa.states)),
+            z3.Distinct([mapper.element(node.id) for node in self.cache])
+        ]
 
     def node_constraints(self, dfa, mapper):
         constraints = []
