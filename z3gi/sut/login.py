@@ -70,6 +70,19 @@ class LoginClass(ScalableSUTClass):
             SUTType.DFA: FSMLogin
         })
 
+    def num_states(self, sut_type : SUTType, size:int):
+        mealy_num = {1: 3, 2: 6, 3: 10, 4: 15, 5: 21}
+        ra_num = {1:4, 2:7}
+        if sut_type is SUTType.DFA:
+            return mealy_num[size] + 1 if size in mealy_num else None
+        elif sut_type is SUTType.Mealy:
+            return mealy_num.get(size)
+        elif sut_type is SUTType.RA:
+            return ra_num.get(size)
+        elif sut_type is SUTType.IORA:
+            return ra_num.get(size) - 1 if size in ra_num else None
+
+
 
 def new_login_sut(size, sut_type = SUTType.IORA):
     return ObjectSUT(Login.INTERFACE, lambda : Login(size))

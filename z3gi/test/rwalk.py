@@ -38,13 +38,15 @@ class RWalkFromState(TestGenerator, metaclass=ABCMeta):
 
         # get its access sequence (in the form of a sequence of transitions)
         trans_path = list(model.acc_trans_seq(crt_state))
+        i = 0
 
         # from this state, do a random walk and generate a random sequence of transitions
-        for _ in range(0, self.rand_length):
+        while self.rand_length is None or i < self.rand_length:
             transitions = model.transitions(crt_state)
             r_trans = transitions[rand.randint(0, len(transitions)-1)]
             crt_state = r_trans.end_state
             trans_path.append(r_trans)
+            i += 1
             if rand.random()< self.prob_reset:
                 break
 

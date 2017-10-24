@@ -1,11 +1,12 @@
+import functools
 from abc import ABCMeta
 from typing import Tuple, List, Dict
 
 import collections
 
 from encode.fa import DFAEncoder, MealyEncoder
-from encode.iora import IORAEncoder
-from encode.ra import RAEncoder
+from encode.iora import IORAEncoder, IORAQREncoder
+from encode.ra import RAEncoder, RAQREncoder
 from learn import Learner
 from learn.fa import FALearner
 from learn.ra import RALearner
@@ -29,11 +30,11 @@ class SutDesc(collections.namedtuple("SutDesc", 'sut_class type size')):
         return  str(self.type).replace("SUTType.","") + "_" + str(self.sut_class.__class__.__name__).replace("Class", "") + "(" + str(self.size) + ")"
 
 TestDesc = collections.namedtuple("TestDesc", 'max_tests rand_length prop_reset')
-class ExperimentStats(collections.namedtuple("CollectedStats", "states registers tests "
+class ExperimentStats(collections.namedtuple("CollectedStats", "states minimal registers tests "
                                                               "inputs max_ltime learn_time")):
     pass
 
-class CollatedStats(collections.namedtuple("CollatedStats", "exp_succ states registers consistent avg_tests std_tests avg_inputs std_inputs max_ltime avg_ltime std_ltime")):
+class CollatedStats(collections.namedtuple("CollatedStats", "exp_succ states registers minimal consistent avg_tests std_tests avg_inputs std_inputs max_ltime avg_ltime std_ltime")):
     pass
 
 def get_learner_setup(sut, sut_type:SUTType, size, test_desc:TestDesc):
@@ -43,9 +44,13 @@ def get_learner_setup(sut, sut_type:SUTType, size, test_desc:TestDesc):
     elif sut_type is SUTType.Mealy:
         return (FALearner(MealyEncoder()), MealyRWalkFromState(*args))
     elif sut_type is SUTType.RA:
-        return (RALearner(RAEncoder()), RARWalkFromState(*args))
+        ra_learner = RALearner(RAEncoder())
+        ra_learner.set_num_reg(size)
+        return (ra_learner, RARWalkFromState(*args))
     elif sut_type is SUTType.IORA:
-        return (RALearner(IORAEncoder()), IORARWalkFromState(*args))
+        ra_learner = RALearner(IORAEncoder())
+        ra_learner.set_num_reg(size)
+        return (ra_learner, IORARWalkFromState(*args))
     raise Exception("Invalid setup")
 
 class Benchmark:
@@ -68,10 +73,10 @@ class Benchmark:
         self.learn_setup[sut_type] = (sut_learner, sut_tester)
         return self
 
-    def _run_benchmark(self, sut_class:ScalableSUTClass, sut_type:SUTType, test_desc:TestDesc, tout:int, max_size:int, use_coloring:bool) \
-            -> List[Tuple[SutDesc, ExperimentStats]]:
+    def _run_benchmark(self, sut_class:ScalableSUTClass, sut_type:SUTType, test_desc:TestDesc, tout:int,\
+                       min_size:int, max_size:int, use_coloring:bool) -> List[Tuple[SutDesc, ExperimentStats]]:
         results = []
-        size = 1
+        size = min_size
         while True:
             if max_size is not None and size > max_size:
                 break
@@ -101,25 +106,27 @@ class Benchmark:
             if model is None:
                 break
             else:
-                imp_stats = self._collect_stats(model, statistics)
                 sut_desc = SutDesc(sut_class, sut_type, size)
+                imp_stats = self._collect_stats(sut_desc, model, statistics)
                 results.append( (sut_desc, imp_stats))
                 size += 1
         return  results
 
-    def _collect_stats(self, model:Automaton, statistics:Statistics) -> ExperimentStats:
+    def _collect_stats(self, sut_desc:SutDesc, model:Automaton, statistics:Statistics) -> ExperimentStats:
         states = len(model.states())
         registers = len(model.registers()) if isinstance(model, RegisterMachine) else None
+        exp_size =  sut_desc.sut_class.num_states(sut_desc.type, sut_desc.size)
+        minimal = None if exp_size is None else exp_size == len(model.states())
         learn_tests = statistics.resets
         learn_inputs = statistics.inputs
         learn_time = sum(statistics.learning_times)
         max_ltime = max(statistics.learning_times)
-        return ExperimentStats(states=states, registers=registers, tests=learn_tests, inputs=learn_inputs, max_ltime=max_ltime, learn_time=learn_time)
+        return ExperimentStats(states=states, minimal=minimal, registers=registers, tests=learn_tests, inputs=learn_inputs, max_ltime=max_ltime, learn_time=learn_time)
 
-    def run_benchmarks(self, test_desc:TestDesc, timeout:int, max_size:int=None, use_coloring:bool=False) -> List[Tuple[SutDesc, ExperimentStats]]:
+    def run_benchmarks(self, test_desc:TestDesc, timeout:int, min_size:int=1, max_size:int=1, use_coloring:bool=False) -> List[Tuple[SutDesc, ExperimentStats]]:
         results = []
         for sut_class, sut_type in self.suts:
-            res = self._run_benchmark(sut_class, sut_type, test_desc, timeout, max_size, use_coloring)
+            res = self._run_benchmark(sut_class, sut_type, test_desc, timeout, min_size, max_size, use_coloring)
             results.extend(res)
         return results
 
@@ -134,6 +141,10 @@ def collate_stats(sut_desc: SutDesc, exp_stats:List[ExperimentStats]):
             avg_reg = median(regs)
         else:
             avg_reg = None
+        if sut_desc.sut_class.num_states(sut_desc.type, sut_desc.size) is None:
+            minimal = None
+        else:
+            minimal = functools.reduce(lambda x,y: x & y, [e.minimal for e in exp_stats])
         consistent = len(set(states)) == 1 and \
         (not sut_desc.type.has_registers() or len(set(regs)) == 1)
         exp_succ = len(exp_stats)
@@ -145,6 +156,7 @@ def collate_stats(sut_desc: SutDesc, exp_stats:List[ExperimentStats]):
             exp_succ=exp_succ,
             states=avg_states,
             registers=avg_reg,
+            minimal=minimal,
             consistent=consistent,
             avg_tests=median(ltests),
             std_tests=0 if len(ltests) == 1 else stdev(ltests),
@@ -177,14 +189,16 @@ b = Benchmark()
 #b.add_setup(SUTType.IORA, RALearner(IORAEncoder()), IORARWalkFromState)
 
 # add the sut classes we want to benchmark
-#b.add_sut(FIFOSetClass())
+b.add_sut(FIFOSetClass(), SUTType.DFA)
 b.add_sut(LoginClass(), SUTType.DFA)
-#b.add_sut(StackClass())
+b.add_sut(FIFOSetClass(), SUTType.Mealy)
+b.add_sut(LoginClass(), SUTType.Mealy)
+#b.add_sut(StackClass(), SUTType.DFA)
 
 #b.add_sut(FIFOSetClass(), SUTType.DFA)
 
-#b.add_sut(FIFOSetClass(), SUTType.IORA)
-#b.add_sut(LoginClass(), SUTType.IORA)
+#b.add_sut(FIFOSetClass(), SUTType.RA)
+#b.add_sut(LoginClass(), SUTType.Mealy)
 #b.add_sut(StackClass(), SUTType.IORA)
 
 # create a test description
@@ -194,7 +208,10 @@ t_desc = TestDesc(max_tests=10000, prop_reset=0.2, rand_length=3)
 timeout = 10000
 
 # how many times each experiment should be run
-num_exp = 2
+num_exp = 5
+
+# the start size
+min_size = 1
 
 # up to what systems of what size do we want to run experiments (set to None if size is ignored as a stop condition)
 max_size = None
@@ -205,7 +222,7 @@ use_coloring = False
 # run the benchmark and collect results
 results = []
 for i in range(0, num_exp):
-    results += b.run_benchmarks(t_desc, timeout, max_size, use_coloring)
+    results += b.run_benchmarks(t_desc, timeout, min_size, max_size, use_coloring)
     print("============================")
     print_results(results)
     sut_dict = dict()

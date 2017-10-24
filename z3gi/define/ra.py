@@ -1,6 +1,6 @@
 import z3
 from model.ra import *
-from define import dt_enum, Automaton
+from define import dt_enum, Automaton, declsort_enum
 
 
 class RegisterMachine(Automaton):
@@ -9,6 +9,9 @@ class RegisterMachine(Automaton):
         self.Register, self.registers = dt_enum('Register',
                                              ['register{0}'.format(i) for i in range(num_registers)] + ['fresh'])
         self.param_size = param_size
+
+    def real_reg(self):
+        return self.registers[:-1]
 
 class RegisterAutomaton(RegisterMachine):
 
@@ -24,6 +27,7 @@ class RegisterAutomaton(RegisterMachine):
         self.update = z3.Function('update', self.Location, self.Label, self.Register)
 
     def export(self, model : z3.ModelRef) -> RegisterAutomaton:
+        print(model)
         builder = RegisterAutomatonBuilder(self)
         ra = builder.build_ra(model)
         return ra
@@ -165,9 +169,9 @@ class IORegisterAutomatonBuilder(object):
                               self.ra.transition(self.ra.start, z3label, self.ra.fresh) != self.ra.sink))
                           ]
         z3output_labels = [z3label for z3label in self.ra.labels.values() if z3label not in z3input_labels]
-        print("Input labels ", z3input_labels, "; Output labels", z3output_labels,
-              "Input states ", z3input_states, "; Output and sink states",
-              [z3state for z3state in self.ra.locations if z3state not in z3input_states])
+        #print("Input labels ", z3input_labels, "; Output labels", z3output_labels,
+        #      "Input states ", z3input_states, "; Output and sink states",
+        #      [z3state for z3state in self.ra.locations if z3state not in z3input_states])
 
         for z3state in z3input_states:
             self._add_state(translator, mut_ra, z3state)
@@ -229,7 +233,7 @@ class IORegisterAutomatonBuilder(object):
         z3end_state = model.eval(self.ra.transition(z3out_state, z3output_label, z3output_guard))
         z3output_update = model.eval(self.ra.update(z3out_state, z3output_label))
         output_mapping = None if self.ra.param_size[translator.z3_to_label(z3output_label)] == 0 \
-                              else  translator.z3_to_mapping(z3output_guard)
+                              else translator.z3_to_mapping(z3output_guard)
 
         transition = IORATransition(translator.z3_to_state(z3start_state),
                                     translator.z3_to_label(z3label),

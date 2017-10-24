@@ -34,8 +34,8 @@ class ScalableSUTClass(SUTClass, metaclass=ABCMeta):
         else:
             return None
     
-    def num_states(self, size:int):
-        pass
+    def num_states(self, sut_type : SUTType, size:int):
+        return None
 
 
 ActionSignature = collections.namedtuple("ActionSignature", ('label', 'num_params'))
@@ -69,7 +69,6 @@ class RASUT(metaclass=ABCMeta):
     def run(self, seq:List[Action]):
         """Runs a sequence of inputs on the SUT and returns an observation"""
         pass
-
 
 class ObjectSUT(RASUT):
     """Wraps around an object and calls methods on it corresponding to the Actions.

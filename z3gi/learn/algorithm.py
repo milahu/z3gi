@@ -50,11 +50,9 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
     if len(traces) == 0:
         return (None, statistics)
     else:
-        statistics.set_suite_size(len(traces))
         test = cast(Test, test_type(traces.pop(0)))
         definition = None
         learner.add(test.tr)
-        statistics.add_learner_test(test)
         done = False
         model = None
         learn_traces = [test.tr]
@@ -73,17 +71,17 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
                     else:
                         raise Exception("The CE {0} has already been processed yet it "
                                         "is still a CE. \n CEs: {1} \n Model: {2}".format(ce, learn_traces, model))
+                    print("CE: ", ce)
                     learner.add(ce)
-                    statistics.add_learner_test(test)
                     done = False
                     break
-        statistics.set_suite_size(len(traces))
         return (model, statistics)
 
 def learn_mbt(sut:SUT, learner:Learner, test_generator:TestGenerator, max_tests:int, stats_tracker:StatsTracker=None) -> Tuple[Union[Automaton, None], Statistics]:
     """ takes learner, a test generator, and bound on the number of tests and generates a model"""
     next_test = gen_blind_test(sut)
     statistics = Statistics()
+    model = None
     if next_test is None:
         return (None, statistics)
     else:
@@ -96,6 +94,7 @@ def learn_mbt(sut:SUT, learner:Learner, test_generator:TestGenerator, max_tests:
         ce = None
         while not done:
             if last_ce and ce == last_ce:
+                print(model)
                 raise Exception("Counterexample ", ce, " was not correctly processed")
             last_ce = ce
             start_time = int(time.time() * 1000)

@@ -8,7 +8,7 @@ import model.fa
 
 from encode.fa import MealyEncoder, DFAEncoder
 from encode.iora import IORAEncoder
-from encode.ra import RAEncoder
+from encode.ra import RAEncoder, RAQREncoder
 from learn.fa import FALearner
 from learn.ra import RALearner
 from test import AcceptorTest, IORATest, MealyTest
@@ -20,7 +20,7 @@ from test.rwalk import DFARWalkFromState
 
 """some configuration mappings"""
 aut2learner={
-    model.ra.RegisterAutomaton:RALearner(RAEncoder()),
+    model.ra.RegisterAutomaton:RALearner(RAQREncoder()),
     model.ra.IORegisterAutomaton:RALearner(IORAEncoder()),
     model.fa.MealyMachine:FALearner(MealyEncoder()),
     model.fa.DFA:FALearner(DFAEncoder())
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('-y', '--yannakakis', action='store_true', help='use yannakakis instead of rwalkfromstate '
                                                                         '(only supports Mealy Machines)')
 
-    print(sut.scalable_sut_classes())
+
     args = parser.parse_args()
     formalism = args.aut
     formalisms = model.defined_formalisms()

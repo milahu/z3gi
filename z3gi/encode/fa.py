@@ -2,6 +2,7 @@ import itertools
 
 import z3
 
+from define import dt_enum
 from define.fa import DFA, MealyMachine, Mapper
 from encode import Encoder
 from utils import Tree
@@ -35,7 +36,8 @@ class DFAEncoder(Encoder):
                     for label in dfa.labels.values()]),
             z3.Distinct(list(dfa.labels.values())),
             z3.Distinct(list(dfa.states)),
-            z3.Distinct([mapper.element(node.id) for node in self.cache])
+            z3.Distinct([mapper.element(node.id) for node in self.cache]),
+        #    z3.And([z3.Or([mapper.map(mapper.element(node.id)) == q for node in self.cache]) for q in dfa.states])
         ]
 
     def node_constraints(self, dfa, mapper):
@@ -89,9 +91,9 @@ class MealyEncoder(Encoder):
             z3.Distinct(list(mm.inputs.values())),
             z3.Distinct(list(mm.outputs.values())),
             z3.Distinct(list(mm.states)),
-            z3.Distinct([mapper.element(node.id) for node in self.cache])
+            z3.Distinct([mapper.element(node.id) for node in self.cache]),
+        #    z3.And([z3.Or([mapper.map(mapper.element(node.id)) == q for node in self.cache]) for q in mm.states])
         ]
-        #return []
 
     def node_constraints(self, mm, mapper):
         constraints = []

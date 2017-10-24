@@ -53,3 +53,16 @@ class FIFOSetClass(ScalableSUTClass):
             SUTType.Mealy: MealyFIFOSet,
             SUTType.DFA: MealyFIFOSet
         })
+
+    def num_states(self, sut_type : SUTType, size:int):
+        ra_num = {1:3, 2:6}
+        if not sut_type.has_registers():
+            mealy_size = size + 1
+            if sut_type is SUTType.DFA:
+                return  mealy_size +1
+            elif sut_type is SUTType.Mealy:
+                return mealy_size
+        if sut_type is SUTType.RA:
+            return ra_num.get(size)
+        elif sut_type is SUTType.IORA:
+            return ra_num.get(size) - 1 if size in ra_num else None

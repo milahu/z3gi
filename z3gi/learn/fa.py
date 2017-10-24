@@ -2,7 +2,7 @@ from typing import Tuple
 
 import z3
 from learn import Learner
-from model import Automaton
+from model import Automaton, InvalidAutomaton
 import define.fa
 
 class FALearner(Learner):
@@ -17,14 +17,18 @@ class FALearner(Learner):
     def add(self, trace):
         self.encoder.add(trace)
 
-    def model(self, min_states=1, max_states=20, old_definition:define.fa.FSM=None, ensure_min=False) -> Tuple[Automaton, define.fa.FSM]:
+    def model(self, min_states=1, max_states=25, old_definition:define.fa.FSM=None, ensure_min=False) -> Tuple[Automaton, define.fa.FSM]:
         if old_definition is not None:
             min_states = len(old_definition.states)
         (succ, fa, m) = self._learn_model(min_states=min_states,
                                         max_states=max_states, ensure_min=ensure_min)
         self.solver.reset()
         if succ:
-            return fa.export(m), fa
+            try:
+                return fa.export(m), fa
+            except InvalidAutomaton:
+                print("Constructed automaton is invalid ", m)
+                return None
         else:
             return  None
         #    to = fa
@@ -32,7 +36,7 @@ class FALearner(Learner):
         #    to = fa
         #    return (None, to)
 
-    def _learn_model(self, min_states=1, max_states=10, ensure_min=False):
+    def _learn_model(self, min_states, max_states, ensure_min):
         """generates the definition and model for an fa whose traces include the traces added so far
         In case of failure, the second argument of the tuple signals occurrence of a timeout"""
         for num_states in range(min_states, max_states + 1):

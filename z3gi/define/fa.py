@@ -50,9 +50,6 @@ class Mapper(object):
         self._elements = dict()
 
     def element(self, name):
-        #if name not in self._elements:
-        #    self._elements[name] = z3.Const("n"+str(name), self.Element)
-        #return self._elements[name]
         return z3.Const("n"+str(name), self.Element)
 
 

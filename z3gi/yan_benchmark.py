@@ -13,6 +13,9 @@ from statistics import stdev, median
 import os.path
 
 from sut.sut_cache import CacheSUT, IOCache
+from test.chain import TestGeneratorChain
+from test.coloring import ColoringTestGenerator
+from test.rwalk import MealyRWalkFromState
 from test.yanna import YannakakisTestGenerator
 
 TestDesc = collections.namedtuple("TestDesc", 'max_tests max_k rand_length')
@@ -29,9 +32,12 @@ def get_learner_setup(aut:Automaton, test_desc:TestDesc):
     sut = get_simulation(aut)
     stats_sut = StatsSUT(sut)
     sut_stats = stats_sut.stats_tracker()
-    sut = CacheSUT(stats_sut, IOCache( MealyObservation))
+    cache = IOCache( MealyObservation)
+    sut = CacheSUT(stats_sut, cache)
     learner = FALearner(MealyEncoder())
-    tester = YannakakisTestGenerator(sut, max_k=test_desc.max_k, rand_length=test_desc.rand_length)
+    #tester = TestGeneratorChain([ColoringTestGenerator(sut, cache), MealyRWalkFromState(sut, rand_start_state=True, rand_length=test_desc.rand_length, prob_reset=0.2)])
+    tester = MealyRWalkFromState(sut, rand_start_state=True, rand_length=test_desc.rand_length, prob_reset=0.1)
+    #tester = YannakakisTestGenerator(sut, max_k=test_desc.max_k, rand_length=test_desc.rand_length)#])
     return (learner, tester, sut, sut_stats)
 
 class Benchmark:
@@ -117,24 +123,24 @@ bankcards_path = os.path.join(models_path, "bankcards")
 pdu_path = os.path.join(models_path, "pdu")
 
 biometric = ModelDesc("biometric", "MealyMachine", os.path.join(models_path, "biometric.dot"))
-bankard_names= ["MAESTRO", "MasterCard", "PIN", "SecureCode", "VISA"]
+bankcard_names= ["MAESTRO", "MasterCard", "PIN", "SecureCode", "VISA"]
 
-bankcards = [ModelDesc(name, "MealyMachine", os.path.join(bankcards_path, "{}.dot".format(name))) for name in bankard_names]
+bankcards = [ModelDesc(name, "MealyMachine", os.path.join(bankcards_path, "{}.dot".format(name))) for name in bankcard_names]
 pdus = [ModelDesc("pdu" + str(i), "MealyMachine",
                   os.path.join(pdu_path, "model{}.dot".format(i))) for i in range(1,7)]
 
-#b.add_experiment(biometric)
-#for bankard in bankcards:
-#    b.add_experiment(bankard)
-#for pdu in pdus[:-2]:
+#b.add_experiment(bankcards[-1)
+#for pdu in pdus[-2:]:
 #    b.add_experiment(pdu)
 
-b.add_experiment(bankcards[1])
+#b.add_experiment(bankcards[-1])
+b.add_experiment(biometric)
+#b.add_experiment(bankcards[1])
 # create a test description
-t_desc = TestDesc(max_tests=10000, max_k=3, rand_length=3)
+t_desc = TestDesc(max_tests=10000, max_k=3, rand_length=9)
 
 # give the smt timeout value (in ms)
-timeout = 150000
+timeout = 60000
 
 # how many times each experiment should be run
 num_exp = 5

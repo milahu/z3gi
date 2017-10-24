@@ -65,7 +65,7 @@ def RA_parse(line):
     acc = bool(int(fields[0]))
     act_strings = fields[1:]
     actions = list(map(act_string_to_act, act_strings))
-    return actions
+    return (actions, acc)
 
 def MealyMachine_parse(line):
     fields = line.split()

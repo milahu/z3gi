@@ -21,11 +21,15 @@ class RALearner(Learner):
         self.encoder = encoder
         self.solver = solver
         self.verbose = verbose
+        self.num_reg = None
 
     def add(self, trace):
         self.encoder.add(trace)
 
-    def model(self, min_locations=1, max_locations=20, min_registers=0, max_registers=3,
+    def set_num_reg(self, num):
+        self.num_reg = num
+
+    def model(self, min_locations=1, max_locations=15, min_registers=0, max_registers=3, ensure_min=True,
               old_definition:define.ra.RegisterMachine = None, old_model:model.ra.RegisterMachine = None) -> \
             Tuple[model.ra.RegisterMachine, define.ra.RegisterMachine]:
         if old_definition is not None:
@@ -34,7 +38,7 @@ class RALearner(Learner):
 
         (succ, ra_def, m) = self._learn_model(min_locations=min_locations,
                                         max_locations=max_locations, min_registers=min_registers,
-                                              max_registers=max_registers)
+                                              max_registers=max_registers, ensure_min=ensure_min)
 
         if succ:
             return ra_def.export(m), ra_def
@@ -43,15 +47,18 @@ class RALearner(Learner):
             #to = ra_def
             #return (None, to)
 
-    def _learn_model(self, min_locations=1, max_locations=20, min_registers=0, max_registers=10):
+    def _learn_model(self, min_locations, max_locations, min_registers, max_registers, ensure_min):
         """generates the definition and model for an ra whose traces include the traces added so far"""
         for num_locations in range(min_locations, max_locations + 1):
             # TODO: calculate max registers based on repeating values
-            for num_registers in range(min_registers, min(max_registers, num_locations) + 1):
+            rng = range(min_registers, min(max_registers, num_locations) + 1) if self.num_reg is None else [self.num_reg]
+            for num_registers in rng:
                 ra, constraints = self.encoder.build(num_locations, num_registers)
                 self.solver.add(constraints)
                 if self.timeout is not None:
                     self.solver.set("timeout", self.timeout)
+                self.solver.set(":smt.random_seed", 0)
+                self.solver.set("random_seed", 0)
                 result = self.solver.check()
                 if self.verbose:
                     print("Learning with {0} locations and {1} registers. Result: {2}"
@@ -62,7 +69,7 @@ class RALearner(Learner):
                     return (True, ra, model)
                 else:
                     self.solver.reset()
-                    if result == z3.unknown:
+                    if result == z3.unknown and ensure_min:
                         print("Timeout at {0} locations and {1} registers".format(num_locations, num_registers))
                         return (False, True, None)
 

@@ -32,6 +32,10 @@ class MultipleTransitionsFired(Exception):
     pass
 
 
+"""Exception raised when the automaton of the solution is invalid (can happen if non-minimal)"""
+
+class InvalidAutomaton(Exception):
+    pass
 
 def defined_formalisms():
     """retrieves a dictionary containing the formalisms implemented and their respective classes"""
@@ -139,20 +143,29 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
         if state not in self._states:
             self._states.append(state)
 
+    def _remove_state(self:Automaton, state):
+        self._states.remove(state)
+        self._state_to_trans.pop(state)
+
     def add_transition(self:Automaton, state, transition):
         if state not in self._state_to_trans:
             self._state_to_trans[state] = []
         self._state_to_trans[state].append(transition)
 
     def generate_acc_seq(self:Automaton):
-        """generates access sequences for an automaton. It optionally takes in old access sequences, which are """
+        """generates access sequences for an automaton. It removes states that are not reachable."""
         new_acc_seq = dict()
         ptree = get_prefix_tree(self)
-        for state in self.states():
+        states = list(self.states())
+        for state in states:
             pred = lambda x: (x.state == state)
             node = ptree.find_node(pred)
             if node is None:
-                raise Exception("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, self))
+                print("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, self))
+                self._remove_state(state)
+                continue
+                #print("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, self))
+                #raise InvalidAutomaton
             new_acc_seq[state] = node.path()
         assert(len(new_acc_seq) == len(self.states()))
         self._acc_trans_seq = new_acc_seq

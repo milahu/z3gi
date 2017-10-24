@@ -34,5 +34,12 @@ class StackClass(ScalableSUTClass):
             SUTType.RA: Stack,
         })
 
+    def num_states(self, sut_type : SUTType, size:int):
+        ra_states = {1: 3, 2: 5}
+        if sut_type is SUTType.RA:
+            return ra_states.get(size)
+        elif sut_type is SUTType.IORA:
+            return ra_states.get(size) - 1 if size in ra_states else None
+
 def new_stack_sut(size):
     return ObjectSUT(Stack.INTERFACE, lambda : Stack(size))
