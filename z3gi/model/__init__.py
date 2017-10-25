@@ -152,7 +152,7 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
             self._state_to_trans[state] = []
         self._state_to_trans[state].append(transition)
 
-    def generate_acc_seq(self:Automaton):
+    def generate_acc_seq(self:Automaton, remove_unreachable=True):
         """generates access sequences for an automaton. It removes states that are not reachable."""
         new_acc_seq = dict()
         ptree = get_prefix_tree(self)
@@ -162,7 +162,8 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
             node = ptree.find_node(pred)
             if node is None:
                 print("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, self))
-                self._remove_state(state)
+                if remove_unreachable:
+                    self._remove_state(state)
                 continue
                 #print("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, self))
                 #raise InvalidAutomaton
@@ -216,11 +217,24 @@ class MutableAcceptorMixin(MutableAutomatonMixin, metaclass=ABCMeta):
         super().add_state(state)
         self._state_to_acc[state] = accepts
 
+def is_strongly_connected(aut : Automaton):
+    states = list(aut.states())
+    for state in states:
+        ptree = get_prefix_tree(aut, from_state=state)
+        for s in states:
+            pred = lambda x: (x.state == s)
+            node = ptree.find_node(pred)
+            if node is None:
+                return False
+    return True
 
-def get_prefix_tree(aut : Automaton):
+
+def get_prefix_tree(aut : Automaton, from_state=None):
     visited  = set()
     to_visit = set()
-    root = PrefixTree(aut.start_state())
+    if from_state is None:
+        from_state = aut.start_state()
+    root = PrefixTree(from_state)
     to_visit.add(root)
     while len(to_visit) > 0:
         crt_node = to_visit.pop()

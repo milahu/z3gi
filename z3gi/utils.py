@@ -1,4 +1,16 @@
 import itertools
+import random
+from typing import List
+
+rand = random.Random(0)
+
+__all__ = [
+    "rand_sel",
+    "determinize"
+    ]
+
+def rand_sel(l:List):
+    return l[rand.randint(0, len(l)-1)]
 
 
 class Tree(object):

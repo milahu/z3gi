@@ -8,6 +8,7 @@ from sut import StatsTracker, SUT, NoRstSUT
 from sut.scalable import ActionSignature
 from sut.simulation import get_no_rst_simulation
 from test import TestGenerator, Test
+import utils
 import time
 
 __all__ = [
@@ -79,13 +80,6 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
                     break
         return (model, statistics)
 
-
-import random
-rand = random.Random(0)
-
-def rand_sel(l:List):
-    return l[rand.randint(0, len(l)-1)]
-
 def learn_no_reset(sut:NoRstSUT, learner:Learner, max_inputs:int) -> Tuple[Union[Automaton, None], Statistics]:
     """ takes a non-reseting SUL, a learner, a test generator, and a bound on the number of inputs and generates a model"""
     trace = []
@@ -101,14 +95,16 @@ def learn_no_reset(sut:NoRstSUT, learner:Learner, max_inputs:int) -> Tuple[Union
         sim.steps([inp for (inp,_) in trace])
         done = True
         for _ in range(0, max_inputs):
-            rand_inp = rand_sel(alpha)
+            rand_inp = utils.rand_sel(alpha)
             out_sut = sut.step(rand_inp)
             trace.append((rand_inp, out_sut))
             out_hyp = sim.step(rand_inp)
             if out_sut != out_hyp:
                 learner.add(list(trace))
                 (hyp, definition) = learner.model(old_definition=definition)
+                print("new hyp")
                 done = False
+                break
         if hyp is None:
             return None, None
     statistics.inputs = len(trace) - max_inputs

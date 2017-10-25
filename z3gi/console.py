@@ -5,6 +5,7 @@ import learn.algorithm as alg
 import parse.importer as parse
 import sut
 import model.fa
+import model.gen as gen
 
 from encode.fa import MealyEncoder, DFAEncoder
 from encode.iora import IORAEncoder
@@ -52,8 +53,9 @@ if __name__ == '__main__':
                                                  '(1) passively learn from traces file\n'
                                                  '(2) actively learn a Mealy Machine system described by a .dot file\n'
                                                  '(3) actively learn a Mealy Machine system described by a .dot file without resets\n'
-                                                 '(4) actively learn a scalable SUT (system) of a given size')
-    parser.add_argument('-m', '--mode', type=str, choices=['traces', 'dot', 'dotnorst', 'scalable'], required=True)
+                                                 '(4) actively learn a randomly generated Mealy Machine without resets\n'
+                                                 '(5) actively learn a scalable SUT (system) of a given size')
+    parser.add_argument('-m', '--mode', type=str, choices=['traces', 'dot', 'dotnorst','randnorst', 'scalable'], required=True)
     parser.add_argument('-f', '--file', type=str, help='the file location to the dot/traces file')
     parser.add_argument('-a', '--aut', type=str, choices=list(model.defined_formalisms().keys()), required=True,
                         help='the type of automaton (formalism) described in the file or '
@@ -63,9 +65,14 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--size', type=int, help='the size of the scalable SUT')
     parser.add_argument('-t', '--timeout', type=int, help='the timeout used in learning '
                                                           '(i.e. the time limit given to the solver to solve the constraints)')
+    parser.add_argument('-ni', '--num-inputs', type=int, default=2, help='the input alphabet size of the random Mealy machine')
+    parser.add_argument('-no', '--num-outputs', type=int, default=2,
+                        help='the output alphabet size of the random Mealy machine')
+    parser.add_argument('-ns', '--num-states', type=int, default=10,
+                        help='the number of states of the random Mealy machine')
 
     # test parameters
-    parser.add_argument('-mi', '--max_inputs', type=int, default=10, help='the max number of inputs executed on a '
+    parser.add_argument('-mi', '--max_inputs', type=int, default=1000, help='the max number of inputs executed on a '
                                                                           'hypothesis before it is judged to be correct, '
                                                                           'only considered for learning with no resets')
     parser.add_argument('-mt', '--max_tests', type=int, default=1000, help='the max number of tests executed on a '
@@ -93,6 +100,14 @@ if __name__ == '__main__':
         if args.mode == 'dotnorst':
             dot_file = args.file
             aut_to_learn = parse.build_automaton_from_dot(formalism, dot_file)
+            sut_to_learn = sut.get_no_rst_simulation(aut_to_learn)
+            max_inputs = args.max_inputs
+            (automaton, statistics) = alg.learn_no_reset(sut_to_learn, learner, max_inputs)
+        elif args.mode == 'randnorst':
+            ni = args.num_inputs
+            no = args.num_inputs
+            ns = args.num_states
+            aut_to_learn = gen.random_mealy(ni, no, ns)
             sut_to_learn = sut.get_no_rst_simulation(aut_to_learn)
             max_inputs = args.max_inputs
             (automaton, statistics) = alg.learn_no_reset(sut_to_learn, learner, max_inputs)
