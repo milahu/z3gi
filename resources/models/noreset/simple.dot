@@ -1,0 +1,8 @@
+digraph g {
+  s0 [color="red"];
+  s1;
+  s0 -> s0 [label="A/NOK"];
+  s0 -> s1 [label="B/OK"];
+  s1 -> s0 [label="A/OK"];
+  s1 -> s1 [label="B/NOK"];
+}

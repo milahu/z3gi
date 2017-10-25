@@ -1,0 +1,14 @@
+digraph g {
+  s0 [color="red"];
+  s1;
+  s2;
+  s3;
+  s0 -> s1 [label="X/B"];
+  s0 -> s1 [label="Y/W"];
+  s1 -> s2 [label="X/B"];
+  s1 -> s0 [label="Y/W"];
+  s2 -> s2 [label="X/B"];
+  s2 -> s3 [label="Y/W"];
+  s3 -> s0 [label="X/W"];
+  s3 -> s2 [label="Y/B"];
+}
