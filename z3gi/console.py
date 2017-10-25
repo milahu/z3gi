@@ -50,9 +50,10 @@ aut2suttype={
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference tool which can:\n'
                                                  '(1) passively learn from traces file\n'
-                                                 '(2) actively learn a system described by a .dot file\n'
-                                                 '(3) actively learn a scalable SUT (system) of a given size')
-    parser.add_argument('-m', '--mode', type=str, choices=['traces', 'dot', 'scalable'], required=True)
+                                                 '(2) actively learn a Mealy Machine system described by a .dot file\n'
+                                                 '(3) actively learn a Mealy Machine system described by a .dot file without resets\n'
+                                                 '(4) actively learn a scalable SUT (system) of a given size')
+    parser.add_argument('-m', '--mode', type=str, choices=['traces', 'dot', 'dotnorst', 'scalable'], required=True)
     parser.add_argument('-f', '--file', type=str, help='the file location to the dot/traces file')
     parser.add_argument('-a', '--aut', type=str, choices=list(model.defined_formalisms().keys()), required=True,
                         help='the type of automaton (formalism) described in the file or '
@@ -64,6 +65,9 @@ if __name__ == '__main__':
                                                           '(i.e. the time limit given to the solver to solve the constraints)')
 
     # test parameters
+    parser.add_argument('-mi', '--max_inputs', type=int, default=10, help='the max number of inputs executed on a '
+                                                                          'hypothesis before it is judged to be correct, '
+                                                                          'only considered for learning with no resets')
     parser.add_argument('-mt', '--max_tests', type=int, default=1000, help='the max number of tests executed on a '
                                                                            'hypothesis before it is judged to be correct')
     parser.add_argument('-rl', '--rand_length', type=int, default=5, help='the maximum length of the random sequence '
@@ -86,22 +90,29 @@ if __name__ == '__main__':
         traces = parse.extract_traces_from_file(args.file, formalism)
         (automaton, statistics) = alg.learn(learner, aut2testcls[aut_type], traces)
     else:
-        if args.mode == 'dot':
+        if args.mode == 'dotnorst':
             dot_file = args.file
             aut_to_learn = parse.build_automaton_from_dot(formalism, dot_file)
-            sut_to_learn = sut.get_simulation(aut_to_learn)
-        elif args.mode == 'scalable':
-            sut_class_name = args.sut_class
-            sut_size = args.size
-            sut_to_learn = sut.get_scalable_sut(sut_class_name, aut2suttype[aut_type], sut_size)
+            sut_to_learn = sut.get_no_rst_simulation(aut_to_learn)
+            max_inputs = args.max_inputs
+            (automaton, statistics) = alg.learn_no_reset(sut_to_learn, learner, max_inputs)
         else:
-            print("Invalid mode ", args.mode)
-            exit(1)
+            if args.mode == 'dot':
+                dot_file = args.file
+                aut_to_learn = parse.build_automaton_from_dot(formalism, dot_file)
+                sut_to_learn = sut.get_simulation(aut_to_learn)
+            elif args.mode == 'scalable':
+                sut_class_name = args.sut_class
+                sut_size = args.size
+                sut_to_learn = sut.get_scalable_sut(sut_class_name, aut2suttype[aut_type], sut_size)
+            else:
+                print("Invalid mode ", args.mode)
+                exit(1)
 
-        num_tests = args.max_tests
-        rand_test_length = args.rand_length
-        reset_prob = args.reset_prob
-        test_generator = aut2rwalkcls[aut_type](sut_to_learn, rand_test_length, reset_prob)
-        (automaton, statistics) = alg.learn_mbt(sut_to_learn, learner, test_generator, num_tests)
+            num_tests = args.max_tests
+            rand_test_length = args.rand_length
+            reset_prob = args.reset_prob
+            test_generator = aut2rwalkcls[aut_type](sut_to_learn, rand_test_length, reset_prob)
+            (automaton, statistics) = alg.learn_mbt(sut_to_learn, learner, test_generator, num_tests)
 
     print("Learned\n", automaton, "\nWith stats\n", statistics)

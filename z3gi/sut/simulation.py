@@ -4,14 +4,15 @@ from typing import List, Type, Union
 from model import Acceptor, Transducer, Automaton
 from model.fa import MealyMachine, Symbol
 from . import SUT, MealyObservation, TransducerObservation, \
-    AcceptorObservation
+    AcceptorObservation, NoRstSUT
+
 
 class Simulation(SUT,metaclass=ABCMeta):
     pass
 
 
 class AcceptorSimulation(Simulation):
-    def __init__(self, model:Acceptor, sut_obs_type:Type[Union[AcceptorObservation]]):
+    def __init__(self, model:Acceptor, sut_obs_type:Type[AcceptorObservation]):
         self.model = model
         self.sut_obs_type = sut_obs_type
 
@@ -43,6 +44,33 @@ class MealyMachineSimulation(TransducerSimulation):
     def input_interface(self):
         #TODO remove non-deterministic behavior
         return list(sorted(self.model.input_labels()))
+
+class NoRstSimulation(NoRstSUT,metaclass=ABCMeta):
+    pass
+
+class NoRstMealyMachineSimulation(NoRstSimulation):
+    def __init__(self, model:MealyMachine):
+        self.model = model
+        self.crt_state = model.start_state()
+
+    def step(self, inp:Symbol):
+        transitions = self.model.transitions(self.crt_state, inp)
+        assert len(transitions) == 1
+        trans = transitions[0]
+        self.crt_state = trans.end_state
+        out = trans.output
+        return out
+
+    def input_interface(self):
+        return list(sorted(self.model.input_labels()))
+
+def get_no_rst_simulation(aut:Automaton) -> NoRstSimulation:
+    """builds a simulation for the model. The simulation acts like a deterministic sut."""
+    if isinstance(aut, MealyMachine):
+        return NoRstMealyMachineSimulation(aut)
+    else:
+        print("Simulation not yet supported for ", type(aut))
+        exit(0)
 
 # TODO replace not suported -> print exit by throwing an adequate exception
 def get_simulation(aut: Automaton) -> Simulation:

@@ -9,6 +9,7 @@ from test import MealyTest, AcceptorTest, IORATest
 __all__ = [
     "get_simulation",
     "get_scalable_sut",
+    "get_no_rst_simulation",
     "scalable_sut_classes"
     ]
 
@@ -134,6 +135,20 @@ class SUT(metaclass=ABCMeta):
         """Runs the list of inputs or input signatures comprising the input interface"""
         pass
 
+class NoRstSUT(metaclass=ABCMeta):
+    def steps(self, inputs:Symbol) -> Tuple[Symbol, Symbol]:
+        trace = []
+        for inp in inputs:
+            trace.append((inp, self.step(inp)))
+        return trace
+
+    def step(self, input:Symbol) -> Symbol:
+        pass
+
+    def input_interface(self) -> List[Symbol]:
+        """Runs the list of inputs or input signatures comprising the input interface"""
+        pass
+
 class SUTType(Enum):
     IORA = 1
     RA = 2
@@ -152,7 +167,7 @@ class SUTType(Enum):
 
 # some useful functions
 from sut.scalable import scalable_sut_classes, get_scalable_sut
-from sut.simulation import get_simulation
+from sut.simulation import get_simulation, get_no_rst_simulation
 
 
 class StatsTracker(object):

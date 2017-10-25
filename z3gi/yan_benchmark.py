@@ -137,7 +137,7 @@ pdus = [ModelDesc("pdu" + str(i), "MealyMachine",
 b.add_experiment(biometric)
 #b.add_experiment(bankcards[1])
 # create a test description
-t_desc = TestDesc(max_tests=10000, max_k=3, rand_length=9)
+t_desc = TestDesc(max_tests=10000, max_k=3, rand_length=3)
 
 # give the smt timeout value (in ms)
 timeout = 60000

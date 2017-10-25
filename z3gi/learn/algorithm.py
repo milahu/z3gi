@@ -4,14 +4,16 @@ from typing import List, Tuple, Union,cast
 from model import Automaton
 from learn import Learner
 from model.ra import Action
-from sut import StatsTracker, SUT
+from sut import StatsTracker, SUT, NoRstSUT
 from sut.scalable import ActionSignature
+from sut.simulation import get_no_rst_simulation
 from test import TestGenerator, Test
 import time
 
 __all__ = [
     "learn",
-    "learn_mbt"
+    "learn_mbt",
+    "learn_no_reset"
     ]
 
 
@@ -76,6 +78,42 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
                     done = False
                     break
         return (model, statistics)
+
+
+import random
+rand = random.Random(0)
+
+def rand_sel(l:List):
+    return l[rand.randint(0, len(l)-1)]
+
+def learn_no_reset(sut:NoRstSUT, learner:Learner, max_inputs:int) -> Tuple[Union[Automaton, None], Statistics]:
+    """ takes a non-reseting SUL, a learner, a test generator, and a bound on the number of inputs and generates a model"""
+    trace = []
+    alpha = sut.input_interface()
+    seq = gen_blind_seq(sut)
+    statistics = Statistics()
+    trace.extend(sut.steps(seq))
+    learner.add(list(trace))
+    (hyp, definition) = learner.model()
+    done = False
+    while not done:
+        sim = get_no_rst_simulation(hyp)
+        sim.steps([inp for (inp,_) in trace])
+        done = True
+        for _ in range(0, max_inputs):
+            rand_inp = rand_sel(alpha)
+            out_sut = sut.step(rand_inp)
+            trace.append((rand_inp, out_sut))
+            out_hyp = sim.step(rand_inp)
+            if out_sut != out_hyp:
+                learner.add(list(trace))
+                (hyp, definition) = learner.model(old_definition=definition)
+                done = False
+        if hyp is None:
+            return None, None
+    statistics.inputs = len(trace) - max_inputs
+    return hyp, statistics
+
 
 def learn_mbt(sut:SUT, learner:Learner, test_generator:TestGenerator, max_tests:int, stats_tracker:StatsTracker=None) -> Tuple[Union[Automaton, None], Statistics]:
     """ takes learner, a test generator, and bound on the number of tests and generates a model"""
@@ -163,3 +201,22 @@ def gen_blind_test(sut:SUT):
             raise Exception("Unrecognized type")
     obs = sut.run(seq)
     return obs.to_test()
+
+def gen_blind_seq(sut):
+    """generates a sequence covering all input elements in the sut interface"""
+    seq = []
+    for abs_inp in sut.input_interface():
+        cnt = 0
+        # if it's RA stuff
+        if isinstance(abs_inp, ActionSignature):
+            if abs_inp.num_params == 0:
+                val = None
+            else:
+                val = cnt
+                cnt += 1
+            seq.append(Action(abs_inp.label, val))
+        elif isinstance(abs_inp, str):
+            seq.append(abs_inp)
+        else:
+            raise Exception("Unrecognized type")
+    return seq
