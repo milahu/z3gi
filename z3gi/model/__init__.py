@@ -1,6 +1,13 @@
 from abc import ABCMeta, abstractmethod
 from typing import List
 
+__all__ = [
+    "get_trans_acc_seq",
+    "get_prefix_tree",
+    "is_strongly_connected",
+    "defined_formalisms"
+    ]
+
 """The most basic transition class available"""
 
 
@@ -154,20 +161,11 @@ class MutableAutomatonMixin(metaclass=ABCMeta):
 
     def generate_acc_seq(self:Automaton, remove_unreachable=True):
         """generates access sequences for an automaton. It removes states that are not reachable."""
-        new_acc_seq = dict()
-        ptree = get_prefix_tree(self)
-        states = list(self.states())
-        for state in states:
-            pred = lambda x: (x.state == state)
-            node = ptree.find_node(pred)
-            if node is None:
-                print("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, self))
-                if remove_unreachable:
-                    self._remove_state(state)
-                continue
-                #print("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, self))
-                #raise InvalidAutomaton
-            new_acc_seq[state] = node.path()
+        new_acc_seq = get_trans_acc_seq(self, from_state=self.start_state())
+        for state in self.states():
+            if state not in new_acc_seq and remove_unreachable:
+                self._remove_state(state)
+
         assert(len(new_acc_seq) == len(self.states()))
         self._acc_trans_seq = new_acc_seq
 
@@ -229,7 +227,24 @@ def is_strongly_connected(aut : Automaton):
     return True
 
 
+def get_trans_acc_seq(aut : Automaton, from_state=None):
+    """Generates transition access sequences for a given automaton"""
+    ptree = get_prefix_tree(aut, from_state=from_state)
+    acc_seq = dict()
+    states = list(aut.states())
+    for state in states:
+        pred = lambda x: (x.state == state)
+        node = ptree.find_node(pred)
+        if node is None:
+            print("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, aut))
+            continue
+            # print("Could not find state {0} in tree {1} \n for model \n {2}".format(state, ptree, self))
+            # raise InvalidAutomaton
+        acc_seq[state] = node.path()
+    return acc_seq
+
 def get_prefix_tree(aut : Automaton, from_state=None):
+    """Generates a transition prefix tree for a given automaton"""
     visited  = set()
     to_visit = set()
     if from_state is None:

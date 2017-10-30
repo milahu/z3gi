@@ -3,6 +3,7 @@ from typing import List, Tuple, Union,cast
 
 from model import Automaton
 from learn import Learner
+from model.fa import State
 from model.ra import Action
 from sut import StatsTracker, SUT, NoRstSUT
 from sut.scalable import ActionSignature
@@ -79,8 +80,22 @@ def learn(learner:Learner, test_type:type, traces: List[object]) -> Tuple[Automa
                     done = False
                     break
         return (model, statistics)
+import model
+def _next_seq_rwalkfromstate(aut:Automaton, input_seq, rand_seq=3):
+    state = aut.state(input_seq)
+    acc_seq = model.get_trans_acc_seq(aut, from_state=state)
+    next_state = utils.rand_sel(list(acc_seq.keys()))
+    next_seq = acc_seq[next_state]
+    for _ in range(0, rand_seq):
+        tr = utils.rand_sel(aut.transitions(state))
+        state = tr.end_state
+        next_seq.append(tr)
+    return aut.trans_to_inputs(next_seq)
 
-def learn_no_reset(sut:NoRstSUT, learner:Learner, max_inputs:int) -> Tuple[Union[Automaton, None], Statistics]:
+def _next_seq_rwalk(aut:Automaton, input_seq, rand_seq=3):
+    return [utils.rand_sel(aut.input_labels()) for _ in range(0, rand_seq)]
+
+def learn_no_reset(sut:NoRstSUT, learner:Learner, max_inputs:int, rand_seq=3) -> Tuple[Union[Automaton, None], Statistics]:
     """ takes a non-reseting SUL, a learner, a test generator, and a bound on the number of inputs and generates a model"""
     trace = []
     alpha = sut.input_interface()
@@ -88,28 +103,40 @@ def learn_no_reset(sut:NoRstSUT, learner:Learner, max_inputs:int) -> Tuple[Union
     statistics = Statistics()
     trace.extend(sut.steps(seq))
     learner.add(list(trace))
+    start_time = int(time.time() * 1000)
     (hyp, definition) = learner.model()
+    end_time = int(time.time() * 1000)
+    statistics.add_learning_time(end_time - start_time)
     done = False
     while not done:
         sim = get_no_rst_simulation(hyp)
-        sim.steps([inp for (inp,_) in trace])
+        inputs = [inp for (inp, _) in trace]
+        sim.steps(inputs)
+        next_inputs = _next_seq_rwalkfromstate(hyp, inputs, rand_seq=rand_seq)
         done = True
         for _ in range(0, max_inputs):
-            rand_inp = utils.rand_sel(alpha)
+            if len(next_inputs) == 0:
+                next_inputs = _next_seq_rwalkfromstate(hyp, inputs, rand_seq=rand_seq)
+            rand_inp = next_inputs.pop(0)
+            #rand_inp = utils.rand_sel(alpha)
             out_sut = sut.step(rand_inp)
             trace.append((rand_inp, out_sut))
+            inputs.append(rand_inp)
             out_hyp = sim.step(rand_inp)
             if out_sut != out_hyp:
                 learner.add(list(trace))
-                (hyp, definition) = learner.model(old_definition=definition)
+                start_time = int(time.time() * 1000)
+                ret = learner.model(old_definition=definition)
+                if ret is None:
+                    return  None, statistics
+                hyp,definition = ret
+                end_time = int(time.time() * 1000)
+                statistics.add_learning_time(end_time - start_time)
                 print("new hyp")
                 done = False
                 break
-        if hyp is None:
-            return None, None
     statistics.inputs = len(trace) - max_inputs
     return hyp, statistics
-
 
 def learn_mbt(sut:SUT, learner:Learner, test_generator:TestGenerator, max_tests:int, stats_tracker:StatsTracker=None) -> Tuple[Union[Automaton, None], Statistics]:
     """ takes learner, a test generator, and bound on the number of tests and generates a model"""

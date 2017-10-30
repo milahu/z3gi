@@ -35,8 +35,8 @@ def get_learner_setup(aut:Automaton, test_desc:TestDesc):
     cache = IOCache( MealyObservation)
     sut = CacheSUT(stats_sut, cache)
     learner = FALearner(MealyEncoder())
-    #tester = TestGeneratorChain([ColoringTestGenerator(sut, cache), MealyRWalkFromState(sut, rand_start_state=True, rand_length=test_desc.rand_length, prob_reset=0.2)])
-    tester = MealyRWalkFromState(sut, rand_start_state=True, rand_length=test_desc.rand_length, prob_reset=0.1)
+    tester = TestGeneratorChain([ColoringTestGenerator(sut, cache), YannakakisTestGenerator(sut, max_k=test_desc.max_k, rand_length=test_desc.rand_length)])
+    #tester = MealyRWalkFromState(sut, rand_start_state=True, rand_length=test_desc.rand_length, prob_reset=0.1)
     #tester = YannakakisTestGenerator(sut, max_k=test_desc.max_k, rand_length=test_desc.rand_length)#])
     return (learner, tester, sut, sut_stats)
 
@@ -121,6 +121,7 @@ b = Benchmark()
 models_path = os.path.join("..", "resources", "models")
 bankcards_path = os.path.join(models_path, "bankcards")
 pdu_path = os.path.join(models_path, "pdu")
+tcp_path = os.path.join(models_path, "tcp")
 
 biometric = ModelDesc("biometric", "MealyMachine", os.path.join(models_path, "biometric.dot"))
 bankcard_names= ["MAESTRO", "MasterCard", "PIN", "SecureCode", "VISA"]
@@ -128,22 +129,30 @@ bankcard_names= ["MAESTRO", "MasterCard", "PIN", "SecureCode", "VISA"]
 bankcards = [ModelDesc(name, "MealyMachine", os.path.join(bankcards_path, "{}.dot".format(name))) for name in bankcard_names]
 pdus = [ModelDesc("pdu" + str(i), "MealyMachine",
                   os.path.join(pdu_path, "model{}.dot".format(i))) for i in range(1,7)]
+tcpclient = ModelDesc("win8client", "MealyMachine", os.path.join(tcp_path, "win8client.dot"))
 
-#b.add_experiment(bankcards[-1)
-#for pdu in pdus[-2:]:
+#b.add_experiment(biometric)
+#for bankcard in bankcards:
+#    b.add_experiment(bankcard)
+#for pdu in pdus:
 #    b.add_experiment(pdu)
+b.add_experiment(tcpclient)
 
 #b.add_experiment(bankcards[-1])
-b.add_experiment(biometric)
-#b.add_experiment(bankcards[1])
+#b.add_experiment(biometric)
+#b.add_experiment(biometric)
+#b.add_experiment(bankcards[-1])
+#b.add_experiment(pdus[-1])
+#b.add_experiment(pdus[-2])
+
 # create a test description
-t_desc = TestDesc(max_tests=10000, max_k=3, rand_length=3)
+t_desc = TestDesc(max_tests=10000, max_k=1, rand_length=1)
 
 # give the smt timeout value (in ms)
 timeout = 60000
 
 # how many times each experiment should be run
-num_exp = 5
+num_exp = 2
 
 # run the benchmark and collect results
 results = []
