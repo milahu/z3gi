@@ -3,7 +3,7 @@ import itertools
 import z3
 
 from define import dt_enum
-from define.fa import DFA, MealyMachine, Mapper
+from define.fa import DFA, MealyMachine, Mapper, IntMapper
 from encode import Encoder
 from utils import Tree
 
@@ -39,6 +39,62 @@ class DFAEncoder(Encoder):
             z3.Distinct([mapper.element(node.id) for node in self.cache]),
         #    z3.And([z3.Or([mapper.map(mapper.element(node.id)) == q for node in self.cache]) for q in dfa.states])
         ]
+
+    def node_constraints(self, dfa, mapper):
+        constraints = []
+        for node in self.cache:
+            accept = self.cache[node]
+            n = mapper.element(node.id)
+            constraints.append(dfa.output(mapper.map(n)) == accept)
+        return constraints
+
+    def transition_constraints(self, dfa, mapper):
+        constraints = [dfa.start == mapper.map(mapper.start)]
+        for node, label, child in self.tree.transitions():
+            n = mapper.element(node.id)
+            l = dfa.labels[label]
+            c = mapper.element(child.id)
+            constraints.append(dfa.transition(mapper.map(n), l) == mapper.map(c))
+        return constraints
+
+# an integer based encoding
+class IntDFAEncoder(Encoder):
+    def __init__(self, use_ineq=False):
+        self.tree = Tree(itertools.count(0))
+        self.cache = {}
+        self.labels = set()
+        self.use_ineq = use_ineq
+
+    def add(self, trace):
+        seq, accept = trace
+        node = self.tree[seq]
+        self.cache[node] = accept
+        self.labels.update(seq)
+
+    def build(self, num_states):
+        from define import int_enum
+        dfa = DFA(list(self.labels), num_states, state_enum=int_enum, label_enum=int_enum)
+        mapper = IntMapper(dfa)
+        constraints = self.axioms(dfa, mapper)
+        constraints += self.node_constraints(dfa, mapper)
+        constraints += self.transition_constraints(dfa, mapper)
+        return dfa, constraints
+
+    def axioms(self, dfa: DFA, mapper: Mapper):
+        if self.use_ineq:
+            return [
+                z3.Distinct([mapper.element(node.id) for node in self.cache]),
+                z3.And([z3.And([z3.And([dfa.transition(state, label) < z3.IntVal(len(dfa.states)),
+                                        dfa.transition(state, label) >= dfa.start])
+                                for state in dfa.states])
+                        for label in dfa.labels.values()]),
+            ]
+        else:
+            return [
+            z3.And([z3.And([z3.Or([dfa.transition(state, label) == to_state
+                                   for to_state in dfa.states]) for state in dfa.states])
+                    for label in dfa.labels.values()]),
+            ]
 
     def node_constraints(self, dfa, mapper):
         constraints = []

@@ -201,8 +201,6 @@ def learn_mbt(sut:SUT, learner:Learner, test_generator:TestGenerator, max_tests:
             if stats_tracker is not None:
                 statistics.resets = old_rsts
                 statistics.inputs = old_inputs
-
-        #print([str(test.trace() for test in learner_tests)])
         return (model, statistics)
 
 def gen_blind_test(sut:SUT):

@@ -11,7 +11,7 @@ def dt_enum(name, elements):
 
 def int_enum(name, elements):
     d = z3.IntSort()
-    return d, [z3.IntVal(i) for i in range(1, len(elements) + 1)]
+    return d, [z3.IntVal(i) for i in range(0, len(elements))]
 
 def declsort_enum(name, elements):
     d = z3.DeclareSort(name)

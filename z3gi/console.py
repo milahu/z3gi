@@ -9,7 +9,7 @@ import model.gen as gen
 
 from encode.fa import MealyEncoder, DFAEncoder
 from encode.iora import IORAEncoder
-from encode.ra import RAEncoder, RAQREncoder
+from encode.ra import RAQREncoder
 from learn.fa import FALearner
 from learn.ra import RALearner
 from test import AcceptorTest, IORATest, MealyTest
@@ -48,6 +48,7 @@ aut2suttype={
     model.fa.DFA:sut.SUTType.DFA
 }
 
+# the interface is a bit convoluted, but it does give access to all the functionality available
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Inference tool which can:\n'
                                                  '(1) passively learn from traces file\n'

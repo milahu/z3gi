@@ -52,6 +52,19 @@ class Mapper(object):
     def element(self, name):
         return z3.Const("n"+str(name), self.Element)
 
+class IntMapper(object):
+    def __init__(self, fa):
+        self.Element = z3.IntSort()
+        self.map = z3.Function('map', self.Element, fa.State)
+        self._elements = dict()
+        self.start = z3.IntVal(0)
+        self._elements[0] = self.start
+
+    def element(self, name):
+        if name not in self._elements:
+            el = z3.IntVal(len(self._elements))
+            self._elements[name] = el
+        return self._elements[name]
 
 
 class MealyMachineBuilder(object):
@@ -120,7 +133,8 @@ class MealyTranslator(object):
         return self._z3_to_out[self._model.eval(z3label)]
 
 class DFATranslator(object):
-    """Provides translation from z3 constants to DFA elements. """
+    """Provides translation from z3 constants to DFA elements. It evaluates everything (s.t. variables are resolved
+    to their actual values), enabling it to translate both variables and values."""
     def __init__(self, model : z3.ModelRef, fa:DFA):
         self._fa = fa
         self._z3_to_label = {model.eval(fa.labels[inp]): inp for inp in fa.labels.keys()}

@@ -8,7 +8,8 @@ from encode import IncrementalEncoder
 from utils import Tree
 
 
-# very ugly incremental tree encoder, just for experimentation
+# dirty incremental mealy tree encoders, just for experimentation
+# result: it using incremental solving yields no benefit
 class MealyTreeIEncoder(IncrementalEncoder):
     def __init__(self):
         self.tree = Tree(itertools.count(0))
