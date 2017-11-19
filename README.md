@@ -131,7 +131,7 @@ algorithm only works on Mealy machines and requires resets.
 Learning randomly generated Mealy machines without reset
 -----------------------
 
-Z3GI can be used to learn randomly generated MealyMachines without reset with the
+Z3GI can be used to learn without reset randomly generated Mealy machines with the
 property that they are strongly connected (though not necessarily minimal). 
 
 Say we want to learn a randomly generated Mealy machine with 2 inputs, 2 outputs 
