@@ -118,7 +118,6 @@ def learn_no_reset(sut:NoRstSUT, learner:Learner, max_inputs:int, rand_seq=3) ->
             if len(next_inputs) == 0:
                 next_inputs = _next_seq_rwalkfromstate(hyp, inputs, rand_seq=rand_seq)
             rand_inp = next_inputs.pop(0)
-            #rand_inp = utils.rand_sel(alpha)
             out_sut = sut.step(rand_inp)
             trace.append((rand_inp, out_sut))
             inputs.append(rand_inp)
@@ -132,7 +131,6 @@ def learn_no_reset(sut:NoRstSUT, learner:Learner, max_inputs:int, rand_seq=3) ->
                 hyp,definition = ret
                 end_time = int(time.time() * 1000)
                 statistics.add_learning_time(end_time - start_time)
-                print("new hyp")
                 done = False
                 break
     statistics.inputs = len(trace) - max_inputs

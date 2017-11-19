@@ -9,7 +9,7 @@ setup(
         author='Rick Smetsers, Paul Fiterau',
         author_email='ricksmet@gmail.com',
         licence='MIT',
-        packages=find_packages(exclude=['tests*', 'docs*']),
+        packages=find_packages(exclude=['tests*']),
         install_requires=['z3-solver'],
         classifiers=[
             'Development Status :: 3 - Alpha',

@@ -85,7 +85,6 @@ if __name__ == '__main__':
     parser.add_argument('-y', '--yannakakis', action='store_true', help='use yannakakis instead of rwalkfromstate '
                                                                         '(only supports Mealy Machines)')
 
-
     args = parser.parse_args()
     formalism = args.aut
     formalisms = model.defined_formalisms()
@@ -96,6 +95,7 @@ if __name__ == '__main__':
     if args.mode == 'traces':
         trace_file = args.file
         traces = parse.extract_traces_from_file(args.file, formalism)
+        print(traces)
         (automaton, statistics) = alg.learn(learner, aut2testcls[aut_type], traces)
     else:
         if args.mode == 'dotnorst':
@@ -131,4 +131,4 @@ if __name__ == '__main__':
             test_generator = aut2rwalkcls[aut_type](sut_to_learn, rand_test_length, reset_prob)
             (automaton, statistics) = alg.learn_mbt(sut_to_learn, learner, test_generator, num_tests)
 
-    print("Learned\n", automaton, "\nWith stats\n", statistics)
+    print("Learned model\n", automaton, "\nWith stats\n", statistics)
