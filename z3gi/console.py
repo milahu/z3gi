@@ -1,4 +1,4 @@
-"""A standalone module for using the z3gi package from the command line."""
+"""A client module for using the z3gi from the command line."""
 import argparse
 
 import learn.algorithm as alg
