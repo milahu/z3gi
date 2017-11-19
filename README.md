@@ -122,7 +122,7 @@ Z3GI will attempt to learn without using resets.
 
 Our implementation currently only supports Mealy machines, though functionality 
 for other formalisms will be added in the future. Note there is currently no 
-standard .dot format for register automata. Also notethat the `yannakakis` test
+standard .dot format for register automata. Also note that the `yannakakis` test
 algorithm only works on Mealy machines.
 
 
