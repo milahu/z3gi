@@ -55,7 +55,7 @@ that it rejects the string (if its value is `0`).
 In the current version, we require that the first observation introduces all inputs in the alphabet.
 
 
-We can use Z3GI to learn a model for the observations in `train.txt` as follows:
+We can use Z3GI to learn a model for the observations in `regex_example` as follows:
 
 ```
 $ python z3gi -m traces -a DFA -f resources\traces\regex_example
