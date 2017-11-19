@@ -115,15 +115,17 @@ $ python z3gi -m dot -a MealyMachine -f resources\models\biometric.dot
 ```
 
 For bigger models which are more difficult to test, we may require an external
-test algorithm. We provide a Windows binary for the Yannakakis test algorithm.
-You can activate this algorithm using the `-y` option. By using `-m dotnorst`,
+test algorithm. We provide a Windows binary for the [Yannakakis test algorithm][yan].
+You can activate this algorithm using the `-y path_bin` option. By using `-m dotnorst`,
 Z3GI will attempt to learn without using resets.
 
 
 Our implementation currently only supports Mealy machines, though functionality 
 for other formalisms will be added in the future. Note there is currently no 
-standard .dot format for register automata. Also note that the `yannakakis` test
-algorithm only works on Mealy machines.
+standard .dot format for register automata. Also note that the Yannakakis test
+algorithm only works on Mealy machines and requires resets.
+
+[yan]: https://gitlab.science.ru.nl/moerman/Yannakakis
 
 
 Learning randomly generated Mealy machines without reset
