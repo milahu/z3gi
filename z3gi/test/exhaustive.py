@@ -12,6 +12,10 @@ class ObservationGeneration(metaclass=ABCMeta):
     def generate_observations(self, max_depth) -> List[object]:
         pass
 
+
+"""Generates an exhaustive set of observations for an RA."""
+
+
 class ExhaustiveRAGenerator(ObservationGeneration):
     def __init__(self, sut:RASUT):
         self.sut = sut
@@ -22,11 +26,8 @@ class ExhaustiveRAGenerator(ObservationGeneration):
 
     def generate_observations(self, max_depth, max_registers=3) -> List[Tuple[Action, Action]]:
         observations = self._generate_observations([IORAObservation([])], 0, max_depth, max_registers+1)
-        print("\n".join([str(obs) for obs in observations]))
         obs_traces = [obs.trace() for obs in observations]
         return obs_traces
-
-
 
     def _generate_observations(self, prev_obs:List[RegisterMachineObservation], crt_depth, max_depth, max_values) \
             -> List[RegisterMachineObservation]:

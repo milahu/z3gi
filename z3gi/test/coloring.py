@@ -3,10 +3,10 @@ from typing import Set
 from model import Automaton, Transition
 from sut.sut_cache import Cache
 from test import TestGenerator
-
 """Explores all transitions in a model that have not been explored (or colored) during test execution. """
-class ColoringTestGenerator(TestGenerator):
 
+
+class ColoringTestGenerator(TestGenerator):
     def __init__(self, sut, cache:Cache):
         self._sut = sut
         self._cache = cache
@@ -34,9 +34,7 @@ class ColoringTestGenerator(TestGenerator):
     def _colored_transitions(self, model: Automaton) -> Set[Transition]:
         trans = set()
         for obs in self._cache.obs_iterator():
-            #print(obs)
             colored_trans = model.inputs_to_trans(obs.inputs())
-            #print(" ".join(map(str, model.inputs_to_trans(obs.inputs()))))
             trans = trans.union(set(colored_trans))
         return trans
 

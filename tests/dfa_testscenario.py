@@ -1,9 +1,4 @@
-
-
 import collections
-
-from z3gi.model.ra import Action
-
 
 
 """Test scenarios contain a list of traces together with the number of locations and registers of the SUT generating

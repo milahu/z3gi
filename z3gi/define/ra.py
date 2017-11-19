@@ -27,7 +27,6 @@ class RegisterAutomaton(RegisterMachine):
         self.update = z3.Function('update', self.Location, self.Label, self.Register)
 
     def export(self, model : z3.ModelRef) -> RegisterAutomaton:
-        print(model)
         builder = RegisterAutomatonBuilder(self)
         ra = builder.build_ra(model)
         return ra

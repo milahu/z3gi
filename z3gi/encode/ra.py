@@ -194,7 +194,10 @@ class RAEncoder(Encoder):
         constraints.append(z3.Distinct(list(values)))
         return constraints
 
-"""A quantifier-reduced version of the encoder """
+
+"""A quantifier-reduced version of the encoder. There are some bugs in it (doesn't pass all RAtests), watch out! """
+
+
 class RAQREncoder(Encoder):
     def __init__(self):
         self.tree = Tree(itertools.count(0))
@@ -265,18 +268,6 @@ class RAQREncoder(Encoder):
             # Registers are not used in the start state
             z3.And([ra.used(ra.start, r) == False for r in ra.registers]),
         ]
-
-     #   axioms.extend(
-     #       [
-     #           z3.Distinct(ra.registers),
-     #           z3.Distinct(ra.labels.values()),
-     #           z3.Distinct(ra.locations),
-     #           z3.And([z3.Or([ra.transition(l, r) == lt for lt in ra.locations for r in ra.registers])
-     #                  for l in ra.locations]),
-     #           z3.And([z3.Or([ra.update(l) == r for r in ra.registers]) for l in ra.locations]),
-     #           z3.And([z3.Or([mapper.map(mapper.element(n.id)) == l for n in self.cache]) for l in ra.locations])
-     #       ]
-     #   )
 
         return axioms
 

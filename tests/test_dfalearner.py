@@ -38,7 +38,7 @@ class DFALearnerTest(unittest.TestCase):
                              "Register automaton output doesn't correspond to observation {0}".format(str(trace)))
 
     def learn_model(self, test_scenario):
-        learner = FALearner(encoder=DFAEncoder(),  verbose=True)
+        learner = FALearner(encoder=DFAEncoder(),  verbose=False)
         for trace in test_scenario.traces:
             learner.add(trace)
 

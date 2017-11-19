@@ -31,12 +31,8 @@ class FALearner(Learner):
                 return None
         else:
             return  None
-        #    to = fa
-        #    return (None, to)
-        #    to = fa
-        #    return (None, to)
 
-    def _learn_model(self, min_states, max_states, ensure_min):
+    def _learn_model(self, min_states, max_states, ensure_min=True):
         """generates the definition and model for an fa whose traces include the traces added so far
         In case of failure, the second argument of the tuple signals occurrence of a timeout"""
         for num_states in range(min_states, max_states + 1):

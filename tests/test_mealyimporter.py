@@ -17,12 +17,12 @@ class MealyImporterTest(unittest.TestCase):
             self.assertEqual(len(aut.transitions()), exp_num_trans, "Number of transitions not equal to expected")
 
     def test_banking(self):
-        maestro_model_file = os.path.join("..","resources","models","MAESTRO.dot")
+        maestro_model_file = os.path.join("..","resources","models","bankcards","MAESTRO.dot")
         mealy = build_automaton_from_dot("MealyMachine", maestro_model_file)
         self.check_aut(mealy, exp_num_states=6)
         sim = MealyMachineSimulation(mealy)
         self.assertEqual(sim.run(["getValidData","selectApplication"]).trace(),
-                         [('getValidData', '9000'), ('selectApplication', '9000')])
+                         [('getValidData', '6A88'), ('selectApplication', '9000')])
 
 
 

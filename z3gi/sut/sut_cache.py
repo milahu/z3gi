@@ -90,10 +90,6 @@ class AcceptorCache(Cache):
                     next_seqs.append(seq + [inp])
             else:
                 obs = self.from_cache(seq)
-                #if obs is None:
-                #    print(seq)
-                #    print(self._tree)
-                #    exit(0)
                 yield obs
 
 class CacheSUT(SUT):
@@ -116,13 +112,3 @@ class CacheSUT(SUT):
 
     def input_interface(self):
         return self._sut.input_interface()
-
-#c = IOCache(MealyObservation)
-#c.update_cache(MealyObservation([("a","oa"), ("a","ob")]))
-#print(c._tree)
-#c.update_cache(MealyObservation([("a","oa"), ("b","ob")]))
-#print(c._tree)
-#c.update_cache(MealyObservation([("b","ob"), ("b","ob")]))
-#print(c._tree)
-#
-#print(c.from_cache(["b", "b"]))

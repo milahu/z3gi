@@ -386,6 +386,8 @@ class IORAEncoder(Encoder):
         return constraints
 
 
+"""A quantifier free version of the encoder. It is not functioning properly, so stay away from it"""
+
 
 class IORAQREncoder(Encoder):
     def __init__(self):

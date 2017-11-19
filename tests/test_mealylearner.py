@@ -39,12 +39,7 @@ class MealyLearnerTest(unittest.TestCase):
                               .format(test.trace()))
 
     def learn_model(self, test_scenario):
-        # inputs = set()
-        # outputs = set()
-        # for trace in test_scenario.traces:
-        #     inputs.update([i for (i, _) in trace])
-        #     outputs.update([o for (_, o) in trace])
-        learner = FALearner(encoder=MealyEncoder(),  verbose=True)
+        learner = FALearner(encoder=MealyEncoder(),  verbose=False)
         for trace in test_scenario.traces:
             learner.add(trace)
 

@@ -13,11 +13,6 @@ class RALearner(Learner):
             raise Exception("RAEncoder has to be supplied")
         if not solver:
             solver = z3.Solver()
-            #solver = z3.Z3_mk_simple_solver("smt")
-            # example of tactics
-            #solver = z3.Then('simplify',
-            #                 'solve-eqs',
-            #                 'qfbv', 'sat').solver()
         self.encoder = encoder
         self.solver = solver
         self.verbose = verbose
@@ -44,10 +39,8 @@ class RALearner(Learner):
             return ra_def.export(m), ra_def
         else:
             return None
-            #to = ra_def
-            #return (None, to)
 
-    def _learn_model(self, min_locations, max_locations, min_registers, max_registers, ensure_min):
+    def _learn_model(self, min_locations, max_locations, min_registers, max_registers=3, ensure_min=True):
         """generates the definition and model for an ra whose traces include the traces added so far"""
         for num_locations in range(min_locations, max_locations + 1):
             # TODO: calculate max registers based on repeating values
@@ -57,8 +50,7 @@ class RALearner(Learner):
                 self.solver.add(constraints)
                 if self.timeout is not None:
                     self.solver.set("timeout", self.timeout)
-                self.solver.set(":smt.random_seed", 0)
-                self.solver.set("random_seed", 0)
+                self.solver.set(":smt.random_seed", 0) # this is a futile attempt of making Z3 deterministic
                 result = self.solver.check()
                 if self.verbose:
                     print("Learning with {0} locations and {1} registers. Result: {2}"

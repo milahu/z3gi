@@ -73,11 +73,3 @@ def determinize(seq):
             neat[value] = i
             i = i + 1
     return [(label, neat[value]) for label, value in seq]
-
-tree = Tree(itertools.count(0))
-tree[["ia","oa"]]
-tree[["ia","oa", "ia","oa"]]
-tree[["ia","oa", "ib","ob"]]
-tree[["ib","ob", "ib","ob"]]
-print("ia" in tree.children)
-print(tree)

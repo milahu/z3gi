@@ -30,7 +30,7 @@ sut_m1 = RaTestScenario("Accept everything", [
     [(act(0, 'in'), act(100, 'OK'))],
     [(act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK'))]
     ],
-    2, 1
+    3, 1
 )
 
 sut_m2 = RaTestScenario("OK first then always NOK", [
@@ -45,7 +45,7 @@ sut_m2 = RaTestScenario("OK first then always NOK", [
     [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(1, 'in', 102, 'NOK')],
     [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(2, 'in', 102, 'NOK')],
     ],
-                        4, 1)
+                        5, 1)
 
 sut_m3 = RaTestScenario("Alternating OK/NOK", [
     [io(0, 'in', 100, 'OK')],
@@ -59,7 +59,7 @@ sut_m3 = RaTestScenario("Alternating OK/NOK", [
     [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(1, 'in', 102, 'OK')],
     [io(0, 'in', 100, 'OK'), io(1, 'in', 101, 'NOK'), io(2, 'in', 102, 'OK')],
     ],
-                        4, 1)
+                        5, 1)
 
 # IO
 sut_m4 = RaTestScenario( "Store value and produce OK output if you get that same value", [
@@ -69,7 +69,7 @@ sut_m4 = RaTestScenario( "Store value and produce OK output if you get that same
     [(act(0, 'in'), act(100, 'OK')), (act(1, 'in'), act(101, 'NOK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))],
   #  [(act(1, 'in'), act(100, 'NOK')), (act(0, 'in'), act(101, 'OK')), (act(0, 'in'), act(102, 'OK')), (act(0, 'in'), act(103, 'OK'))]],
                          ],
-                         6, 2)
+                         5, 2)
 
 # login model (incomplete traces)
 sut_m5 = RaTestScenario("Login model", [

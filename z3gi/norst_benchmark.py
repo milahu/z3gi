@@ -1,19 +1,12 @@
-import functools
-from abc import ABCMeta
-from typing import Tuple, List, Dict
+from typing import Tuple, List
 
 import collections
 
 from encode.fa import MealyEncoder
-from learn import Learner
 from learn.fa import FALearner
 from model import Automaton
-from model.ra import RegisterMachine
 from sut import SUTType
 from sut import get_no_rst_simulation
-from sut.scalable import ScalableSUTClass
-from sut.fifoset import FIFOSetClass
-from sut.stack import StackClass
 from learn.algorithm import Statistics
 from statistics import stdev, median
 import learn.algorithm as alg

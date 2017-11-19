@@ -4,8 +4,8 @@ from typing import Tuple, List, Dict
 import collections
 
 from encode.fa import DFAEncoder, MealyEncoder
-from encode.iora import IORAEncoder, IORAQREncoder
-from encode.ra import RAEncoder, RAQREncoder
+from encode.iora import IORAEncoder
+from encode.ra import RAEncoder
 from learn import Learner
 from learn.fa import FALearner
 from learn.ra import RALearner
@@ -43,7 +43,7 @@ def get_learner_setup(sut, sut_type:SUTType, size, test_desc:TestDesc):
     elif sut_type is SUTType.Mealy:
         return (FALearner(MealyEncoder()), MealyRWalkFromState(*args))
     elif sut_type is SUTType.RA:
-        ra_learner = RALearner(RAQREncoder())
+        ra_learner = RALearner(RAEncoder())
         ra_learner.set_num_reg(size)
         return (ra_learner, RARWalkFromState(*args))
     elif sut_type is SUTType.IORA:

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
         name='z3gi',
-        version='0.1.1',
+        version='0.2.1',
         description='Grammatical inference using the Z3 SMT solver',
         long_description=open('README.md').read(),
         url='https://gitlab.science.ru.nl/rick/z3gi/lata',

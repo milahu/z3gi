@@ -7,7 +7,7 @@ from learn.fa import FALearner
 from model import Automaton
 from model.ra import RegisterMachine
 from parse.importer import build_automaton_from_dot
-from sut import SUTType, get_simulation, MealyObservation, StatsSUT, StatsTracker
+from sut import get_simulation, MealyObservation, StatsSUT
 from learn.algorithm import learn_mbt, Statistics
 from statistics import stdev, median
 import os.path

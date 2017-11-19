@@ -1,4 +1,4 @@
-"""A standalone for using the z3gi package from the command line."""
+"""A standalone module for using the z3gi package from the command line."""
 import argparse
 
 import learn.algorithm as alg
@@ -9,7 +9,7 @@ import model.gen as gen
 
 from encode.fa import MealyEncoder, DFAEncoder
 from encode.iora import IORAEncoder
-from encode.ra import RAQREncoder
+from encode.ra import RAEncoder
 from learn.fa import FALearner
 from learn.ra import RALearner
 from test import AcceptorTest, IORATest, MealyTest
@@ -21,7 +21,7 @@ from test.rwalk import DFARWalkFromState
 
 """some configuration mappings"""
 aut2learner={
-    model.ra.RegisterAutomaton:RALearner(RAQREncoder()),
+    model.ra.RegisterAutomaton:RALearner(RAEncoder()),
     model.ra.IORegisterAutomaton:RALearner(IORAEncoder()),
     model.fa.MealyMachine:FALearner(MealyEncoder()),
     model.fa.DFA:FALearner(DFAEncoder())
