@@ -18,6 +18,7 @@ from test.rwalk import RARWalkFromState
 from test.rwalk import IORARWalkFromState
 from test.rwalk import MealyRWalkFromState
 from test.rwalk import DFARWalkFromState
+from test.yanna import YannakakisTestGenerator
 
 """some configuration mappings"""
 aut2learner={
@@ -82,8 +83,9 @@ if __name__ == '__main__':
                                                                           ' used by rwalkfromstate')
     parser.add_argument('-rp', '--reset_prob', type=float, default=0.2, help='the probability of reseting the SUT after '
                                                                             'running each test input')
-    parser.add_argument('-y', '--yannakakis', action='store_true', help='use yannakakis instead of rwalkfromstate '
-                                                                        '(only supports Mealy Machines)')
+    parser.add_argument('-y', '--yannakakis', type=str, default=None, help='uses the yannakakis instead of rwalkfromstate '
+                                                                        '(only supports Mealy Machines).'
+                                                                           ' Takes the path to the yannakakis binary as argument.')
 
     args = parser.parse_args()
     formalism = args.aut
@@ -128,7 +130,10 @@ if __name__ == '__main__':
             num_tests = args.max_tests
             rand_test_length = args.rand_length
             reset_prob = args.reset_prob
-            test_generator = aut2rwalkcls[aut_type](sut_to_learn, rand_test_length, reset_prob)
+            if args.yannakakis is None:
+                test_generator = aut2rwalkcls[aut_type](sut_to_learn, rand_test_length, reset_prob)
+            else:
+                test_generator = YannakakisTestGenerator(sut_to_learn, args.yannakakis, rand_length=rand_test_length)
             (automaton, statistics) = alg.learn_mbt(sut_to_learn, learner, test_generator, num_tests)
 
     print("Learned model\n", automaton, "\nWith stats\n", statistics)
