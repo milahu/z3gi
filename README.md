@@ -9,18 +9,12 @@ Introduction
 ------------
 
 Grammatical inference is the research field that is concerned with learning the set of rules that describe the behavior of a system, such as a network protocol, a piece of software, or a (formal) language.
-One of the best studied problems in grammatical inference is that of finding a deterministic finite automaton (DFA) of minimal size that accepts a given set of positive strings and rejects a given set of negative strings.
-This problem is can be very hard, as it has been shown to be NP-complete.
 Z3GI provides different ways of solving this (and similar) problem(s) using satisfiability modulo theories (SMT).
 
 Installing with pip (recommended)
 ---------------------------------
 
-The recommended way of installing Z3GI is with `pip`:
-
-```
-$ pip install z3gi
-```
+To be enabled.
 
 Installing from sources
 -----------------------
@@ -32,117 +26,115 @@ $ git clone https://gitlab.science.ru.nl/rick/z3gi.git
 $ python z3gi/setup.py install
 ```
 
-Getting started
+Getting started - learning from traces
 ---------------
 
-Consider a deterministic finite automaton (DFA) that accepts strings of `0`s and `1`s in which the number of `0`s minus twice the number of `1`s is either 1 or 3 more than a multiple of 5 (such a DFA is described [here][dfa]).
+Consider a deterministic finite automaton (DFA) corresponding to the regex (ab)*.
 
-[dfa]: http://abbadingo.cs.nuim.ie/dfa.html
-
-A training file `train.txt` for this DFA could read (if you have the sources of this package, this file can be found at `docs/train.txt`):
+The training file at `resources\traces\regex_example` for this DFA reads:
 
 ```
-16 2
-1 4 1 0 0 0
-1 4 0 1 0 0
-1 4 0 0 1 0
-1 5 1 0 1 1 1
-1 6 1 1 1 1 0 1
-1 6 0 1 0 0 0 0
-1 6 1 0 0 0 0 0
-1 7 0 0 0 1 1 0 1
-1 7 0 0 0 0 1 0 1
-0 3 1 0 1
-0 4 0 0 0 0
-0 4 1 1 0 1
-0 5 0 0 0 0 0
-0 5 0 0 1 0 1
-0 6 0 1 0 1 1 1
-0 7 1 0 0 0 1 1 1
+1 a b
+1 a b a b
+0 a
+0 b
+0 a b a
+0 a a
+0 a b b
+0 a b a a
 ```
 
-In this [Abbadingo file][abbadingo], the first line is a header, giving the number of strings in the file (16) and the number of symbols (2).
-Each line after the header has the format 
-
-[abbadingo]: http://abbadingo.cs.nuim.ie/data-sets.html
-
+Each line represents an observation comprising elements separated by spaces. 
+For a DFA, the observation has the syntax:
 ```
-label n symbol1 symbol2 ... symboln
+label symbol1 symbol2 ... symboln
 ```
 
-Where label `1` means accepted, and the label `0` means rejected.
+The symols form a string, the label indicates that the DFA accepts the string (if its value is `1`) or 
+that it rejects the string (if its value is `0`). 
+In the current version, we require that the first observation introduces all inputs in the alphabet.
 
-We can use Z3GI to learn a model for the strings in `train.txt` as follows:
+
+We can use Z3GI to learn a model for the observations in `train.txt` as follows:
 
 ```
-$ python -m z3gi --model -f train.txt
+$ python z3gi -m traces -a DFA -f resources\traces\regex_example
 ```
 
-This produces the following output:
+This produces an output containing:
 
 ```
 Learned model:
-[state3 = 3,
-start = 0,
-state0 = 0,
-n = 5,
-state2 = 2,
-state4 = 4,
-1 = INPUT!val!0,
-state1 = 1,
-0 = INPUT!val!1,
-out = [3 -> True, 4 -> True, else -> False],
-trans = [(0, INPUT!val!0) -> 3,
-        (0, INPUT!val!1) -> 4,
-        (4, INPUT!val!0) -> 2,
-        (3, INPUT!val!0) -> 4,
-        (3, INPUT!val!1) -> 2,
-        (2, INPUT!val!0) -> 1,
-        (1, INPUT!val!1) -> 3,
-        (4, INPUT!val!1) -> 1,
-        else -> 0]]
+ {'q0': False, 'q1': True, 'q2': True}
+acc_seq(q0) =
+acc_seq(q1) = q0 a -> q1
+acc_seq(q2) = q0 a -> q1 , q1 b -> q2
+q0
+        a -> q1
+        b -> q0
+q1
+        a -> q0
+        b -> q2
+q2
+        a -> q1
+        b -> q0
 ```
 
-We can interpret this learned model as follows.
-- `0 = INPUT!val!1` and `1 = INPUT!val!0` provide identifiers for `0` and `1` (notice that the values in the identifiers and the actual inputs are different!)
-- `n = 5` indicates that the learned model has 5 states
-- `state0 = 0` through `state4 = 4` provide the identifiers for these states
-- `out` describes an output function for these states (`True` if it is accepting and `False` if it is rejecting)
-- `trans` desribes a transition function for states and symbols to states (e.g. `(0, INPUT!val!0) -> 3)` describes a transition from `state0` with `1` to `state3`)
+The model description is split into 3 (or 2) sections.
+- the first section indicates acceptance/rejection of each state
+- the second section indicates access sequences to the state, in later versions, this section may be ommitted
+- the first section describes the transition for the DFA
+ 
 
-Using z3gi in Python
---------------------
 
-Let's learn the same model (from `train.txt`) in Python:
+Learning scalable systems
+-----------------------
 
-1. Open your Python interpreter:
+Z3GI implements several scalable systems such as Sets or Login Systems. What these
+systems have in common is that they are configurable in size. A greater size leads
+results in a bigger system. Z3GI can be used to learn these systems. 
 
-    ```
-    $ python
-    ```
-2. Let's use a different encoder this time:
+To give an example, suppose we want to learn a Login system with 2 users 
+which is structured as a Mealy machine. To learn this system we run:
 
-    ```
-    >>> from z3gi.encoders import expressive
-    >>> encoder = expressive.Encoder()
-    ```
-3. Create a sample:
+```
+$ python z3gi -m scalable -a MealyMachine -sc Login -s 2
+```
 
-    ```
-    >>> from z3gi.sample import Sample
-    >>> sample = Sample(encoder)
-    ```
-4. Add constraints for strings in `train.txt` to the sample:
+Learning .dot models
+-----------------------
 
-    ```
-    >>> from z3gi.parsers import abbadingo
-    >>> for string, label in abbadingo.read(open('train.txt', 'r'), header=1):
-    ...     sample[string] = label
-    ...
-    ```
-5. Obtain the model!
+We can apply Z3GI to learn simulations of .dot models. In particular, we can
+learn the Mealy machine models obtained by various case-studies which are included 
+in the `resources\models` directory. 
 
-    ```
-    >>> model = sample.model()
-    >>> print(model)
-    ```
+Say we want to learn the biometric passport. We then need to run:
+
+```
+$ python z3gi -m dot -a MealyMachine -f resources\models\biometric.dot
+```
+
+For bigger models which are more difficult to test, we may require an external
+test algorithm. We provide a Windows binary for the Yannakakis test algorithm.
+You can activate this algorithm using the `-y` option. By using `-m dotnorst`,
+Z3GI will attempt to learn without using resets.
+
+
+Our implementation currently only supports Mealy machines, though functionality 
+for other formalisms will be added in the future. Note there is currently no 
+standard .dot format for register automata. Also notethat the `yannakakis` test
+algorithm only works on Mealy machines.
+
+
+Learning randomly generated Mealy machines without reset
+-----------------------
+
+Z3GI can be used to learn randomly generated MealyMachines without reset with the
+property that they are strongly connected (though not necessarily minimal). 
+
+Say we want to learn a randomly generated Mealy machine with 2 inputs, 2 outputs 
+and 3 states. Then we run:
+
+```
+$ z3gi -m randnorst -a MealyMachine -ni 2 -no 2 -ns 3
+```
