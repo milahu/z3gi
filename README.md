@@ -144,5 +144,5 @@ Say we want to learn a randomly generated Mealy machine with 2 inputs, 2 outputs
 and 3 states. We then run:
 
 ```
-$ z3gi -m randnorst -a MealyMachine -ni 2 -no 2 -ns 3
+$ python z3gi -m randnorst -a MealyMachine -ni 2 -no 2 -ns 3
 ```
