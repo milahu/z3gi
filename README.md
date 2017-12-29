@@ -2,8 +2,11 @@ Grammatical inference using the Z3 SMT solver
 =============================================
 
 Z3GI is a Python tool and library that uses the [Z3 SMT solver][z3] for learning minimal consistent state machine models from labeled strings or input/output taces.
+The ideas the tool is based on and the experiments conducted are described in the publication "Model Learning as a Satisfiability Modulo Theories Problem" due to appear
+at the [LATA 2018][LATA2018] conference. A long version of this paper is included here, see _extended.pdf_.
 
 [z3]: https://github.com/Z3Prover/z3
+[LATA2018]: http://grammars.grlmc.com/LATA2018/
 
 Introduction
 ------------
@@ -146,3 +149,13 @@ and 3 states. We then run:
 ```
 $ python z3gi -m randnorst -a MealyMachine -ni 2 -no 2 -ns 3
 ```
+
+
+Performing benchmarks
+-----------------------
+
+For the publication, we ran Z3GI through a series of benchmarks, which can be re-run 
+by executing the .*benchmark.py python scripts in the `z3gi` directory. These scripts
+are well documented in the way relevant parameters (such as solver timeout)
+can be tweaked. Ensure these parameters are set to their desired values before running,
+and note that experiments may take minutes to a few hours to complete.
