@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import List, Generator, Iterable, Tuple
+from typing import List, Generator, Iterable, Tuple, Set
 import itertools
 
 from model import Automaton, Acceptor, Transducer
@@ -17,6 +17,10 @@ class Test(metaclass=ABCMeta):
     def check(self, model:Automaton):
         """checks if the hyp passes the test. On failure, it returns a minimal trace to be added by the learner.
         On success it return None"""
+        # TODO this is a quick fix to the problem of not having a predefined alphabet from the very start.
+        # if the trace contains new labels, then we return whole trace
+        if len(self.input_labels().difference(model.input_labels())) != 0:
+            return self.tr
         return self._check_trace(model, self.tr)
 
     @abstractmethod
@@ -35,6 +39,27 @@ class Test(metaclass=ABCMeta):
     @abstractmethod
     def covers(self, test) -> bool:
         pass
+
+    @abstractmethod
+    def inputs(self) -> List[object]:
+        pass
+
+    def input_labels(self) -> Set[object]:
+        """generates all the input labels in the test trace. Used to verify that model contains all test input labels"""
+        inputs = self.inputs()
+        input_labels = set()
+        for inp in inputs:
+            # if it's RA stuff
+            if isinstance(inp, Action):
+                (label, _) = inp
+            elif isinstance(inp, str):
+                label = inp
+            else:
+                raise Exception("Unrecognized type")
+            input_labels.add(label)
+
+        return input_labels
+
 
 class EqualTestsMixin(metaclass=ABCMeta):
     """doesn't work unfortunately"""
@@ -131,6 +156,9 @@ class TransducerTest(Test):
     def size(self):
         return len(self.tr)
 
+    def inputs(self):
+        return [inp for (inp, _) in self.tr]
+
     def covers(self, test):
         if type(test) is type(self) and len(test.trace()) <= len(self.trace()):
             for ((inp, _),(inp2, _)) in zip(self.trace(), test.trace()):
@@ -185,6 +213,10 @@ class AcceptorTest(Test):
     def size(self):
         (seq, acc) = self.tr
         return len(seq)
+
+    def inputs(self):
+        (seq, acc) = self.tr
+        return seq
 
     def __hash__(self):
         (seq, acc) = self.tr
